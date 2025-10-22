@@ -1,0 +1,11 @@
+# SIMULATION SETTINGS #
+Time_end(s): 20000.0
+dt(s): 20.0
+Plot_output_freq: 1
+Total_number_of_puff: 300
+
+# Calculation Mode for Sigma (Rural = 1, Urban = 0)
+Rural/Urban: 1
+
+# Stability Category (PG = 1, BMP = 0)
+Pasquill-Gifford/Briggs-McElroy-Pooler: 1

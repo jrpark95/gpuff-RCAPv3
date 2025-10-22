@@ -1,0 +1,38 @@
+
+*BEGIN Nucl_Lib
+
+!     Input for RCAP
+!     Prepared by N.I.Tak (2017/12/xx)
+!     Modified by S.Y.Kim (2018/09/xx)
+!     The same data with MACCS 60 nuclides 
+!     core_inventory is not revised and meaningless yet for LWR
+
+!     ---------------------
+!     reference of database
+!     ---------------------
+!     half life      : INDEXR.DAT of MACCS
+!     atomic weight  : EPA website
+!     chemical group : Sample Problem A (NUREG/CR-6613)
+!     core inventory : 
+!     decay chain    : EPA website, Sample Problem A
+!     recommend to sort atomic mass number
+!     differences between SOARCA and Sample Problem A are
+!     (1) list of pseudo-stable nuclides:
+!     Rb-88, Y-91m, Nb-97, Nb-97m, Rh-103m, Rh-106, Te-131, Xe-135m, Ba-137m, Pr-144, Pr-144m
+!     above radionuclides are pseudo-stable in Sample Problem A as they are implicitly included in a dose calculation of their parent 
+!     (2) chemical group of radionuclides
+
+!     --------------------
+!     nuclide 042 : Cs-137
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Cs-137    30.0 y               136.907089        cesium
+!             core_inventory  (Ci/MWth)
+        NL20  1.728E+17
+!             decay daughter   branching fraction
+!             Ba-137m          9.46e-1 (Ba-137m is pseudo-stable as it is implicitly included in a dose calculation of its parent)
+!             Stable Ba-137    5.40e-2
+
+*END Nucl_Lib
+
+*EOF

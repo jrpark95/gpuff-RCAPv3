@@ -1,0 +1,654 @@
+
+*BEGIN Nucl_Lib
+
+!     Input for RCAP
+!     Prepared by N.I.Tak (2017/12/xx)
+!     Modified by S.Y.Kim (2018/09/xx)
+!     The same data with MACCS 60 nuclides 
+!     core_inventory is not revised and meaningless yet for LWR
+
+!     ---------------------
+!     reference of database
+!     ---------------------
+!     half life      : INDEXR.DAT of MACCS
+!     atomic weight  : EPA website
+!     chemical group : Sample Problem A (NUREG/CR-6613)
+!     core inventory : 
+!     decay chain    : EPA website, Sample Problem A
+!     recommend to sort atomic mass number
+!     differences between SOARCA and Sample Problem A are
+!     (1) list of pseudo-stable nuclides:
+!     Rb-88, Y-91m, Nb-97, Nb-97m, Rh-103m, Rh-106, Te-131, Xe-135m, Ba-137m, Pr-144, Pr-144m
+!     above radionuclides are pseudo-stable in Sample Problem A as they are implicitly included in a dose calculation of their parent 
+!     (2) chemical group of radionuclides
+
+!     --------------------
+!     nuclide 001 : Co-58
+!     ---------------------
+!             nuclide   half life             atomic weight(g)  chemical_group
+!        NL10  Co-58     70.80 d               57.935752         ruthenium
+        NL10  Co-58     0.5 d               57.935752         ruthenium
+!             core_inventory  (Ci/MWth)
+        NL20  9.2997E+00
+!             decay daughter   branching fraction
+!             Stable Fe-58     1.00e+0
+
+!     --------------------
+!     nuclide 002 : Co-60
+!     ---------------------
+!             nuclide   half life             atomic weight(g)  chemical_group
+        NL10  Co-60     5.271 y               59.933817         ruthenium
+!             core_inventory  (Ci/MWth)
+        NL20  9.2997E+00
+!             decay daughter   branching fraction
+!             Stable Ni-60     1.00e+0
+
+!     --------------------
+!     nuclide 003 : Kr-85
+!     ---------------------
+!             nuclide   half life             atomic weight(g)  chemical_group
+        NL10  Kr-85     10.72 y               84.912527         xenon
+!             core_inventory  (Ci/MWth)
+        NL20  2.7759E+02
+!             decay daughter   branching fraction
+!             Stable Rb-85     1.00e+0
+
+!     --------------------
+!     nuclide 004 : Kr-85m
+!     ---------------------
+!             nuclide   half life             atomic weight(g)  chemical_group
+        NL10  Kr-85m    4.48 h                84.912527         xenon
+!             core_inventory  (Ci/MWth)
+        NL20  1.0476E+04
+!             decay daughter   branching fraction
+!             Stable Rb-85     7.89e-1
+        NL30  Kr-85            2.11e-1
+
+!     --------------------
+!     nuclide 005 : Rb-86
+!     ---------------------
+!             nuclide   half life             atomic weight(g)  chemical_group
+        NL10  Rb-86     18.66 d               85.911167         cesium
+!             core_inventory  (Ci/MWth)
+        NL20  2.7759E+02
+!             decay daughter   branching fraction
+!             Stable Sr-86     1.00e+0
+
+!     --------------------
+!     nuclide 006 : Kr-87
+!     ---------------------
+!             nuclide   half life             atomic weight(g)  chemical_group
+        NL10  Kr-87     76.3 m                86.913354         xenon
+!             core_inventory  (Ci/MWth)
+        NL20  1.9972E+04
+!             decay daughter   branching fraction
+!             Rb-87            1.00e+0
+!             Rb-87 -> Stable Sr-87 (Rb-87 is pseudo-stable due to long half-life: 4.923E10 y)
+
+!     --------------------
+!     nuclide 007 : Kr-88
+!     ---------------------
+!             nuclide   half life             atomic weight(g)  chemical_group
+        NL10  Kr-88     2.84 h                87.914446         xenon
+!             core_inventory  (Ci/MWth)
+        NL20  2.7871E+04
+!             decay daughter   branching fraction
+!             Rb-88            1.00e+0 (Rb-88 is pseudo-stable as it is implicitly included in a dose calculation of its parent)
+
+!     --------------------
+!     nuclide 008 : Sr-89
+!     ---------------------
+!             nuclide   half life             atomic weight(g)  chemical_group
+        NL10  Sr-89     50.5 d                88.907450         strontium
+!             core_inventory  (Ci/MWth)
+        NL20  3.7535E+04
+!             decay daughter   branching fraction
+!             Stable Y-89      1.00e+0
+
+!     --------------------
+!     nuclide 009 : Sr-90
+!     ---------------------
+!             nuclide   half life             atomic weight(g)  chemical_group
+        NL10  Sr-90     29.12 y               89.907737         strontium
+!             core_inventory  (Ci/MWth)
+        NL20  2.0756E+03
+!             decay daughter   branching fraction
+        NL30  Y-90             1.00e+0
+
+!     --------------------
+!     nuclide 010 : Y-90
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Y-90      64.0 h               89.907151         lanthanum
+!             core_inventory  (Ci/MWth)
+        NL20  2.0756E+03
+!             decay daughter   branching fraction
+!             Stable Zr-90     1.00e+0
+
+!     --------------------
+!     nuclide 011 : Sr-91
+!     ---------------------
+!             nuclide   half life             atomic weight(g)  chemical_group
+        NL10  Sr-91     9.5 h                 90.910203         strontium
+!             core_inventory  (Ci/MWth)
+        NL20  4.5378E+04
+!             decay daughter   branching fraction
+!             Y-91m            5.78e-1 (Y-91m is pseudo-stable as it is implicitly included in a dose calculation of its parent)
+        NL30  Y-91             4.22e-1
+
+!     --------------------
+!     nuclide 012 : Y-91
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Y-91      58.51 d              90.907304         lanthanum
+!             core_inventory  (Ci/MWth)
+        NL20  4.5378E+04
+!             decay daughter   branching fraction
+!             Stable Zr-91     1.00e+0
+
+!     --------------------
+!     nuclide 013 : Sr-92
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Sr-92     2.71 h               91.911037         strontium
+!             core_inventory  (Ci/MWth)
+        NL20  4.6218E+04
+!             decay daughter   branching fraction
+        NL30  Y-92             1.00e+0
+
+!     --------------------
+!     nuclide 014 : Y-92
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Y-92      3.54 h               91.908949         lanthanum
+!             core_inventory  (Ci/MWth)
+        NL20  4.6499E+04
+!             decay daughter   branching fraction
+!             Stable Zr-92     1.00e+0
+
+!     --------------------
+!     nuclide 015 : Y-93
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Y-93      10.1 h               92.909582         lanthanum
+!             core_inventory  (Ci/MWth)
+        NL20  5.0700E+04
+!             decay daughter   branching fraction
+!             Zr-93            1.00e+0
+!             Zr-93 -> Nb-93m -> Stable Nb-93 (Zr-93 is pseudo-stable due to long half-life: 1.53E+6 y)
+
+!     --------------------
+!     nuclide 016 : Zr-95
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Zr-95     63.98 d              94.908042         lanthanum
+!             core_inventory  (Ci/MWth)
+        NL20  5.2101E+04
+!             decay daughter   branching fraction
+!             Nb-95m           7.08e-3 (Nb-95m is pseudo-stable as it is implicitly included in a dose calculation of its parent)
+        NL30  Nb-95            9.93e-1
+
+!     --------------------
+!     nuclide 017 : Nb-95
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Nb-95     35.15 d              94.906835         lanthanum
+!             core_inventory  (Ci/MWth)
+        NL20  5.2101E+04
+!             decay daughter   branching fraction
+!             Stable Mo-95     1.00e+0
+
+!     --------------------
+!     nuclide 018 : Zr-97
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Zr-97     16.90 h              96.910953         lanthanum
+!             core_inventory  (Ci/MWth)
+        NL20  4.9020E+04
+!             decay daughter   branching fraction
+!             Nb-97m           9.47e-1 (Nb-97m is pseudo-stable as it is implicitly included in a dose calculation of its parent)
+!             Nb-97            5.30e-2 (Nb-97 is pseudo-stable as it is implicitly included in a dose calculation of its parent)
+
+!     --------------------
+!     nuclide 019 : Mo-99
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Mo-99     66.0 h               98.907711         ruthenium
+!             core_inventory  (Ci/MWth)
+        NL20  5.1261E+04
+!             decay daughter   branching fraction
+        NL30  Tc-99m           8.76e-1
+!             Tc-99            1.24e-1
+!             Tc-99 -> Stable Ru-99 (Tc-99 is pseudo-stable due to long half-life: 2.111E+5 y)
+
+!     --------------------
+!     nuclide 020 : Tc-99m
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Tc-99m    6.02 h               98.906254         ruthenium
+!             core_inventory  (Ci/MWth)
+        NL20  4.5098E+04
+!             decay daughter   branching fraction
+!             Tc-99            1.00e+0
+!             Tc-99 -> Stable Ru-99 (Tc-99 is pseudo-stable due to long half-life: 2.111E+5 y)
+
+!     --------------------
+!     nuclide 021 : Ru-103
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Ru-103    39.28 d              102.906323        ruthenium
+!             core_inventory  (Ci/MWth)
+        NL20  3.0812E+04
+!             decay daughter   branching fraction
+!             Rh-103m          9.97e-1 (Rh-103m is pseudo-stable as it is implicitly included in a dose calculation of its parent)
+!             Stable Rh-103    3.00e-3
+
+!     --------------------
+!     nuclide 022 : Ru-105
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Ru-105    4.44 h               104.907752        ruthenium
+!             core_inventory  (Ci/MWth)
+        NL20  1.4790E+04
+!             decay daughter   branching fraction
+        NL30  Rh-105           1.00e+0
+
+!     --------------------
+!     nuclide 023 : Rh-105
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Rh-105    35.36 h              104.905693        ruthenium
+!             core_inventory  (Ci/MWth)
+        NL20  1.1989E+04
+!             decay daughter   branching fraction
+!             Stable Pd-105    1.00e+0
+
+!     --------------------
+!     nuclide 024 : Ru-106
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Ru-106    368.2 d              105.907329        ruthenium
+!             core_inventory  (Ci/MWth)
+        NL20  6.9468E+03
+!             decay daughter   branching fraction
+!             Rh-106           1.00e+0 (Rh-106 is pseudo-stable as it is implicitly included in a dose calculation of its parent)
+
+!     --------------------
+!     nuclide 025 : Sb-127
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Sb-127    3.85 d               126.906923        tellurium
+!             core_inventory  (Ci/MWth)
+        NL20  2.8571E+02
+!             decay daughter   branching fraction
+        NL30  Te-127m          1.76e-1
+        NL30  Te-127           8.24e-1
+
+!     --------------------
+!     nuclide 026 : Te-127
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Te-127    9.35 h               126.905226        tellurium
+!             core_inventory  (Ci/MWth)
+        NL20  1.8123E+03
+!             decay daughter1  branching fraction
+!             Stable I-127     1.00e+0
+
+!     --------------------
+!     nuclide 027 : Te-127m
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Te-127m   109 d                126.905226        tellurium
+!             core_inventory  (Ci/MWth)
+        NL20  2.8571E+02
+!             decay daughter   branching fraction
+        NL30  Te-127           9.76e-1
+!             Stable I-127     2.40e-2
+
+!     --------------------
+!     nuclide 028 : Sb-129
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Sb-129    4.32 h               128.909148        tellurium
+!             core_inventory  (Ci/MWth)
+        NL20  2.8571E+02
+!             decay daughter   branching fraction
+        NL30  Te-129m          2.25e-1
+        NL30  Te-129           7.75e-1
+
+!     --------------------
+!     nuclide 029 : Te-129
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Te-129    69.6 m               128.906598        tellurium
+!             core_inventory  (Ci/MWth)
+        NL20  7.3109E+03
+!             decay daughter   branching fraction
+!             I-129            1.00e+0
+!             I-129 -> Stable Xe-129 (I-129 is pseudo-stable due to long half-life: 1.57E+7 y)
+
+!     --------------------
+!     nuclide 030 : Te-129m
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Te-129m   33.6 d               128.906598        tellurium
+!             core_inventory  (Ci/MWth)
+        NL20  1.3585E+03
+!             decay daughter   branching fraction
+        NL30  Te-129           6.50e-1
+!             I-129            3.50e-1
+!             I-129 -> Stable Xe-129 (I-129 is pseudo-stable due to long half-life: 1.57E+7 y)
+
+!     --------------------
+!     nuclide 031 : Te-131m
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Te-131m   30 h                 130.908523        tellurium
+!             core_inventory  (Ci/MWth)
+        NL20  4.6499E+03
+!             decay daughter   branching fraction
+        NL30  I-131            7.78e-1
+!             Te-131           2.22e-1 (Te-131 is pseudo-stable as it is implicitly included in a dose calculation of its parent)
+
+!     --------------------
+!     nuclide 032 : I-131
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  I-131     8.04 d               130.906124        iodine
+!             core_inventory  (Ci/MWth)
+        NL20  2.6162E+04
+!             decay daughter   branching fraction
+!             Xe-131m          1.11e-2  (Xe-131m is pseudo-stable as it is implicitly included in a dose calculation of its parent)
+!             Stable Xe-131    9.88e-1
+
+!     --------------------
+!     nuclide 033 : Te-132
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Te-132    78.2 h               131.908553        tellurium
+!             core_inventory  (Ci/MWth)
+        NL20  3.7815E+04
+!             decay daughter   branching fraction
+        NL30  I-132            1.00e+0
+
+!     --------------------
+!     nuclide 034 : I-132
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  I-132     2.30 h               131.907997        iodine
+!             core_inventory  (Ci/MWth)
+        NL20  3.8375E+04
+!             decay daughter   branching fraction
+!             Stable Xe-132    1.00e+0
+
+!     --------------------
+!     nuclide 035 : I-133
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  I-133     20.8 h               132.907796        iodine
+!             core_inventory  (Ci/MWth)
+        NL20  5.6863E+04
+!             decay daughter   branching fraction
+!             Xe-133m          2.90e-2  (Xe-133m is pseudo-stable as it is implicitly included in a dose calculation of its parent)
+        NL30  Xe-133           9.71e-1
+
+!     --------------------
+!     nuclide 036 : Xe-133
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Xe-133    5.245 d              132.905910        xenon
+!             core_inventory  (Ci/MWth)
+        NL20  5.6863E+04
+!             decay daughter   branching fraction
+!             Stable Cs-133    1.00e+0
+
+!     --------------------
+!     nuclide 037 : I-134
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  I-134     52.6 m               133.909744        iodine
+!             core_inventory  (Ci/MWth)
+        NL20  6.3866E+04
+!             decay daughter   branching fraction
+!             Stable Xe-134    1.00e+0
+
+!     --------------------
+!     nuclide 038 : Cs-134
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Cs-134    2.062 y              133.906718        cesium
+!             core_inventory  (Ci/MWth)
+        NL20  2.9692E+03
+!             decay daughter   branching fraction
+!             Stable Ba-134    1.00e+0
+        
+!     --------------------
+!     nuclide 039 : I-135
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  I-135     6.61 h               134.910048        iodine
+!             core_inventory  (Ci/MWth)
+        NL20  5.2941E+04
+!             decay daughter   branching fraction
+        NL30  Xe-135           8.46e-1
+!             Xe-135m          1.54e-1 (Xe-135m is pseudo-stable as it is implicitly included in a dose calculation of its parent)
+
+!     --------------------
+!     nuclide 040 : Xe-135
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Xe-135    9.09 h               134.907227        xenon
+!             core_inventory  (Ci/MWth)
+        NL20  6.9468E+03
+!             decay daughter   branching fraction
+!             Cs-135           1.00e+0
+!             Cs-135 -> Stable Ba-135 (Cs-135 is pseudo-stable due to long half-life: 2.3E+6 y)
+
+!     --------------------
+!     nuclide 041 : Cs-136
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Cs-136    13.1 d               135.907311        cesium
+!             core_inventory  (Ci/MWth)
+        NL20  5.5182E+02
+!             decay daughter   branching fraction
+!             Stable Ba-136    1.00e+0
+
+!     --------------------
+!     nuclide 042 : Cs-137
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Cs-137    30.0 y               136.907089        cesium
+!             core_inventory  (Ci/MWth)
+        NL20  2.4034E+03
+!             decay daughter   branching fraction
+!             Ba-137m          9.46e-1 (Ba-137m is pseudo-stable as it is implicitly included in a dose calculation of its parent)
+!             Stable Ba-137    5.40e-2
+
+!     --------------------
+!     nuclide 043 : Ba-139
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Ba-139    82.7 m               138.908841        barium
+!             core_inventory  (Ci/MWth)
+        NL20  5.3221E+04
+!             decay daughter   branching fraction
+!             Stable La-139    1.00e+0
+
+!     --------------------
+!     nuclide 044 : Ba-140
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Ba-140    12.74 d              139.910604        barium
+!             core_inventory  (Ci/MWth)
+        NL20  5.2381E+04
+!             decay daughter   branching fraction
+        NL30  La-140           1.00e+0
+
+!     --------------------
+!     nuclide 045 : La-140
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  La-140    40.272 h             139.909477        lanthanum
+!             core_inventory  (Ci/MWth)
+        NL20  5.2661E+04
+!             decay daughter   branching fraction
+!             Stable Ce-140    1.00e+0
+
+!     --------------------
+!     nuclide 046 : La-141
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  La-141    3.93 h               140.910962        lanthanum
+!             core_inventory  (Ci/MWth)
+        NL20  4.8739E+04
+!             decay daughter   branching fraction
+        NL30  Ce-141           1.00e+0
+
+!     --------------------
+!     nuclide 047 : Ce-141
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Ce-141    32.501 d             140.908276        cerium
+!             core_inventory  (Ci/MWth)
+        NL20  4.8739E+04
+!             decay daughter   branching fraction        
+!             Stable Pr-141    1.00e+0
+
+!     --------------------
+!     nuclide 048 : La-142
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  La-142    92.5 m               141.914079        lanthanum
+!             core_inventory  (Ci/MWth)
+        NL20  4.9020E+04
+!             decay daughter   branching fraction
+!             Stable Ce-142    1.00e+0
+
+!     --------------------
+!     nuclide 049 : Ce-143
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Ce-143    33.0 h               142.912385        cerium
+!             core_inventory  (Ci/MWth)
+        NL20  4.8179E+04
+!             decay daughter   branching fraction
+        NL30  Pr-143           1.00e+0
+
+!     --------------------
+!     nuclide 050 : Pr-143
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Pr-143    13.56 d              142.910816        lanthanum
+!             release source to coolant per power (Ci/MWth)
+        NL20  4.8179E+04
+!             decay daughter   branching fraction
+!             Stable Nd-143    1.00e+0
+
+!     --------------------
+!     nuclide 051 : Ce-144
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Ce-144    284.3 d              143.913647        cerium
+!             core_inventory  (Ci/MWth)
+        NL20  3.4734E+04
+!             decay daughter   branching fraction
+!             Pr-144           9.822e-1 (Pr-144 is pseudo-stable as it is implicitly included in a dose calculation of its parent)
+!             Pr-144m          1.780e-3 (Pr-144m is pseudo-stable as it is implicitly included in a dose calculation of its parent)
+
+!     --------------------
+!     nuclide 052 : Nd-147
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Nd-147    10.98 d              146.916100        lanthanum
+!             core_inventory  (Ci/MWth)
+        NL20  1.8599E+04            
+!             decay daughter   branching fraction        
+!             Pm-147           1.00e+0  (Pm-147 is pseudo-stable as it is implicitly included in a dose calculation of its parent)
+        
+!     --------------------
+!     nuclide 053 : Pu-238
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Pu-238    87.74 y              238.049559        cerium
+!             release source to coolant per power (Ci/MWth)
+        NL20  4.8179E+04
+!             decay daughter   branching fraction        
+!             U-234            1.00e+0 (U-234 is pseudo-stable due to long half-life: 2.455E+5 y)
+
+!     --------------------
+!     nuclide 054 : Np-239
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Np-239    2.355 d              239.052939        cerium
+!             release source to coolant per power (Ci/MWth)
+        NL20  4.8179E+04
+!             decay daughter   branching fraction        
+        NL30  Pu-239           1.00e+0
+
+!     --------------------
+!     nuclide 055 : Pu-239
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Pu-239    2.4065E+4 y           239.052163        cerium
+!             release source to coolant per power (Ci/MWth)
+        NL20  4.8179E+04
+!             decay daughter   branching fraction
+!             U-235m           0.00e+0
+!             U-235m -> U-235 (U-235m is not included in the decay chain applied to MACCS)
+!             U-235            1.00e+0 (U-235 is pseudo-stable due to long half-life: 7.04E+8 y)
+
+!     --------------------
+!     nuclide 056 : Pu-240
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Pu-240    6537 y               240.053813        cerium
+!             release source to coolant per power (Ci/MWth)
+        NL20  4.8179E+04
+!             decay daughter   branching fraction
+!             U-236            1.00e+0 (U-236 is pseudo-stable due to long half-life: 2.342E+7 y)
+
+!     --------------------
+!     nuclide 057 : Pu-241
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Pu-241    14.4 y               241.056851        cerium
+!             release source to coolant per power (Ci/MWth)
+        NL20  4.8179E+04
+!             decay daughter   branching fraction
+        NL30  Am-241           1.00e+0
+!             U-237            2.45e-5 (U-237 is pseudo-stable due to very low branching fraction)
+
+!     --------------------
+!     nuclide 058 : Am-241
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Am-241    432.2 y              241.056829        lanthanum
+!             release source to coolant per power (Ci/MWth)
+        NL20  4.8179E+04
+!             decay daughter   branching fraction
+!             Np-237           1.00e+0 (Np-237 is pseudo-stable due to long half-life: 2.144E+6 y)
+
+!     --------------------
+!     nuclide 059 : Cm-242
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Cm-242    162.8 d              242.058835        lanthanum
+!             release source to coolant per power (Ci/MWth)
+        NL20  4.8179E+04
+!             decay daughter   branching fraction
+        NL30  Pu-238           1.00e+0
+
+!     --------------------
+!     nuclide 060 : Cm-244
+!     ---------------------
+!             nuclide   half life            atomic weight(g)  chemical_group
+        NL10  Cm-244    18.11 y              244.062752        lanthanum
+!             release source to coolant per power (Ci/MWth)
+        NL20  4.8179E+04
+!             decay daughter   branching fraction
+        NL30  Pu-240           1.00e+0
+
+*END Nucl_Lib
+
+*EOF

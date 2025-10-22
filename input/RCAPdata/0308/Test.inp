@@ -1,0 +1,657 @@
+! 
+!-------------------------------------------------
+!   RCAP AD/EP/LP Module Test Case
+!   made by Sung-yeop Kim (2021.11.25.)
+!-------------------------------------------------
+!
+!
+!===============================================================================
+!   Multi-Unit Input setting
+!-------------------------------------------------------------------------------
+
+MU00  1
+MU10  Test1.inp
+
+*END Multi_input
+
+!===============================================================================
+!   Simulation Control (SC)
+!-------------------------------------------------------------------------------
+*BEGIN Simul_Con
+
+!     sim_title
+SC10  Test_Title
+!     plant_name    plant_power(MWth)  plant_type  (loc_longitude  loc_latitude)
+SC20  Test_Plant    1000               LWR          E141.0325000    N37.4227778 
+!     source_term_title
+SC30  Test_Source
+!     coord     numRad   numTheta
+SC40  cylindr   10       16
+!     ir (km)
+SC41  1.6  3.2  4.8  6.4  8.0  16.0  32.0  48.0  64.0  80.0
+!     weather_file   nucl_lib_file   dcf_file            fcm_file
+SC50  METEO.inp      MACCS60.NDL     MACCS_DCF_NEW.LIB   sampleFCM.inp
+!     Solver Selection Option
+!     Early_Dose?   Late_Dose?
+SC90  y             y
+
+*END Simul_Con
+
+!===============================================================================
+!   Radio-Nuclide Transport (RT)
+!-------------------------------------------------------------------------------
+*BEGIN RN_Trans
+
+!---------------
+! Plant Release
+!---------------
+!      ID   nuclide_name   core_inventory (Bq)
+RT110  01   Co-58          2.304E+16
+RT110  02   Co-60          1.762E+16
+RT110  03   Kr-85          1.770E+16
+RT110  04   Kr-85m         8.287E+17
+RT110  05   Kr-87          1.514E+18
+RT110  06   Kr-88          2.048E+18
+RT110  07   Rb-86          1.350E+15
+RT110  08   Sr-89          2.567E+18
+RT110  09   Sr-90          1.386E+17
+RT110  10   Sr-91          3.300E+18
+RT110  11   Sr-92          3.434E+18
+RT110  12   Y-90           1.486E+17
+RT110  13   Y-91           3.127E+18
+RT110  14   Y-92           3.447E+18
+RT110  15   Y-93           3.900E+18
+RT110  16   Zr-95          3.951E+18
+RT110  17   Zr-97          4.118E+18
+RT110  18   Nb-95          3.735E+18
+RT110  19   Mo-99          4.360E+18
+RT110  20   Tc-99m         3.763E+18
+RT110  21   Ru-103         3.248E+18
+RT110  22   Ru-105         2.112E+18
+RT110  23   Ru-106         7.379E+17
+RT110  24   Rh-105         1.463E+18
+RT110  25   Sb-127         1.993E+17
+RT110  26   Sb-129         7.058E+17
+RT110  27   Te-127         1.925E+17
+RT110  28   Te-127m        2.548E+16
+RT110  29   Te-129         6.626E+17
+RT110  30   Te-129m        1.747E+17
+RT110  31   Te-131m        3.346E+17
+RT110  32   Te-132         3.330E+18
+RT110  33   I-131          2.292E+18
+RT110  34   I-132          3.378E+18
+RT110  35   I-133          4.847E+18
+RT110  36   I-134          5.320E+18
+RT110  37   I-135          4.570E+18
+RT110  38   Xe-133         4.849E+18
+RT110  39   Xe-135         9.102E+17
+RT110  40   Cs-134         3.092E+17
+RT110  41   Cs-136         9.409E+16
+RT110  42   Cs-137         1.728E+17
+RT110  43   Ba-139         4.492E+18
+RT110  44   Ba-140         4.444E+18
+RT110  45   La-140         4.542E+18
+RT110  46   La-141         4.166E+18
+RT110  47   La-142         4.015E+18
+RT110  48   Ce-141         4.040E+18
+RT110  49   Ce-143         3.928E+18
+RT110  50   Ce-144         2.435E+18
+RT110  51   Pr-143         3.857E+18
+RT110  52   Nd-147         1.725E+18
+RT110  53   Np-239         4.622E+19
+RT110  54   Pu-238         2.620E+15
+RT110  55   Pu-239         5.908E+14
+RT110  56   Pu-240         7.450E+14
+RT110  57   Pu-241         1.255E+17
+RT110  58   Am-241         8.287E+13
+RT110  59   Cm-242         3.172E+16
+RT110  60   Cm-244         1.856E+15
+!
+!      ID  rel_class_name  wet_dep  dry_dep
+RT120  1   xenon           n        n
+RT120  2   iodine          y        y
+RT120  3   cesium          y        y
+RT120  4   tellurium       y        y
+RT120  5   strontium       y        y
+RT120  6   ruthenium       y        y
+RT120  7   lanthanum       y        y
+RT120  8   cerium          y        y
+RT120  9   barium          y        y
+!
+!      particleSizeID  Vdepo(m/s)
+RT130  1               8.10E-04
+RT130  2               9.01E-04
+RT130  3               1.34E-03
+RT130  4               2.46E-03
+RT130  5               4.94E-03
+RT130  6               9.87E-03
+RT130  7               1.78E-02
+RT130  8               2.62E-02
+RT130  9               2.83E-02
+RT130  10              8.56E-02
+!
+!      particleSize_distr.
+!      iType   iSize   1_Xe 2_I       3_Cs      4_Te      5_Sr      6_Ru      7_La      8_Ce     9_Ba
+RT150  1       1       0.1  0.0014895 0.0012836 0.0022139 0.0014733 0.0012479 0.0012604 0.001017 0.0011339
++      1       2       0.1  0.022675  0.019533  0.033732  0.022426  0.018991  0.019181  0.015482 0.017258
++      1       3       0.1  0.10765   0.091448  0.16302   0.10634   0.088684  0.089856  0.072548 0.080758
++      1       4       0.1  0.24585   0.23489   0.26315   0.24913   0.22864   0.23155   0.18129  0.20548
++      1       5       0.1  0.38418   0.4168    0.31207   0.38547   0.42114   0.40825   0.33135  0.37511
++      1       6       0.1  0.18402   0.19204   0.18978   0.18207   0.19771   0.19483   0.21486  0.21113
++      1       7       0.1  0.054143  0.044002  0.03604   0.053093  0.043585  0.05508   0.18346  0.10913
++      1       8       0.1  2.90E-09  0.        1.54E-08  9.69E-17  0.        6.54E-19  0.       0.
++      1       9       0.1  6.82E-10  0.        3.61E-09  2.28E-17  0.        1.54E-19  0.       0.
++      1       10      0.1  7.87E-13  0.        4.16E-12  2.62E-20  0.        1.77E-22  0.       0.
+
+!------------
+! Plume Data
+!------------
+!      nRelePath  nPlumeTotal
+RT200  1          34
+!      plumeID  iRelePath/iPlume  rele_time(s)  duration(s)  rele_height(m)  rel_heat(W)  sizeDistri_iType
+RT210  1         1/1               00.0         3600.0       50.0            3.7E+06      1
++      2         1/2              600.0         3600.0       50.0            3.7E+06      1
++      3         1/3             1200.0         3600.0       50.0            3.7E+06      1
++      4         1/4             1800.0         3600.0       50.0            3.7E+06      1
++      5         1/5             2400.0         3600.0       50.0            3.7E+06      1
++      6         1/6             3000.0         3600.0       50.0            3.7E+06      1
++      7         1/7             3600.0         3600.0       50.0            3.7E+06      1
++      8         1/8             4200.0         3600.0       50.0            3.7E+06      1
++      9         1/9             4800.0         3600.0       50.0            3.7E+06      1
++      10        1/10             5400.0        3600.0       50.0            3.7E+06      1
++      11        1/11             6000.0        3600.0       50.0            3.7E+06      1
++      12        1/12             6600.0        3600.0       50.0            3.7E+06      1
++      13        1/13             7200.0        3600.0       50.0            3.7E+06      1
++      14        1/14             7800.0        3600.0       50.0            3.7E+06      1
++      15        1/15             8400.0        3600.0       50.0            3.7E+06      1
++      16        1/16             9000.0        3600.0       50.0            3.7E+06      1
++      17        1/17             9600.0        3600.0       50.0            3.7E+06      1
++      18        1/18            10200.0        3600.0       50.0            3.7E+06      1
++      19        1/19            10800.0        3600.0       50.0            3.7E+06      1
++      20        1/20            11400.0        3600.0       50.0            3.7E+06      1
++      21        1/21            12000.0        3600.0       50.0            3.7E+06      1
++      22        1/22            12600.0        3600.0       50.0            3.7E+06      1
++      23        1/23            13200.0        3600.0       50.0            3.7E+06      1
++      24        1/24            13800.0        3600.0       50.0            3.7E+06      1
++      25        1/25            14400.0        3600.0       50.0            3.7E+06      1
++      26        1/26            15000.0        3600.0       50.0            3.7E+06      1
++      27        1/27            15600.0        3600.0       50.0            3.7E+06      1
++      28        1/28            16200.0        3600.0       50.0            3.7E+06      1
++      29        1/29            16800.0        3600.0       50.0            3.7E+06      1
++      30        1/30            17400.0        3600.0       50.0            3.7E+06      1
++      31        1/31            18000.0        3600.0       50.0            3.7E+06      1
++      32        1/32            18600.0        3600.0       50.0            3.7E+06      1
++      33        1/33            19200.0        3600.0       50.0            3.7E+06      1
++      34        1/34            19800.0        3600.0       50.0            3.7E+06      1
+
+!      iRelePath  build_height(m)  build_width(m) 
+RT215  1          50.00            50.0
+!      release_fraction
+!      plumeID  1_Xe     2_I      3_Cs     4_Te     5_Sr     6_Ru     7_La     8_Ce     9_Ba
+RT220  1        1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      2        1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      3        1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      4        1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      5        1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      6        1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      7        1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      8        1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      9        1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      10       1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      11       1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      12       1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      13       1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      14       1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      15       1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      16       1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      17       1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      18       1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      19       1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      20       1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      21       1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      22       1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      23       1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      24       1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      25       1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      26       1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      27       1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      28       1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      29       1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02 
++      30       1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      31       1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      32       1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      33       1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  
++      34       1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02  1.0E-02   
+
+!-----------------------
+! Weather Sampling Data
+!-----------------------
+!      sam_option_ID (const, stratified)
+RT310  const
+!      nSample/day
+RT320  1
+!      seed for random number 
+RT340  -79
+!      wind_speed(m/s)  stability  rain_rate(mm/hr)  mix_height(m)
+RT350  2.2              D          5.0               1000.0  
+
+*END RN_Trans
+
+!===============================================================================
+!   Emergency Phase Simulation (EP)
+!-------------------------------------------------------------------------------
+*BEGIN EP_Sim
+
+!      no_scenario   cohort_opt (fraction/population)
+EP100  1             fraction
+!      scenarios for emergency phase response
+!      id   title                                                              
+EP110  1    Cohort01
+!+      2    Cohort02
+!      id   cohort_fraction    
+EP115  1    1.0
+!+      2    0.0   
+
+!------------------
+! Evacuation Model
+!------------------
+!      id   alarm/arrival   time
+EP200  1    alarm           3600.
+!      application zone (shelter, evacuation)
+!      id   evaEndRing   EP_endRing
+EP210  1    6            6
+!EP210  1    0            0
+!      shelter delay(sec)
+!      id   evaR1   evaR2   evaR3   evaR4   evaR5   evaR6
+EP220  1    7200.   7200.   7200.   7200.   7200.   7200.
+!      shelter duration/evacuation delay(sec)
+!      id   evaR1   evaR2   evaR3   evaR4   evaR5   evaR6
+EP230  1    3600.  3600.  3600.  3600.  3600.  3600.
+!      no. evacuation speed
+!      id   nSpeedPeriod   speed1   speed2   speed3   duration1   duration2
+EP240  1    3              8.0      5.0      10.0     900.0       3600.0
+
+*END EP_Sim
+
+!===============================================================================
+!   Site Data (SD)
+!-------------------------------------------------------------------------------
+*BEGIN Site_Data
+
+!--------------------------------
+!     surface roughness (cm)
+!--------------------------------
+!      dir1   dir2   dir3   dir4   dir5   dir6   dir7   dir8   dir9   dir10  dir11  dir12  dir13  dir14  dir15  dir16
+SD50   10.0   10.0   10.0   10.0   10.0   10.0   10.0   10.0   10.0   10.0   10.0   10.0   10.0   10.0   10.0   10.0
+
+!-------------------------
+! Population Distribution
+!-------------------------
+!      data table (persons)
+!      iR  dir1   dir2   dir3   dir4   dir5   dir6   dir7   dir8   dir9   dir10  dir11  dir12  dir13  dir14  dir15  dir16
+!SD150  1   50     50     50     50     50     50     50     50     50     50     50     50     50     50     50     50 
+!+      2   50     50     50     50     50     50     50     50     50     50     50     50     50     50     50     50
+!+      3   50     50     50     50     50     50     50     50     50     50     50     50     50     50     50     50
+!+      4   50     50     50     50     50     50     50     50     50     50     50     50     50     50     50     50
+!+      5   50     50     50     50     50     50     50     50     50     50     50     50     50     50     50     50
+!+      6   50     50     50     50     50     50     50     50     50     50     50     50     50     50     50     50
+!+      7   50     50     50     50     50     50     50     50     50     50     50     50     50     50     50     50
+!+      8   50     50     50     50     50     50     50     50     50     50     50     50     50     50     50     50
+!+      9   50     50     50     50     50     50     50     50     50     50     50     50     50     50     50     50
+!+      10  50     50     50     50     50     50     50     50     50     50     50     50     50     50     50     50
+!
+!       data table (persons)
+!      iR  dir1   dir2   dir3   dir4   dir5   dir6   dir7   dir8   dir9  dir10  dir11  dir12  dir13  dir14  dir15  dir16
+SD150   1     3      0      0      0      0     10     24     24     24     24     24     24     24     24     24     21
++       2    13      0      0      0      0      0    206    206     73     73     73     73     73     73     73     70
++       3     2      0      0      0      0      0    709    826    767    484    121    121    121    121    121    120
++       4     0      0      0      0      0      0    396   1084   1094    401    170    170    170    170    170    141
++       5     0      0      0      0      0      0      0    698    714    605    234    219    219    211    165     93
++       6     4      0      0      0      0      0      0    983   3817   5209   2370   1348   1117    910   1028    760
++       7     3      0      0      0      0      0      0    141   3901   2129    859   1307   8141   7010   2775   3474
++       8     0      0      0      0      0      0      0    859  12350   2968   2723   4322  27689  23351   6119  45026
++       9     0      0      0      0      0      0      0      0  10441  10663   4730  13498   5841  10446  11647  78981
++      10     0      0      0      0      0      0      0      0  22805  14789  32508  95046  15429  16825   7068   5703
+
+!---------------
+! Land Fraction
+!---------------
+!      iR  dir1   dir2   dir3   dir4   dir5   dir6   dir7   dir8   dir9   dir10  dir11  dir12  dir13  dir14  dir15  dir16
+!SD200  1   1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0
+!+      2   1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0
+!+      3   1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0
+!+      4   1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0
+!+      5   1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0
+!+      6   1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0
+!+      7   1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0
+!+      8   1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0
+!+      9   1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0
+!+      10  1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0    1.0
+!
+SD200   1  0.11   0      0      0      0      0.39   0.99   1      1      1      1      1      1      1      1      0.87
++       2  0.17   0      0      0      0      0      0.79   1      1      1      1      1      1      1      1      0.97
++       3  0.01   0      0      0      0      0      0.82   1      1      1      1      1      1      1      1      0.98
++       4  0      0      0      0      0      0      0.33   0.9    1      1      1      1      1      1      1      0.86
++       5  0      0      0      0      0      0      0      0.58   1      1      1      1      1      1      1      0.72
++       6  0      0      0      0      0      0      0      0.2    1      1      1      1      1      1      1      0.74
++       7  0      0      0      0      0      0      0      0.03   0.97   1      1      1      1      1      1      0.67
++       8  0      0      0      0      0      0      0      0.07   0.98   1      1      1      1      1      1      0.41
++       9  0      0      0      0      0      0      0      0      0.74   1      1      1      1      1      1      0.33
++      10  0      0      0      0      0      0      0      0      0.73   1      1      1      1      1      1      0.31
+
+!--------------------------
+! Farming Fraction of Land
+!--------------------------
+!      iR  dir1   dir2   dir3   dir4   dir5   dir6   dir7   dir8   dir9   dir10  dir11  dir12  dir13  dir14  dir15  dir16
+SD210  1   0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354
++      2   0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354
++      3   0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354
++      4   0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354
++      5   0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354
++      6   0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354
++      7   0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354
++      8   0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354
++      9   0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354
++      10  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354  0.354
+!
+
+!----------------
+! WaterShedIndex
+!----------------
+!      iR  dir1   dir2   dir3   dir4   dir5   dir6   dir7   dir8   dir9   dir10  dir11  dir12  dir13  dir14  dir15  dir16
+!SD300  1   land   land   land   land   land   land   land   land   land   land   land   land   land   land   land   land
+!+      2   land   land   land   land   land   land   land   land   land   land   land   land   land   land   land   land
+!+      3   land   land   land   land   land   land   land   land   land   land   land   land   land   land   land   land
+!+      4   land   land   land   land   land   land   land   land   land   land   land   land   land   land   land   land
+!+      5   land   land   land   land   land   land   land   land   land   land   land   land   land   land   land   land
+!+      6   land   land   land   land   land   land   land   land   land   land   land   land   land   land   land   land
+!+      7   land   land   land   land   land   land   land   land   land   land   land   land   land   land   land   land
+!+      8   land   land   land   land   land   land   land   land   land   land   land   land   land   land   land   land
+!+      9   land   land   land   land   land   land   land   land   land   land   land   land   land   land   land   land
+!+      10  land   land   land   land   land   land   land   land   land   land   land   land   land   land   land   land
+!
+SD300  1   land   sea    sea    sea    sea    land   land   land   land   land   land   land   land   land   land   land
++      2   land   sea    sea    sea    sea    sea    land   land   land   land   land   land   land   land   land   land
++      3   land   sea    sea    sea    sea    sea    land   land   land   land   land   land   land   land   land   land
++      4   sea    sea    sea    sea    sea    sea    land   land   land   land   land   land   land   land   land   land
++      5   sea    sea    sea    sea    sea    sea    sea    land   land   land   land   land   land   land   land   land
++      6   land   sea    sea    sea    sea    sea    sea    land   land   land   land   land   land   land   land   land
++      7   land   sea    sea    sea    sea    sea    sea    land   land   land   land   land   land   land   land   land
++      8   land   sea    sea    sea    sea    sea    sea    land   land   land   land   land   land   land   land   land
++      9   land   sea    sea    sea    sea    sea    sea    land   land   land   land   land   land   land   land   land
++      10  land   sea    sea    sea    sea    sea    sea    land   land   land   land   land   land   land   land   land
+
+
+*END Site_Data
+
+!===============================================================================
+!   Long-Term Phase Simulation (LP)
+!-------------------------------------------------------------------------------
+*BEGIN LP_Sim
+
+!      InterPhaseDur1st(day)  InterPhaseDur2nd(day)
+LP100  30.                    0.
+
+!-----------------------
+! Decontamination Model
+!-----------------------
+!      id  deconDur(day)  dosReductionF  nWorkers_farm/km2  nWorkers_nonFarm/Person  WorkTimeFrac_farm  WorkTimeFrac_nonfarm
+LP200  1   60.            3.0            2.9350             3.6525E-01               0.1                0.33
+
+!--------------------------------
+!     interdiction  period
+!--------------------------------
+!       nInterdict         interDur1(year)    interDur2(year)    interDur3(year)
+LP210   3                  1                  5                  30
+
+!-------------------------------
+! Water Shed & Ingestion Factor
+!-------------------------------
+!      id  WaterShedName  nNuclide  Nuclide1  IngesFactor1  Nuclide2  IngesFactor2  Nuclide3  IngesFactor3  Nuclide4  IngesFactor4 
+LP300  1   land           4         Sr-89     5.0E-6        Sr-90     5.0E-6        Cs-134    5.0E-6        Cs-137    5.0E-6   
+LP300  2   sea            4         Sr-89     0.0           Sr-90     0.0           Cs-134    0.0           Cs-137    0.0            
+
+*END LP_Sim
+
+!===============================================================================
+!   Model Parameters (MP)
+!-------------------------------------------------------------------------------
+*BEGIN Model_Par
+
+!--------------
+! ATMOS Models
+!--------------
+!      disper_opt
+MP100  T-G_Modi
+!      rough_corr_model_opt (AMS or Smith)
+MP110  AMS
+!      plume_meander_opt (sample600, sample180, or RG145) 
+MP120  sample600
+!      wash_out_coef1  wash_out_coef2
+MP130  1.89E-5         0.664
+
+!--------------
+! Early Models
+!--------------
+!      ID  organ_name  organ_flag
+MP200  1   A-SKIN      y
+MP200  2   A-RED_MARR  y
+MP200  3   A-LUNGS     y
+MP200  4   A-THYROIDH  y
+MP200  5   A-STOMACH   y
+MP200  6   A-LOWER_LI  n
+MP200  7   L-EDEWBODY  y
+MP200  8   L-RED_MARR  y
+MP200  9   L-BONE_SUR  y
+MP200  10  L-BREAST    y
+MP200  11  L-LUNGS     y
+MP200  12  L-THYROID   y
+MP200  13  L-LOWER_LI  y
+MP200  14  L-BLAD_WAL  y
+MP200  15  L-LIVER     n
+MP200  16  L-THYROIDH  y
+
+!-------------------------
+! Protection Factors (PF)
+!-------------------------
+!      activity    cloud_shield  ground_shield  inhal_shield  skin_shield  breath_rate   
+MP210  evacuation  0.95          0.359          0.98          0.98         2.66E-4          
++      normal      0.775         0.196          0.46          0.46         2.66E-4          
++      shelter     0.6           0.0946         0.251         0.251        2.66E-4   
+!      resuspension inhalation model
+!      resus_coef  resus_half_life
+MP220  1.0E-4      182000
+!      emergency-phase period (day)
+MP230  7.0
+!      relocation action model 
+!      criticOrgan  hotRelocTime (day)  normalRelocTime (day)  hotDosLimit (Sv)  normalDosLimit (Sv)
+MP240  L-EDEWBODY   2.0                 5.0                    0.05              0.005
+!MP240  L-EDEWBODY   7.0                 7.0                    1.0E10            1.0E10
+
+!--------------------------------------------------
+! Acute Effect Estimation from Acute Exposure Dose
+!--------------------------------------------------
+!      Acute Fatality Model
+!      ID  FatalityName              target_organ  alph-f  beta-f  threshold
+MP250  1   HematopoieticSyndrome     A-RED_MARR       3.8     5.0        1.5
+MP250  2   PulmonarySyndrome         A-LUNGS         10.0     7.0        5.0   
+
+!      Acute Morbidity (Injury) Model 		
+!      ID  InjuryName        target_organ  alph-f  beta-f  threshold
+MP260  1   Prodromal_Vomit   A-STOMACH        2.0     3.0        0.5 
+MP260  2   Diarrhea          A-STOMACH        3.0     2.5        1.0   
+MP260  3   Pneumonitis       A-LUNGS         10.0     7.0        5.0     
+MP260  4   Skin_Erythema     A-SKIN           6.0     5.0        3.0
+MP260  5   Transepidermal    A-SKIN          20.0     5.0       10.0
+MP260  6   Thyroiditis       A-THYROIDH     240.0     2.0       40.0
+MP260  7   Hypothyrodism     A-THYROIDH      60.0     1.3        2.0           
+
+!---------------------------------------------------
+! Cancer Effect Estimation from Acute Exposure Dose
+!---------------------------------------------------
+!      Cancer Effects Model (Fatality/Incident)
+!      ID  cancer_name   target_organ  dos_a  dos_b  cf_risk  ci_risk  ddrf  dos_thres  dosRate_thres  LNT_threshold  sus_frac  
+MP270  1   Leukemia      L-RED_MARR      1.0    0.0  9.91E-3   1.0E-2   2.0        0.2            0.0            0.0       1.0
+MP270  2   Bone          L-BONE_SUR      1.0    0.0  9.00E-4   0.0      2.0        0.2            0.0            0.0       1.0   
+MP270  3   Breast        L-BREAST        1.0    0.0  5.40E-3   1.7E-2   1.0        0.2            0.0            0.0       1.0   
+MP270  4   Lung          L-LUNGS         1.0    0.0  1.55E-2   0.0      2.0        0.2            0.0            0.0       1.0   
+MP270  5   Thyroid       L-THYROIDH      1.0    0.0  7.20E-4   7.2E-3   1.0        0.2            0.0            0.0       1.0   
+MP270  6   GI            L-LOWER_LI      1.0    0.0  3.36E-2   0.0      2.0        0.2            0.0            0.0       1.0   
+MP270  7   Other         L-EDEWBODY      1.0    0.0  2.76E-2   0.0      2.0        0.2            0.0            0.0       1.0   
+
+
+!===============================================================================
+!  Chronic Models
+!-------------------------------------------------------------------------------
+
+!--------------------------------
+! LongTerm Relocation Dose Limit
+!--------------------------------
+!      criticOrgan  InterPhaseRelocDosLimit1(Sv)  InterPhaseRelocDosLimit2(Sv)  LongRelocDosLimit(Sv)   
+MP300  L-EDEWBODY   0.3                           0.3                           1.0
+!      longDurProj(yr)  longDurExposed(yr)
+MP301  70.               317.
+
+!-------------------------
+! Ground Weathering Model
+!-------------------------
+!      nTerm  GroundCoef1  GroundHalfLife1    
+MP330  1      0.5          1.6E7                              
+
+!-------------------------------
+! Resuspension Weathering Model
+!-------------------------------
+!      nTerm  ResusCoef1  ResusHalfLife1
+MP340  1      1.0E-5      1.6E7
+
+!----------------------------------
+! Water Ingestion Nuclides & Model
+!----------------------------------
+!      id  Nuclide  IniWashOff_Frac  AnnWashOff_Rate        
+MP350  1   Sr-89    0.01             0.004               
+MP350  2   Sr-90    0.01             0.004                 
+MP350  3   Cs-134   0.005            0.001              
+MP350  4   Cs-137   0.005            0.001           
+    
+!--------------------------
+! Crop/Food Disposal Limit
+!-------------------------- 
+!      id  criticOrgan   1stYrMilk(Sv)  1stYrOther(Sv)  LaterYrFood(Sv)
+MP370  1   L-EDEWBODY    0.025          0.025           0.005
+MP370  2   L-THYROID     0.075          0.075           0.015
+
+!--------------------------------------------------------------------------------
+! Korea/IAEA Disposal Criteria for Food Group1 (Meat, Fish, Grain)
+!--------------------------------------------------------------------------------
+!      id  DisposCriteria(Bq/kg)  No._Nuclides  Name_Nuclides
+!MP380  1   2000.                  5             Cs-134 Cs-137 Ru-103 Ru-106 Sr-89
+!MP380  2   1000.                  2             I-131  Sr-90
+!MP380  3   100.                   2             U-235  U-238
+!MP380  4   10.                    5             Am-241 Pu-238 Pu-239 Pu-240 Pu-242
+!MP380  5   100000.                1             H-3
+
+!--------------------------------------------------------------------------------
+! Korea/IAEA Disposal Criteria for Food Group2 (Vegetable, Fruit)
+!--------------------------------------------------------------------------------
+!      id  DisposCriteria(Bq/kg)  No._Nuclides  Name_Nuclides
+!MP381  1   1000.                  5             Cs-134 Cs-137 Ru-103 Ru-106 Sr-89
+!MP381  2   500.                   2             I-131  Sr-90
+!MP381  3   100.                   2             U-235  U-238
+!MP381  4   10.                    5             Am-241 Pu-238 Pu-239 Pu-240 Pu-242
+!MP381  5   100000.                1             H-3        
+
+!--------------------------------------------------------------------------------
+! Korea/IAEA Disposal Criteria for Food Group3 (Milk)
+!--------------------------------------------------------------------------------
+!      id  DisposCriteria(Bq/kg)  No._Nuclides  Name_Nuclides
+!MP382  1   200.                   5             Cs-134 Cs-137 Ru-103 Ru-106 Sr-89
+!MP382  2   100.                   2             I-131  Sr-90
+!MP382  3   20.                    2             U-235  U-238
+!MP382  4   10.                    5             Am-241 Pu-238 Pu-239 Pu-240 Pu-242
+!MP382  5   100000.                1             H-3            
+
+*END Model_Par
+
+
+!===============================================================================
+!   Output Control
+!-------------------------------------------------------------------------------
+*BEGIN Post_Proc
+
+!-------------------------------
+! EPoutput           
+! Health Effects : No. of Cases
+!-------------------------------
+!      Variable1          Variable2               irad1  irad2  ccdf?        
+PP230  Early_Fatality     Total                   1      10     n
+PP230  Early_Fatality     Total                   1      1      n
+PP230  Early_Fatality     Total                   5      5      n
+PP230  Early_Fatality     Total                   10     10     n
+PP230  Cancer_Fatality    Total                   1      10     n
+PP230  Cancer_Fatality    Total                   1      1      n
+PP230  Cancer_Fatality    Total                   5      5      n
+PP230  Cancer_Fatality    Total                   10     10     n
+PP230  Cancer_Fatality    Leukemia                1      10     n
+PP230  Cancer_Fatality    Leukemia                1      1      n
+PP230  Cancer_Fatality    Leukemia                5      5      n
+PP230  Cancer_Fatality    Leukemia                10     10     n
+PP230  Cancer_Fatality    Bone                    1      10     n
+PP230  Cancer_Fatality    Bone                    1      1      n
+PP230  Cancer_Fatality    Bone                    5      5      n
+PP230  Cancer_Fatality    Bone                    10     10     n
+PP230  Early_Injury       Diarrhea                1      10     n
+PP230  Early_Injury       Diarrhea                1      1      n
+PP230  Early_Injury       Diarrhea                5      5      n
+PP230  Early_Injury       Diarrhea                10     10     n
+PP230  Early_Injury       Transepidermal          1      10     n
+PP230  Early_Injury       Transepidermal          1      1      n
+PP230  Early_Injury       Transepidermal          5      5      n
+PP230  Early_Injury       Transepidermal          10     10     n
+PP230  Early_Injury       Thyroiditis             1      10     n
+PP230  Early_Injury       Thyroiditis             1      1      n
+PP230  Early_Injury       Thyroiditis             5      5      n
+PP230  Early_Injury       Thyroiditis             10     10     n
+PP230  Cancer_Incident    Total                   1      10     n
+PP230  Cancer_Incident    Total                   1      1      n
+PP230  Cancer_Incident    Total                   5      5      n
+PP230  Cancer_Incident    Total                   10     10     n
+PP230  Cancer_Incident    Breast                  1      10     n
+PP230  Cancer_Incident    Breast                  1      1      n
+PP230  Cancer_Incident    Breast                  5      5      n
+PP230  Cancer_Incident    Breast                  10     10     n
+PP230  Cancer_Incident    Lung                    1      10     n
+PP230  Cancer_Incident    Lung                    1      1      n
+PP230  Cancer_Incident    Lung                    5      5      n
+PP230  Cancer_Incident    Lung                    10     10     n
+
+!--------------------------
+! EPoutput           
+! Population-Weighted Risk
+!--------------------------
+!      Variable1          Variable2               irad1  irad2  ccdf?
+PP250  Early_Fatality     Total                   1      10     n
+PP250  Early_Fatality     Total                   1      1      n
+PP250  Early_Fatality     Total                   5      5      n
+PP250  Early_Fatality     Total                   10     10     n
+PP250  Cancer_Fatality    Total                   1      10     n
+PP250  Cancer_Fatality    Total                   1      1      n
+PP250  Cancer_Fatality    Total                   5      5      n
+PP250  Cancer_Fatality    Total                   10     10     n
+PP250  Cancer_Fatality    Leukemia                1      10     n
+PP250  Cancer_Fatality    Bone                    1      10     n
+PP250  Early_Injury       Diarrhea                1      10     n
+PP250  Early_Injury       Pneumonitis             1      10     n
+PP250  Early_Injury       Transepidermal          1      10     n
+PP250  Early_Injury       Thyroiditis             1      10     n
+PP250  Early_Injury       Hypothyrodism           1      10     n
+PP250  Cancer_Incident    Total                   1      10     n
+PP250  Cancer_Incident    Breast                  1      10     n
+PP250  Cancer_Incident    Lung                    1      10     n
+PP250  Cancer_Incident    Thyroid                 1      10     n
+PP250  Cancer_Incident    Other                   1      10     n
+
+
+*END Post_Proc
+
+
+*EOF

@@ -1,0 +1,46 @@
+# Build results
+*.exe
+*.obj
+*.o
+*.lib
+*.exp
+*.pdb
+*.ilk
+
+# CUDA build files
+*.ptx
+*.cubin
+
+# Visual Studio files
+.vs/
+x64/
+Debug/
+Release/
+*.user
+*.suo
+*.sdf
+*.opensdf
+*.db
+*.opendb
+*.ipch
+
+# Object files
+objectfiles/
+
+# Output files
+*.vtk
+*.bin
+# output/
+# evac/
+# puffs/
+# plants/
+# receptors/
+
+# Temporary files
+*.log
+*.tmp
+*~
+
+# Windows
+Thumbs.db
+Desktop.ini
