@@ -1,14 +1,34 @@
 #include "gpuff.cuh"
 
-int Gpuff::countflag(){
+// Count Active Puffs
+//
+// Counts the number of active (flagged) puff particles in the standard puff array.
+// Used to determine how many puffs need to be written to output files.
+//
+// Returns:
+//   Number of puffs with flag == 1
+//
+int Gpuff::countflag() {
     int count = 0;
-    for(int i = 0; i < nop; ++i) if(puffs[i].flag == 1) count++;
+    for (int i = 0; i < nop; ++i) {
+        if (puffs[i].flag == 1) count++;
+    }
     return count;
 }
 
+// Count Active RCAP Puffs
+//
+// Counts the number of active (flagged) puff particles in the RCAP puff array.
+// RCAP version uses boolean flag instead of integer.
+//
+// Returns:
+//   Number of puffs with flag == true
+//
 int Gpuff::countflag_RCAP() {
     int count = 0;
-    for (int i = 0; i < puffs_RCAP.size(); ++i) if (puffs_RCAP[i].flag == true) count++;
+    for (int i = 0; i < puffs_RCAP.size(); ++i) {
+        if (puffs_RCAP[i].flag == true) count++;
+    }
     return count;
 }
 
@@ -69,13 +89,33 @@ void Gpuff::puff_output_ASCII(int timestep){
 }
 
 
-void Gpuff::swapBytes(float& value){
+// Byte Swap for Float (Big-Endian Conversion)
+//
+// Swaps byte order of float value from little-endian to big-endian format.
+// Required for VTK binary output format which uses big-endian encoding.
+//
+// VTK Binary Format Requirement:
+//   VTK binary files must use big-endian byte order regardless of system architecture.
+//   This ensures portability across different platforms.
+//
+// Parameters:
+//   value: Float value to be byte-swapped (modified in place)
+//
+void Gpuff::swapBytes(float& value) {
     char* valuePtr = reinterpret_cast<char*>(&value);
     std::swap(valuePtr[0], valuePtr[3]);
     std::swap(valuePtr[1], valuePtr[2]);
 }
 
-void Gpuff::swapBytes_int(int& value){
+// Byte Swap for Integer (Big-Endian Conversion)
+//
+// Swaps byte order of integer value from little-endian to big-endian format.
+// Required for VTK binary output format which uses big-endian encoding.
+//
+// Parameters:
+//   value: Integer value to be byte-swapped (modified in place)
+//
+void Gpuff::swapBytes_int(int& value) {
     char* valuePtr = reinterpret_cast<char*>(&value);
     std::swap(valuePtr[0], valuePtr[3]);
     std::swap(valuePtr[1], valuePtr[2]);
@@ -211,17 +251,50 @@ void Gpuff::puff_output_binary(int timestep){
     vtkFile.close();
 }
 
+// Write RCAP Puff Data to VTK Binary File
+//
+// Exports puff center positions and properties to VTK format for visualization in ParaView.
+// Transfers data from GPU to host memory before writing.
+//
+// VTK File Format:
+//   Format: Legacy VTK (Version 4.0)
+//   Type: POLYDATA (point cloud dataset)
+//   Encoding: BINARY (big-endian)
+//
+// Output File Structure:
+//   - Header: VTK version and description
+//   - Points: 3D coordinates (x, y, z) of active puffs
+//   - Point Data: Scalar fields attached to each point
+//
+// Point Data Fields:
+//   - sigma_h: Horizontal dispersion parameter (m)
+//   - sigma_z: Vertical dispersion parameter (m)
+//   - virtual_dist: Virtual source distance (m)
+//   - Q: Puff concentration/mass (Bq or kg)
+//   - stab: Atmospheric stability class (1-7)
+//   - unitidx: Source unit index
+//   - rain: Precipitation rate (mm)
+//   - simulnum: Simulation number (meteorological condition index)
+//
+// File Naming Convention:
+//   Format: puff_RCAP_XXXXX.vtk
+//   XXXXX: 5-digit zero-padded timestep number
+//
+// ParaView Compatibility:
+//   Files can be loaded as time series by using "..." wildcard pattern
+//   Example: puff_RCAP_....vtk loads entire sequence
+//
+// Parameters:
+//   timestep: Current simulation timestep (used for file naming)
+//
 void Gpuff::puff_output_binary_RCAP(int timestep) {
 
+    // Transfer puff data from GPU to host memory
     cudaMemcpy(puffs_RCAP.data(), d_puffs_RCAP, puffs_RCAP.size() * sizeof(Puffcenter_RCAP), cudaMemcpyDeviceToHost);
 
     int part_num = countflag_RCAP();
-    //std::cout << "part_num = " << part_num << std::endl;
-    //std::cout << "puffs_RCAP.size() = " << puffs_RCAP.size() << std::endl;
-
 
     std::ostringstream filenameStream;
-
     std::string path;
 
 #ifdef _WIN32
@@ -245,11 +318,13 @@ void Gpuff::puff_output_binary_RCAP(int timestep) {
         return;
     }
 
+    // Write VTK header (ASCII format)
     vtkFile << "# vtk DataFile Version 4.0\n";
     vtkFile << "puff data\n";
     vtkFile << "BINARY\n";
     vtkFile << "DATASET POLYDATA\n";
 
+    // Write point coordinates (binary big-endian)
     vtkFile << "POINTS " << part_num << " float\n";
     for (int i = 0; i < puffs_RCAP.size(); ++i) {
         if (!puffs_RCAP[i].flag) continue;
@@ -266,7 +341,10 @@ void Gpuff::puff_output_binary_RCAP(int timestep) {
         vtkFile.write(reinterpret_cast<char*>(&z), sizeof(float));
     }
 
+    // Write point data attributes
     vtkFile << "POINT_DATA " << part_num << "\n";
+
+    // Horizontal dispersion parameter
     vtkFile << "SCALARS sigma_h float 1\n";
     vtkFile << "LOOKUP_TABLE default\n";
     for (int i = 0; i < puffs_RCAP.size(); ++i) {
@@ -276,6 +354,7 @@ void Gpuff::puff_output_binary_RCAP(int timestep) {
         vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
     }
 
+    // Vertical dispersion parameter
     vtkFile << "SCALARS sigma_z float 1\n";
     vtkFile << "LOOKUP_TABLE default\n";
     for (int i = 0; i < puffs_RCAP.size(); ++i) {
@@ -285,6 +364,7 @@ void Gpuff::puff_output_binary_RCAP(int timestep) {
         vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
     }
 
+    // Virtual source distance
     vtkFile << "SCALARS virtual_dist float 1\n";
     vtkFile << "LOOKUP_TABLE default\n";
     for (int i = 0; i < puffs_RCAP.size(); ++i) {
@@ -294,6 +374,7 @@ void Gpuff::puff_output_binary_RCAP(int timestep) {
         vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
     }
 
+    // Puff concentration/mass (first nuclide)
     vtkFile << "SCALARS Q float 1\n";
     vtkFile << "LOOKUP_TABLE default\n";
     for (int i = 0; i < puffs_RCAP.size(); ++i) {
@@ -303,24 +384,7 @@ void Gpuff::puff_output_binary_RCAP(int timestep) {
         vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
     }
 
-    //vtkFile << "SCALARS windvel float 1\n";
-    //vtkFile << "LOOKUP_TABLE default\n";
-    //for (int i = 0; i < puffs_RCAP.size(); ++i) {
-    //    if (!puffs_RCAP[i].flag) continue;
-    //    float vval = puffs_RCAP[i].windvel;
-    //    swapBytes(vval);
-    //    vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
-    //}
-
-    //vtkFile << "SCALARS windir float 1\n";
-    //vtkFile << "LOOKUP_TABLE default\n";
-    //for (int i = 0; i < puffs_RCAP.size(); ++i) {
-    //    if (!puffs_RCAP[i].flag) continue;
-    //    float vval = puffs_RCAP[i].windir;
-    //    swapBytes(vval);
-    //    vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
-    //}
-
+    // Atmospheric stability class
     vtkFile << "SCALARS stab int 1\n";
     vtkFile << "LOOKUP_TABLE default\n";
     for (int i = 0; i < puffs_RCAP.size(); ++i) {
@@ -330,6 +394,7 @@ void Gpuff::puff_output_binary_RCAP(int timestep) {
         vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(int));
     }
 
+    // Source unit index
     vtkFile << "SCALARS unitidx int 1\n";
     vtkFile << "LOOKUP_TABLE default\n";
     for (int i = 0; i < puffs_RCAP.size(); ++i) {
@@ -339,6 +404,7 @@ void Gpuff::puff_output_binary_RCAP(int timestep) {
         vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(int));
     }
 
+    // Precipitation rate
     vtkFile << "SCALARS rain float 1\n";
     vtkFile << "LOOKUP_TABLE default\n";
     for (int i = 0; i < puffs_RCAP.size(); ++i) {
@@ -348,6 +414,7 @@ void Gpuff::puff_output_binary_RCAP(int timestep) {
         vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
     }
 
+    // Simulation number (meteorological condition index)
     vtkFile << "SCALARS simulnum int 1\n";
     vtkFile << "LOOKUP_TABLE default\n";
     for (int i = 0; i < puffs_RCAP.size(); ++i) {
@@ -360,17 +427,24 @@ void Gpuff::puff_output_binary_RCAP(int timestep) {
     vtkFile.close();
 }
 
+// Write RCAP Puff Data to VTK Binary File (CPU Version)
+//
+// CPU-only version of puff output (no GPU transfer).
+// Used when puff data is already in host memory.
+//
+// Note: This function assumes puffs_RCAP is already populated in host memory.
+// The GPU-to-host transfer (cudaMemcpy) is commented out.
+//
+// See puff_output_binary_RCAP() documentation for VTK format details.
+//
 void Gpuff::puff_output_binary_RCAP_cpu(int timestep) {
 
-    //cudaMemcpy(puffs_RCAP.data(), d_puffs_RCAP, puffs_RCAP.size() * sizeof(Puffcenter_RCAP), cudaMemcpyDeviceToHost);
+    // Note: GPU transfer skipped for CPU-only execution
+    // cudaMemcpy(puffs_RCAP.data(), d_puffs_RCAP, puffs_RCAP.size() * sizeof(Puffcenter_RCAP), cudaMemcpyDeviceToHost);
 
     int part_num = countflag_RCAP();
-    //std::cout << "part_num = " << part_num << std::endl;
-    //std::cout << "puffs_RCAP.size() = " << puffs_RCAP.size() << std::endl;
-
 
     std::ostringstream filenameStream;
-
     std::string path;
 
 #ifdef _WIN32
@@ -509,12 +583,49 @@ void Gpuff::puff_output_binary_RCAP_cpu(int timestep) {
     vtkFile.close();
 }
 
+// Write Evacuee Data to VTK Binary File
+//
+// Exports evacuee positions and dose data to VTK format for visualization.
+// Tracks population movement and radiation exposure during evacuation scenarios.
+//
+// VTK File Format:
+//   Format: Legacy VTK (Version 4.0)
+//   Type: POLYDATA (point cloud dataset)
+//   Encoding: BINARY (big-endian)
+//
+// Coordinate System:
+//   Evacuees stored in polar coordinates (r, theta) around source
+//   Converted to Cartesian (x, y) for VTK output:
+//     x = r * cos(theta)
+//     y = r * sin(theta)
+//     z = 0 (ground level)
+//
+// Point Data Fields:
+//   - population: Number of people in this evacuee group
+//   - speed: Current evacuation speed (m/s)
+//   - ridx: Radial index in grid
+//   - dose_inhalation_0/1/2: Inhalation dose for 3 nuclides (Sv)
+//   - dose_cloudshine_0/1/2: Cloudshine dose for 3 nuclides (Sv)
+//
+// File Naming Convention:
+//   Format: evac_RCAP_XXXXX.vtk
+//   XXXXX: 5-digit zero-padded timestep number
+//   Directory: ./evac/ or .\evac\
+//
+// Use Case:
+//   Visualize evacuation progress and dose accumulation
+//   Identify high-dose evacuation routes
+//   Analyze population exposure patterns
+//
+// Parameters:
+//   timestep: Current simulation timestep (used for file naming)
+//
 void Gpuff::evac_output_binary_RCAP(int timestep) {
 
     std::ostringstream filenameStream;
-
     std::string path;
 
+    // Transfer evacuee data from GPU to host memory
     cudaMemcpy(evacuees.data(), d_evacuees, evacuees.size() * sizeof(Evacuee), cudaMemcpyDeviceToHost);
 
 #ifdef _WIN32
@@ -538,11 +649,13 @@ void Gpuff::evac_output_binary_RCAP(int timestep) {
         return;
     }
 
+    // Write VTK header (ASCII format)
     vtkFile << "# vtk DataFile Version 4.0\n";
     vtkFile << "evacuation data\n";
     vtkFile << "BINARY\n";
     vtkFile << "DATASET POLYDATA\n";
 
+    // Write evacuee positions (convert polar to Cartesian)
     vtkFile << "POINTS " << evacuees.size() << " float\n";
     for (const auto& evacuee : evacuees) {
         float r = evacuee.r;
@@ -560,8 +673,10 @@ void Gpuff::evac_output_binary_RCAP(int timestep) {
         vtkFile.write(reinterpret_cast<char*>(&z), sizeof(float));
     }
 
+    // Write point data attributes
     vtkFile << "POINT_DATA " << evacuees.size() << "\n";
 
+    // Population in this evacuee group
     vtkFile << "SCALARS population float 1\n";
     vtkFile << "LOOKUP_TABLE default\n";
     for (const auto& evacuee : evacuees) {
@@ -573,6 +688,7 @@ void Gpuff::evac_output_binary_RCAP(int timestep) {
     }
     printf("\n");
 
+    // Evacuation speed
     vtkFile << "SCALARS speed float 1\n";
     vtkFile << "LOOKUP_TABLE default\n";
     for (const auto& evacuee : evacuees) {
@@ -581,6 +697,7 @@ void Gpuff::evac_output_binary_RCAP(int timestep) {
         vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
     }
 
+    // Radial grid index
     vtkFile << "SCALARS ridx int 1\n";
     vtkFile << "LOOKUP_TABLE default\n";
     for (const auto& evacuee : evacuees) {
@@ -589,6 +706,7 @@ void Gpuff::evac_output_binary_RCAP(int timestep) {
         vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(int));
     }
 
+    // Inhalation dose for nuclide 0
     vtkFile << "SCALARS dose_inhalation_0 float 1\n";
     vtkFile << "LOOKUP_TABLE default\n";
     for (const auto& evacuee : evacuees) {
@@ -596,6 +714,8 @@ void Gpuff::evac_output_binary_RCAP(int timestep) {
         swapBytes(vval);
         vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
     }
+
+    // Inhalation dose for nuclide 1
     vtkFile << "SCALARS dose_inhalation_1 float 1\n";
     vtkFile << "LOOKUP_TABLE default\n";
     for (const auto& evacuee : evacuees) {
@@ -603,6 +723,8 @@ void Gpuff::evac_output_binary_RCAP(int timestep) {
         swapBytes(vval);
         vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
     }
+
+    // Inhalation dose for nuclide 2
     vtkFile << "SCALARS dose_inhalation_2 float 1\n";
     vtkFile << "LOOKUP_TABLE default\n";
     for (const auto& evacuee : evacuees) {
@@ -611,6 +733,7 @@ void Gpuff::evac_output_binary_RCAP(int timestep) {
         vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
     }
 
+    // Cloudshine dose for nuclide 0
     vtkFile << "SCALARS dose_cloudshine_0 float 1\n";
     vtkFile << "LOOKUP_TABLE default\n";
     for (const auto& evacuee : evacuees) {
@@ -618,6 +741,8 @@ void Gpuff::evac_output_binary_RCAP(int timestep) {
         swapBytes(vval);
         vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
     }
+
+    // Cloudshine dose for nuclide 1
     vtkFile << "SCALARS dose_cloudshine_1 float 1\n";
     vtkFile << "LOOKUP_TABLE default\n";
     for (const auto& evacuee : evacuees) {
@@ -625,6 +750,8 @@ void Gpuff::evac_output_binary_RCAP(int timestep) {
         swapBytes(vval);
         vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
     }
+
+    // Cloudshine dose for nuclide 2
     vtkFile << "SCALARS dose_cloudshine_2 float 1\n";
     vtkFile << "LOOKUP_TABLE default\n";
     for (const auto& evacuee : evacuees) {
@@ -632,7 +759,6 @@ void Gpuff::evac_output_binary_RCAP(int timestep) {
         swapBytes(vval);
         vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
     }
-
 
     vtkFile.close();
 }
@@ -1145,32 +1271,77 @@ void Gpuff::receptor_output_binary_RCAP(int timestep){
 }
 
 
+// Write Plant/Source Locations to VTK File
+//
+// Exports nuclear plant unit locations and release heights to VTK format.
+// Used for visualizing source locations in multi-unit accident scenarios.
+//
+// VTK File Format:
+//   Format: Legacy VTK (Version 4.0)
+//   Type: POLYDATA (point cloud dataset)
+//   Encoding: ASCII (human-readable)
+//
+// Coordinate Transformation:
+//   Input: Geographic coordinates (latitude, longitude in degrees)
+//   Output: Local Cartesian coordinates (meters)
+//
+//   Conversion factors:
+//     metersPerLatDegree = 111320.0 m/degree (approximate)
+//     metersPerLonDegree = 88290.0 m/degree (for Korea region ~37N)
+//
+//   Transformation:
+//     x = (lon - baseLon) * metersPerLonDegree
+//     y = (lat - baseLat) * metersPerLatDegree
+//     z = release_height
+//
+// Base Coordinate:
+//   Reference point (0, 0) is set to the first unit's location
+//   All other units positioned relative to this reference
+//
+// Use Case:
+//   Display source locations in ParaView
+//   Overlay with puff and evacuee data
+//   Multi-unit scenario visualization
+//
+// File Naming Convention:
+//   Format: plant_RCAP_00001.vtk (fixed to timestep 1)
+//   Directory: ./plants/ or .\plants\
+//
+// Parameters:
+//   input_num: Number of nuclear plant units
+//   RT: Vector of RadioNuclideTransport objects (contains position and release data)
+//   ND: Vector of NuclideData objects (not currently used)
+//
 void Gpuff::plant_output_binary_RCAP(
     int input_num,
     const std::vector<RadioNuclideTransport>& RT,
     const std::vector<NuclideData>& ND
 ) {
+    // Calculate total number of puffs across all units
     int totalPuffs = 0;
-
     for (int i = 0; i < input_num; i++) {
         totalPuffs += RT[i].nPuffTotal;
     }
 
     puffs_RCAP.reserve(RCAP_metdata.size() * totalPuffs);
 
+    // Set base coordinate to first unit location
     double baseLon = RT[0].lon;
     double baseLat = RT[0].lat;
 
-    const double metersPerLatDegree = 111320.0;
-    const double metersPerLonDegree = 88290.0;
+    // Approximate conversion factors for Korea region
+    const double metersPerLatDegree = 111320.0;  // Constant globally
+    const double metersPerLonDegree = 88290.0;   // At ~37N latitude
 
+    // Create output directory
     std::string path = ".\\plants";
 #ifdef _WIN32
-    _mkdir(path.c_str()); // Windows
+    _mkdir(path.c_str());
 #else
-    mkdir(path.c_str(), 0777); // POSIX
+    mkdir(path.c_str(), 0777);
 #endif
 
+    // Generate filename
     std::ostringstream filenameStream;
     filenameStream << ".\\plants\\plant_RCAP_" << std::setfill('0') << std::setw(5) << 1 << ".vtk";
     std::string filename = filenameStream.str();
@@ -1181,14 +1352,17 @@ void Gpuff::plant_output_binary_RCAP(
         return;
     }
 
+    // Write VTK header (ASCII format)
     vtkFile << "# vtk DataFile Version 4.0\n";
     vtkFile << "Transformed puff coordinates\n";
     vtkFile << "ASCII\n";
     vtkFile << "DATASET POLYDATA\n";
     vtkFile << "POINTS " << (input_num * RT[0].nPuffTotal) << " float\n";
 
+    // Write plant unit positions
     for (int j = 0; j < input_num; j++) {
         for (int k = 0; k < RT[j].nPuffTotal; k++) {
+            // Transform geographic to local Cartesian coordinates
             float _x = static_cast<float>((RT[j].lon - baseLon) * metersPerLonDegree);
             float _y = static_cast<float>((RT[j].lat - baseLat) * metersPerLatDegree);
             float _z = RT[j].RT_puffs[k].rele_height;

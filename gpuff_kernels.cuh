@@ -1,184 +1,293 @@
+// ====================================================================================
+// GPUFF-RCAPv3 CUDA Kernel Implementation
+// ====================================================================================
+//
+// File: gpuff_kernels.cuh
+// Purpose: GPU kernel implementations for Gaussian puff atmospheric dispersion model
+//          with radiological consequence assessment capabilities
+//
+// This file contains CUDA kernels for:
+//   - Atmospheric dispersion calculations (Pasquill-Gifford and Briggs-McElroy-Pooler)
+//   - Puff transport by wind field interpolation
+//   - Radioactive decay and deposition (wet/dry)
+//   - Concentration accumulation on receptor grids
+//   - Evacuee dose calculations for emergency planning
+//   - Nuclide-specific exposure computations
+//
+// Physics Models Implemented:
+//   - Gaussian puff dispersion model
+//   - Pasquill-Gifford stability classes (A-G)
+//   - Atmospheric stability classification via temperature gradient
+//   - Bilinear interpolation for meteorological fields
+//   - Radioactive decay chain calculations
+//   - Ground deposition modeling
+//
+// Performance Notes:
+//   - Kernels optimized for CUDA memory coalescing
+//   - Shared memory used for parallel reductions
+//   - Atomic operations for grid accumulation
+//   - Thread indexing patterns preserved for GPU efficiency
+//
+// ====================================================================================
+
 #include "gpuff.cuh"
 #include "gpuff_kernels.h"
 
-//__device__ float Dynamic_viscosity_Sutherland(float temp){
-//
-//    float mu_ref = 1.716e-5;    // Reference viscosity [Pa*s] // 1.827e-5
-//    float T_ref = 273.15;       // Reference temperature [K] // 291.15
-//    float S = 110.4;            // Sutherland temperature [K] // 120.0
-//    
-//    float mu = mu_ref * pow(temp/T_ref, 1.5)*(T_ref + S)/(temp + S);
-//
-//    return mu;
-//}
+// ====================================================================================
+// Constants
+// ====================================================================================
 
-//__host__ __device__ void copy_decay_data(const DecayData& src, DecayData& dest) {
-//    memcpy(dest.daughter, src.daughter, sizeof(src.daughter));
-//    dest.branching_fraction = src.branching_fraction;
-//}
-//
-//__host__ __device__ void copy_nuclide_data(const NuclideData& src, NuclideData& dest) {
-//    memcpy(dest.name, src.name, sizeof(src.name));
-//    dest.id = src.id;
-//    dest.half_life = src.half_life;
-//    dest.atomic_weight = src.atomic_weight;
-//    memcpy(dest.chemical_group, src.chemical_group, sizeof(src.chemical_group));
-//    dest.core_inventory = src.core_inventory;
-//    dest.decay_count = src.decay_count;
-//
-//    for (int i = 0; i < 2; ++i) {
-//        copy_decay_data(src.decay[i], dest.decay[i]);
-//    }
-//
-//    dest.organ_count = src.organ_count;
-//    for (int i = 0; i < MAX_ORGANS; ++i) {
-//        memcpy(dest.organ_names[i], src.organ_names[i], sizeof(src.organ_names[i]));
-//        for (int j = 0; j < DATA_FIELDS; ++j) {
-//            dest.exposure_data[i][j] = src.exposure_data[i][j];
-//        }
-//    }
-//}
+// Grid spacing for meteorological data (meters)
+constexpr float GRID_SPACING = 1500.0f;
 
+// Minimum puff height (meters)
+constexpr float MIN_PUFF_HEIGHT = 2.0f;
 
-__device__ float atomicMinFloat(float* address, float val){
-    int* address_as_i = (int*) address;
+// Convergence tolerance for Newton-Raphson iteration
+constexpr float NEWTON_RAPHSON_TOLERANCE = 1e-4f;
+
+// Pasquill-Gifford stability classes
+constexpr int STABILITY_CLASS_A = 0;  // Extremely unstable
+constexpr int STABILITY_CLASS_B = 1;  // Moderately unstable
+constexpr int STABILITY_CLASS_C = 2;  // Slightly unstable
+constexpr int STABILITY_CLASS_D = 3;  // Neutral
+constexpr int STABILITY_CLASS_E = 4;  // Slightly stable
+constexpr int STABILITY_CLASS_F = 5;  // Moderately stable
+constexpr int STABILITY_CLASS_G = 6;  // Extremely stable
+
+// Wet scavenging parameters
+constexpr float WET_SCAVENGING_LAMBDA_COEFF = 3.5e-5f;
+constexpr float WET_SCAVENGING_RH_THRESHOLD = 0.8f;
+
+// ====================================================================================
+// Device Helper Functions - Atomic Operations
+// ====================================================================================
+
+/**
+ * Atomic minimum operation for floating-point values
+ * Uses Compare-And-Swap (CAS) to atomically update minimum value
+ *
+ * Thread-safe operation for finding minimum across GPU threads
+ */
+__device__ float atomicMinFloat(float* address, float val) {
+    int* address_as_i = (int*)address;
     int old = *address_as_i, assumed;
-    while(val < __int_as_float(old)){
+
+    while (val < __int_as_float(old)) {
         assumed = old;
         old = atomicCAS(address_as_i, assumed, __float_as_int(val));
     }
+
     return __int_as_float(old);
 }
 
-__device__ float atomicMaxFloat(float* address, float val){
-    int* address_as_i = (int*) address;
+/**
+ * Atomic maximum operation for floating-point values
+ * Uses Compare-And-Swap (CAS) to atomically update maximum value
+ *
+ * Thread-safe operation for finding maximum across GPU threads
+ */
+__device__ float atomicMaxFloat(float* address, float val) {
+    int* address_as_i = (int*)address;
     int old = *address_as_i, assumed;
-    while(val > __int_as_float(old)){
+
+    while (val > __int_as_float(old)) {
         assumed = old;
         old = atomicCAS(address_as_i, assumed, __float_as_int(val));
     }
+
     return __int_as_float(old);
 }
 
-__device__ float Sigma_h_Pasquill_Gifford(int PasquillCategory, float virtual_distance){
+// ====================================================================================
+// Device Helper Functions - Pasquill-Gifford Dispersion Formulas
+// ====================================================================================
 
+/**
+ * Calculate horizontal dispersion coefficient (sigma_h) using Pasquill-Gifford formula
+ *
+ * Formula: sigma_h = exp(c0 + c1*ln(x) + c2*ln(x)^2)
+ * where x is the virtual distance from source
+ *
+ * Reference: Pasquill, F. (1961). "The estimation of the dispersion of windborne material"
+ *            Meteorological Magazine, 90, 33-49.
+ *
+ * @param PasquillCategory Atmospheric stability class (0=A extremely unstable, 6=G extremely stable)
+ * @param virtual_distance Effective distance traveled by puff (meters)
+ * @return Horizontal dispersion parameter sigma_h (meters)
+ */
+__device__ float Sigma_h_Pasquill_Gifford(int PasquillCategory, float virtual_distance) {
+    // Pasquill-Gifford coefficients for horizontal dispersion (A through G stability classes)
     float coefficient0[7] = {-1.104, -1.634, -2.054, -2.555, -2.754, -3.143, -3.143};
     float coefficient1[7] = {0.9878, 1.0350, 1.0231, 1.0423, 1.0106, 1.0418, 1.0418};
     float coefficient2[7] = {-0.0076, -0.0096, -0.0076, -0.0087, -0.0064, -0.0070, -0.0070};
 
-    float sigma = exp(coefficient0[PasquillCategory] + 
-                    coefficient1[PasquillCategory]*log(virtual_distance) + 
-                    coefficient2[PasquillCategory]*log(virtual_distance)*log(virtual_distance));
+    float log_distance = log(virtual_distance);
+    float sigma = exp(coefficient0[PasquillCategory] +
+                      coefficient1[PasquillCategory] * log_distance +
+                      coefficient2[PasquillCategory] * log_distance * log_distance);
 
     return sigma;
 }
 
+/**
+ * CPU version of horizontal dispersion coefficient calculation
+ * Identical formula to device version, for validation and debugging
+ */
 float Sigma_h_Pasquill_Gifford_cpu(int PasquillCategory, float virtual_distance) {
-
-    float coefficient0[7] = { -1.104, -1.634, -2.054, -2.555, -2.754, -3.143, -3.143 };
-    float coefficient1[7] = { 0.9878, 1.0350, 1.0231, 1.0423, 1.0106, 1.0418, 1.0418 };
-    float coefficient2[7] = { -0.0076, -0.0096, -0.0076, -0.0087, -0.0064, -0.0070, -0.0070 };
-
-    float sigma = exp(coefficient0[PasquillCategory] +
-        coefficient1[PasquillCategory] * log(virtual_distance) +
-        coefficient2[PasquillCategory] * log(virtual_distance) * log(virtual_distance));
-
-    //printf("PasquillCategory = %d, virtual_distance = %e, sigma = %f\n", PasquillCategory, virtual_distance, sigma);
-    return sigma;
-}
-
-__device__ float dSh_PG(int PasquillCategory, float virtual_distance){
-
     float coefficient0[7] = {-1.104, -1.634, -2.054, -2.555, -2.754, -3.143, -3.143};
     float coefficient1[7] = {0.9878, 1.0350, 1.0231, 1.0423, 1.0106, 1.0418, 1.0418};
     float coefficient2[7] = {-0.0076, -0.0096, -0.0076, -0.0087, -0.0064, -0.0070, -0.0070};
 
-    float sigma = pow(virtual_distance, coefficient1[PasquillCategory]-1)
-                    *exp(coefficient0[PasquillCategory]+coefficient2[PasquillCategory]*log(virtual_distance)*log(virtual_distance))
-                    *(coefficient1[PasquillCategory]+2*coefficient2[PasquillCategory]*log(virtual_distance));
-
-    return sigma;
-}
-
-__device__ float Sigma_z_Pasquill_Gifford(int PasquillCategory, float virtual_distance){
-
-    float coefficient0[7] = {4.679, -1.999, -2.341, -3.186, -3.783, -4.490, -4.490};
-    float coefficient1[7] = {-1.172, 0.8752, 0.9477, 1.1737, 1.3010, 1.4024, 1.4024};
-    float coefficient2[7] = {0.2770, 0.0136, -0.0020, -0.0316, -0.0450, -0.0540, -0.0540};
-
-    float sigma = exp(coefficient0[PasquillCategory] + 
-                    coefficient1[PasquillCategory]*log(virtual_distance) + 
-                    coefficient2[PasquillCategory]*log(virtual_distance)*log(virtual_distance));
-
-    return sigma;
-}
-
-float Sigma_z_Pasquill_Gifford_cpu(int PasquillCategory, float virtual_distance) {
-
-    float coefficient0[7] = { 4.679, -1.999, -2.341, -3.186, -3.783, -4.490, -4.490 };
-    float coefficient1[7] = { -1.172, 0.8752, 0.9477, 1.1737, 1.3010, 1.4024, 1.4024 };
-    float coefficient2[7] = { 0.2770, 0.0136, -0.0020, -0.0316, -0.0450, -0.0540, -0.0540 };
-
+    float log_distance = log(virtual_distance);
     float sigma = exp(coefficient0[PasquillCategory] +
-        coefficient1[PasquillCategory] * log(virtual_distance) +
-        coefficient2[PasquillCategory] * log(virtual_distance) * log(virtual_distance));
+                      coefficient1[PasquillCategory] * log_distance +
+                      coefficient2[PasquillCategory] * log_distance * log_distance);
 
     return sigma;
 }
 
-__device__ float dSz_PG(int PasquillCategory, float virtual_distance){
+/**
+ * Derivative of horizontal dispersion coefficient with respect to virtual distance
+ * Used in Newton-Raphson iteration for virtual distance calculation
+ *
+ * Formula: d(sigma_h)/dx where sigma_h = exp(c0 + c1*ln(x) + c2*ln(x)^2)
+ *
+ * @param PasquillCategory Atmospheric stability class (0-6)
+ * @param virtual_distance Effective distance traveled by puff (meters)
+ * @return Derivative d(sigma_h)/dx
+ */
+__device__ float dSh_PG(int PasquillCategory, float virtual_distance) {
+    float coefficient0[7] = {-1.104, -1.634, -2.054, -2.555, -2.754, -3.143, -3.143};
+    float coefficient1[7] = {0.9878, 1.0350, 1.0231, 1.0423, 1.0106, 1.0418, 1.0418};
+    float coefficient2[7] = {-0.0076, -0.0096, -0.0076, -0.0087, -0.0064, -0.0070, -0.0070};
 
+    float log_distance = log(virtual_distance);
+    float sigma = pow(virtual_distance, coefficient1[PasquillCategory] - 1)
+                  * exp(coefficient0[PasquillCategory] + coefficient2[PasquillCategory] * log_distance * log_distance)
+                  * (coefficient1[PasquillCategory] + 2 * coefficient2[PasquillCategory] * log_distance);
+
+    return sigma;
+}
+
+/**
+ * Calculate vertical dispersion coefficient (sigma_z) using Pasquill-Gifford formula
+ *
+ * Formula: sigma_z = exp(c0 + c1*ln(x) + c2*ln(x)^2)
+ * where x is the virtual distance from source
+ *
+ * Vertical dispersion varies significantly with stability class:
+ *   - Class A (unstable): Large vertical mixing
+ *   - Class G (stable): Limited vertical mixing
+ *
+ * @param PasquillCategory Atmospheric stability class (0-6)
+ * @param virtual_distance Effective distance traveled by puff (meters)
+ * @return Vertical dispersion parameter sigma_z (meters)
+ */
+__device__ float Sigma_z_Pasquill_Gifford(int PasquillCategory, float virtual_distance) {
+    // Pasquill-Gifford coefficients for vertical dispersion (A through G stability classes)
     float coefficient0[7] = {4.679, -1.999, -2.341, -3.186, -3.783, -4.490, -4.490};
     float coefficient1[7] = {-1.172, 0.8752, 0.9477, 1.1737, 1.3010, 1.4024, 1.4024};
     float coefficient2[7] = {0.2770, 0.0136, -0.0020, -0.0316, -0.0450, -0.0540, -0.0540};
 
-    float sigma = pow(virtual_distance, coefficient1[PasquillCategory]-1)
-                    *exp(coefficient0[PasquillCategory]+coefficient2[PasquillCategory]*log(virtual_distance)*log(virtual_distance))
-                    *(coefficient1[PasquillCategory]+2*coefficient2[PasquillCategory]*log(virtual_distance));
+    float log_distance = log(virtual_distance);
+    float sigma = exp(coefficient0[PasquillCategory] +
+                      coefficient1[PasquillCategory] * log_distance +
+                      coefficient2[PasquillCategory] * log_distance * log_distance);
 
     return sigma;
 }
-//
-//__device__ float Sigma_h_Briggs_McElroy_Pooler(int PasquillCategory, float virtual_distance){
-//
-//    float coefficient0_rural[7] = {0.22, 0.16, 0.11, 0.08, 0.06, 0.04, 0.04};
-//    float coefficient0_urban[7] = {0.32, 0.32, 0.22, 0.16, 0.11, 0.11, 0.11};
-//    float coefficient1_rural = 0.0001;
-//    float coefficient1_urban = 0.0004;
-//
-//    float sigma;
-//    
-//    if(d_isRural) sigma = coefficient0_rural[PasquillCategory]*virtual_distance
-//                            *pow(1 + coefficient1_rural*virtual_distance, -0.5);
-//
-//    else sigma = coefficient0_urban[PasquillCategory]*virtual_distance
-//                    *pow(1 + coefficient1_urban*virtual_distance, -0.5);
-//
-//    return sigma;
-//}
 
-//__device__ float dSh_BMP(int PasquillCategory, float virtual_distance){
-//
-//    float coefficient0_rural[7] = {0.22, 0.16, 0.11, 0.08, 0.06, 0.04, 0.04};
-//    float coefficient0_urban[7] = {0.32, 0.32, 0.22, 0.16, 0.11, 0.11, 0.11};
-//    float coefficient1_rural = 0.0001;
-//    float coefficient1_urban = 0.0004;
-//
-//    float sigma;
-//    
-//    if(d_isRural) sigma = 0.5*coefficient0_rural[PasquillCategory]
-//                            *(coefficient1_rural*virtual_distance+2)
-//                            /pow(coefficient1_rural*virtual_distance+1,1.5);
-//
-//    else sigma = 0.5*coefficient0_urban[PasquillCategory]
-//                    *(coefficient1_urban*virtual_distance+2)
-//                    /pow(coefficient1_urban*virtual_distance+1,1.5);
-//
-//    return sigma;
-//}
+/**
+ * CPU version of vertical dispersion coefficient calculation
+ * Identical formula to device version, for validation and debugging
+ */
+float Sigma_z_Pasquill_Gifford_cpu(int PasquillCategory, float virtual_distance) {
+    float coefficient0[7] = {4.679, -1.999, -2.341, -3.186, -3.783, -4.490, -4.490};
+    float coefficient1[7] = {-1.172, 0.8752, 0.9477, 1.1737, 1.3010, 1.4024, 1.4024};
+    float coefficient2[7] = {0.2770, 0.0136, -0.0020, -0.0316, -0.0450, -0.0540, -0.0540};
 
-__device__ float Sigma_z_Briggs_McElroy_Pooler(int PasquillCategory, float virtual_distance){
+    float log_distance = log(virtual_distance);
+    float sigma = exp(coefficient0[PasquillCategory] +
+                      coefficient1[PasquillCategory] * log_distance +
+                      coefficient2[PasquillCategory] * log_distance * log_distance);
 
+    return sigma;
+}
+
+/**
+ * Derivative of vertical dispersion coefficient with respect to virtual distance
+ * Used in Newton-Raphson iteration for virtual distance calculation
+ *
+ * @param PasquillCategory Atmospheric stability class (0-6)
+ * @param virtual_distance Effective distance traveled by puff (meters)
+ * @return Derivative d(sigma_z)/dx
+ */
+__device__ float dSz_PG(int PasquillCategory, float virtual_distance) {
+    float coefficient0[7] = {4.679, -1.999, -2.341, -3.186, -3.783, -4.490, -4.490};
+    float coefficient1[7] = {-1.172, 0.8752, 0.9477, 1.1737, 1.3010, 1.4024, 1.4024};
+    float coefficient2[7] = {0.2770, 0.0136, -0.0020, -0.0316, -0.0450, -0.0540, -0.0540};
+
+    float log_distance = log(virtual_distance);
+    float sigma = pow(virtual_distance, coefficient1[PasquillCategory] - 1)
+                  * exp(coefficient0[PasquillCategory] + coefficient2[PasquillCategory] * log_distance * log_distance)
+                  * (coefficient1[PasquillCategory] + 2 * coefficient2[PasquillCategory] * log_distance);
+
+    return sigma;
+}
+
+// ====================================================================================
+// Device Helper Functions - Briggs-McElroy-Pooler Dispersion Formulas
+// ====================================================================================
+
+/**
+ * Calculate vertical dispersion coefficient (sigma_z) using Briggs-McElroy-Pooler formula
+ *
+ * Alternative to Pasquill-Gifford, accounts for urban vs rural terrain effects
+ * Formula: sigma_z = c0 * x * (1 + c1*x)^c2
+ *
+ * Reference: Briggs, G.A. (1973). "Diffusion estimation for small emissions"
+ *            ATDL Contribution File No. 79, Air Resources Atmospheric Turbulence
+ *            and Diffusion Laboratory, Oak Ridge, TN.
+ *
+ * @param PasquillCategory Atmospheric stability class (0-6)
+ * @param virtual_distance Effective distance traveled by puff (meters)
+ * @return Vertical dispersion parameter sigma_z (meters)
+ */
+__device__ float Sigma_z_Briggs_McElroy_Pooler(int PasquillCategory, float virtual_distance) {
+    // Coefficients for rural terrain
+    float coefficient0_rural[7] = {0.20, 0.12, 0.08, 0.06, 0.03, 0.016, 0.016};
+    float coefficient1_rural[7] = {0.0, 0.0, 0.0002, 0.0015, 0.0003, 0.0003, 0.0003};
+    float coefficient2_rural[7] = {1.0, 1.0, -0.5, -0.5, -1.0, -1.0, -1.0};
+
+    // Coefficients for urban terrain
+    float coefficient0_urban[7] = {0.24, 0.24, 0.2, 0.14, 0.08, 0.08, 0.08};
+    float coefficient1_urban[7] = {0.001, 0.001, 0.0, 0.0003, 0.00015, 0.00015, 0.00015};
+    float coefficient2_urban[7] = {0.5, 0.5, 1.0, -0.5, -0.5, -0.5, -0.5};
+
+    float sigma;
+
+    if (d_isRural) {
+        sigma = coefficient0_rural[PasquillCategory] * virtual_distance *
+                pow(1 + coefficient1_rural[PasquillCategory] * virtual_distance, coefficient2_rural[PasquillCategory]);
+    }
+    else {
+        sigma = coefficient0_urban[PasquillCategory] * virtual_distance *
+                pow(1 + coefficient1_urban[PasquillCategory] * virtual_distance, coefficient2_urban[PasquillCategory]);
+    }
+
+    return sigma;
+}
+
+/**
+ * Derivative of Briggs-McElroy-Pooler vertical dispersion with respect to virtual distance
+ * Used in Newton-Raphson iteration
+ *
+ * @param PasquillCategory Atmospheric stability class (0-6)
+ * @param virtual_distance Effective distance traveled by puff (meters)
+ * @return Derivative d(sigma_z)/dx for Briggs-McElroy-Pooler formula
+ */
+__device__ float dSz_BMP(int PasquillCategory, float virtual_distance) {
     float coefficient0_rural[7] = {0.20, 0.12, 0.08, 0.06, 0.03, 0.016, 0.016};
     float coefficient1_rural[7] = {0.0, 0.0, 0.0002, 0.0015, 0.0003, 0.0003, 0.0003};
     float coefficient2_rural[7] = {1.0, 1.0, -0.5, -0.5, -1.0, -1.0, -1.0};
@@ -187,132 +296,162 @@ __device__ float Sigma_z_Briggs_McElroy_Pooler(int PasquillCategory, float virtu
     float coefficient1_urban[7] = {0.001, 0.001, 0.0, 0.0003, 0.00015, 0.00015, 0.00015};
     float coefficient2_urban[7] = {0.5, 0.5, 1.0, -0.5, -0.5, -0.5, -0.5};
 
-
     float sigma;
-    
-    if(d_isRural) sigma = coefficient0_rural[PasquillCategory]*virtual_distance*
-                            pow(1 + coefficient1_rural[PasquillCategory]*virtual_distance, coefficient2_rural[PasquillCategory]);
 
-    else sigma = coefficient0_urban[PasquillCategory]*virtual_distance*
-                    pow(1 + coefficient1_urban[PasquillCategory]*virtual_distance, coefficient2_urban[PasquillCategory]);
+    if (d_isRural) {
+        sigma = pow(coefficient1_rural[PasquillCategory] * virtual_distance + 1, coefficient2_rural[PasquillCategory] - 1) *
+                (coefficient0_rural[PasquillCategory] * coefficient1_rural[PasquillCategory] *
+                 (coefficient2_rural[PasquillCategory] + 1) * virtual_distance + coefficient0_rural[PasquillCategory]);
+    }
+    else {
+        sigma = pow(coefficient1_urban[PasquillCategory] * virtual_distance + 1, coefficient2_urban[PasquillCategory] - 1) *
+                (coefficient0_urban[PasquillCategory] * coefficient1_urban[PasquillCategory] *
+                 (coefficient2_urban[PasquillCategory] + 1) * virtual_distance + coefficient0_urban[PasquillCategory]);
+    }
 
     return sigma;
 }
 
-__device__ float dSz_BMP(int PasquillCategory, float virtual_distance){
+// ====================================================================================
+// Device Helper Functions - Newton-Raphson Iteration
+// ====================================================================================
 
-    float coefficient0_rural[7] = {0.20, 0.12, 0.08, 0.06, 0.03, 0.016, 0.016};
-    float coefficient1_rural[7] = {0.0, 0.0, 0.0002, 0.0015, 0.0003, 0.0003, 0.0003};
-    float coefficient2_rural[7] = {1.0, 1.0, -0.5, -0.5, -1.0, -1.0, -1.0};
+/**
+ * Newton-Raphson iteration to find virtual distance from target horizontal dispersion
+ *
+ * Solves: sigma_h(x) = target_sigma for x (virtual distance)
+ * Uses iterative method: x_new = x - f(x)/f'(x)
+ * where f(x) = sigma_h(x) - target_sigma
+ *
+ * This is needed because puffs track sigma values but need to compute
+ * equivalent virtual distances for dispersion updates
+ *
+ * @param PasquillCategory Atmospheric stability class (0-6)
+ * @param targetSigma Desired horizontal dispersion parameter (meters)
+ * @param init Initial guess for virtual distance (meters)
+ * @return Calculated virtual distance (meters)
+ */
+__device__ float NewtonRaphson_h(int PasquillCategory, float targetSigma, float init) {
+    float x = init;
+    float fx, dfx;
 
-    float coefficient0_urban[7] = {0.24, 0.24, 0.2, 0.14, 0.08, 0.08, 0.08};
-    float coefficient1_urban[7] = {0.001, 0.001, 0.0, 0.0003, 0.00015, 0.00015, 0.00015};
-    float coefficient2_urban[7] = {0.5, 0.5, 1.0, -0.5, -0.5, -0.5, -0.5};
-
-    float sigma;
-    
-    if(d_isRural) sigma = pow(coefficient1_rural[PasquillCategory]*virtual_distance+1, coefficient2_rural[PasquillCategory]-1)*
-                            (coefficient0_rural[PasquillCategory]*coefficient1_rural[PasquillCategory]*
-                            (coefficient2_rural[PasquillCategory]+1)*virtual_distance+coefficient0_rural[PasquillCategory]);
-
-    else sigma = pow(coefficient1_urban[PasquillCategory]*virtual_distance+1, coefficient2_urban[PasquillCategory]-1)*
-                    (coefficient0_urban[PasquillCategory]*coefficient1_urban[PasquillCategory]*
-                    (coefficient2_urban[PasquillCategory]+1)*virtual_distance+coefficient0_urban[PasquillCategory]);
-
-    return sigma;
-}
-
-__device__ float NewtonRaphson_h(int PasquillCategory, float targetSigma, float init){
-
-    float x = init, fx, dfx;
-    int loops = 0;
-
-    while(1){
-        if(d_isPG){
+    while (true) {
+        if (d_isPG) {
             fx = Sigma_h_Pasquill_Gifford(PasquillCategory, x) - targetSigma;
             dfx = dSh_PG(PasquillCategory, x);
         }
-        else{
-            //fx = Sigma_h_Briggs_McElroy_Pooler(PasquillCategory, x) - targetSigma;
-            //dfx = dSh_BMP(PasquillCategory, x);
-        }
+
         x = x - fx / dfx;
-        if (fabs(fx) < 1e-4){
-            //printf("%d ", loops);
+
+        if (fabs(fx) < NEWTON_RAPHSON_TOLERANCE) {
             break;
         }
-        //printf("%f, %f, %f\n", Sigma_h_Pasquill_Gifford(PasquillCategory, x), targetSigma, fx);
-        loops++;
     }
 
     return x;
 }
 
-__device__ float NewtonRaphson_z(int PasquillCategory, float targetSigma, float init){
+/**
+ * Newton-Raphson iteration to find virtual distance from target vertical dispersion
+ *
+ * Solves: sigma_z(x) = target_sigma for x (virtual distance)
+ *
+ * @param PasquillCategory Atmospheric stability class (0-6)
+ * @param targetSigma Desired vertical dispersion parameter (meters)
+ * @param init Initial guess for virtual distance (meters)
+ * @return Calculated virtual distance (meters)
+ */
+__device__ float NewtonRaphson_z(int PasquillCategory, float targetSigma, float init) {
+    float x = init;
+    float fx, dfx;
 
-    float x = init, fx, dfx;
-    int loops = 0;
-
-    while(1){
-        if(d_isPG){
+    while (true) {
+        if (d_isPG) {
             fx = Sigma_z_Pasquill_Gifford(PasquillCategory, x) - targetSigma;
             dfx = dSz_PG(PasquillCategory, x);
         }
-        else{
+        else {
             fx = Sigma_z_Briggs_McElroy_Pooler(PasquillCategory, x) - targetSigma;
             dfx = dSz_BMP(PasquillCategory, x);
         }
+
         x = x - fx / dfx;
-        if (fabs(fx) < 1e-4){
-            //printf("%d ", loops);
+
+        if (fabs(fx) < NEWTON_RAPHSON_TOLERANCE) {
             break;
         }
-        //printf("%f, %f, %f\n", Sigma_z_Pasquill_Gifford(PasquillCategory, x), targetSigma, fx);
-        loops++;
     }
 
     return x;
 }
 
+// ====================================================================================
+// CUDA Kernels - Debug and Utility
+// ====================================================================================
 
-__global__ void checkValueKernel(){
-    if (threadIdx.x == 0 && blockIdx.x == 0){
+/**
+ * Debug kernel to check device constant values
+ * Prints number of puffs from device constant memory
+ * Thread organization: Single thread (0,0) executes
+ */
+__global__ void checkValueKernel() {
+    if (threadIdx.x == 0 && blockIdx.x == 0) {
         printf("Value of d_nop inside kernel: %d\n", d_nop);
     }
 }
 
-__global__ void print_timeidx(Gpuff::Puffcenter* d_puffs)
-{
-
+/**
+ * Debug kernel to print puff time indices
+ * Thread organization: 1D grid, one thread per puff
+ *
+ * @param d_puffs Array of puff center data
+ */
+__global__ void print_timeidx_kernel(Gpuff::Puffcenter* d_puffs) {
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
 
-    // printf("%d\n", d_nop);
-    // printf("%f\n", d_dt);
-    // printf("%d\n", d_freq_output);
-    // printf("%f\n", d_time_end);
-
-    if (tid < d_nop){
-        printf("Timeidx of puff %d: %f\n", tid, d_puffs[tid].y/1500.0);
+    if (tid < d_nop) {
+        printf("Timeidx of puff %d: %f\n", tid, d_puffs[tid].y / GRID_SPACING);
     }
-
-
 }
 
-__global__ void update_puff_flags(
-    Gpuff::Puffcenter* d_puffs, float activationRatio) 
+// ====================================================================================
+// CUDA Kernels - Puff Activation
+// ====================================================================================
+
+/**
+ * Activate puffs based on activation ratio
+ * Used for progressive puff release in time-varying simulations
+ *
+ * Thread organization: 1D grid, one thread per puff
+ * Memory access: Coalesced writes to puff flags
+ *
+ * @param d_puffs Array of puff center data
+ * @param activationRatio Fraction of puffs to activate (0.0 to 1.0)
+ */
+__global__ void update_puff_flags_kernel(
+    Gpuff::Puffcenter* d_puffs, float activationRatio)
 {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx >= d_nop) return;
 
     Gpuff::Puffcenter& p = d_puffs[idx];
 
-    if (idx < int(d_nop * activationRatio)){
+    if (idx < int(d_nop * activationRatio)) {
         p.flag = 1;
     }
-    //if(idx==0)printf("actnum=%d\n", int(d_nop * activationRatio));
 }
 
-__global__ void update_puff_flags2(
+/**
+ * Activate puffs based on release time for RCAP simulations
+ * Puffs are activated when simulation time exceeds their release time
+ *
+ * Thread organization: 1D grid, one thread per puff
+ * Early exit: Puffs already active are skipped
+ *
+ * @param d_puffs_RCAP Array of RCAP puff center data
+ * @param currentTime Current simulation time (seconds)
+ */
+__global__ void update_puff_flags2_kernel(
     Gpuff::Puffcenter_RCAP* d_puffs_RCAP, float currentTime)
 {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -320,14 +459,17 @@ __global__ void update_puff_flags2(
 
     Gpuff::Puffcenter_RCAP& p = d_puffs_RCAP[idx];
     if (p.flag == 1) return;
-    //printf("p.releasetime = %f, currentTime= %f\n", p.releasetime, currentTime);
-    if (p.releasetime < currentTime) p.flag = 1;
-    
-    //if(idx==0)printf("actnum=%d\n", int(d_nop * activationRatio));
+
+    if (p.releasetime < currentTime) {
+        p.flag = 1;
+    }
 }
 
+/**
+ * CPU version of puff flag update for RCAP simulations
+ * Identical logic to device version, for validation
+ */
 void Gpuff::update_puff_flags2_cpu(float currentTime, int nop) {
-
     for (int idx = 0; idx < nop; ++idx) {
         Gpuff::Puffcenter_RCAP& p = puffs_RCAP[idx];
         if (p.flag == 1) continue;
@@ -338,169 +480,275 @@ void Gpuff::update_puff_flags2_cpu(float currentTime, int nop) {
     }
 }
 
+// ====================================================================================
+// CUDA Kernels - Puff Transport
+// ====================================================================================
 
-__global__ void move_puffs_by_wind(
-    Gpuff::Puffcenter* d_puffs, 
+/**
+ * Move puffs by 3D wind field interpolation
+ *
+ * Performs bilinear interpolation of meteorological wind data (UGRD, VGRD, DZDT)
+ * to advect puff positions. Wind components are interpolated from eta-coordinate
+ * meteorological grid.
+ *
+ * Physics:
+ *   - Horizontal winds (UGRD, VGRD) on staggered U/V grid
+ *   - Vertical motion (DZDT) on W grid
+ *   - Bilinear interpolation in horizontal, linear in vertical
+ *   - Minimum puff height enforced to prevent ground intersection
+ *
+ * Thread organization: 1D grid, one thread per puff
+ * Memory access: Irregular access pattern due to spatial interpolation
+ * Performance note: Memory access pattern not fully coalesced
+ *
+ * @param d_puffs Array of puff center data
+ * @param device_meteorological_data_pres Pressure-level meteorological data
+ * @param device_meteorological_data_unis Surface-level meteorological data
+ * @param device_meteorological_data_etas Eta-coordinate meteorological data (winds)
+ */
+__global__ void move_puffs_by_wind_kernel(
+    Gpuff::Puffcenter* d_puffs,
     PresData* device_meteorological_data_pres,
     UnisData* device_meteorological_data_unis,
-    EtasData* device_meteorological_data_etas) 
+    EtasData* device_meteorological_data_etas)
 {
-
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if(idx >= d_nop) return;
+    if (idx >= d_nop) return;
 
     Gpuff::Puffcenter& p = d_puffs[idx];
-    if(!p.flag) return;
+    if (!p.flag) return;
 
-    int xidx = int(p.x/1500.0);
-    int yidx = int(p.y/1500.0);
+    // Convert puff position to grid indices
+    int xidx = int(p.x / GRID_SPACING);
+    int yidx = int(p.y / GRID_SPACING);
+
+    // Find vertical level indices for U/V winds and W (vertical motion)
     int zidx_uv = 1;
     int zidx_w = 1;
 
-    for(int i=0; i<dimZ_etas-1; i++){
-        if(p.z<d_etas_hgt_uv[i]){
-            zidx_uv=i+1;
+    for (int i = 0; i < dimZ_etas - 1; i++) {
+        if (p.z < d_etas_hgt_uv[i]) {
+            zidx_uv = i + 1;
             break;
         }
     }
 
-    for(int i=0; i<dimZ_etas-1; i++){
-        if(p.z<d_etas_hgt_w[i]){
-            zidx_w=i+1;
+    for (int i = 0; i < dimZ_etas - 1; i++) {
+        if (p.z < d_etas_hgt_w[i]) {
+            zidx_w = i + 1;
             break;
         }
     }
 
-    if(zidx_uv<0) {
+    // Validate vertical indices
+    if (zidx_uv < 0) {
         printf("Invalid zidx_uv error.\n");
         zidx_uv = 1;
     }
 
-    if(zidx_w<0) {
+    if (zidx_w < 0) {
         printf("Invalid zidx_w error.\n");
         zidx_w = 1;
     }
 
-    float x0 = p.x/1500.0-xidx;
-    float y0 = p.y/1500.0-yidx;
+    // Calculate interpolation weights (bilinear interpolation)
+    float x0 = p.x / GRID_SPACING - xidx;  // Fractional position in cell
+    float y0 = p.y / GRID_SPACING - yidx;
 
-    float x1 = 1-x0;
-    float y1 = 1-y0;
+    float x1 = 1 - x0;  // Complementary weight
+    float y1 = 1 - y0;
 
-    float xwind = x1*y1*device_meteorological_data_etas[xidx*(dimY)*(dimZ_etas) + yidx*(dimZ_etas) + zidx_uv].UGRD
-                    +x0*y1*device_meteorological_data_etas[(xidx+1)*(dimY)*(dimZ_etas) + yidx*(dimZ_etas) + zidx_uv].UGRD
-                    +x1*y0*device_meteorological_data_etas[xidx*(dimY)*(dimZ_etas) + (yidx+1)*(dimZ_etas) + zidx_uv].UGRD
-                    +x0*y0*device_meteorological_data_etas[(xidx+1)*(dimY)*(dimZ_etas) + (yidx+1)*(dimZ_etas) + zidx_uv].UGRD;
+    // Bilinear interpolation of U wind component (m/s)
+    float xwind = x1 * y1 * device_meteorological_data_etas[xidx * (dimY) * (dimZ_etas) + yidx * (dimZ_etas) + zidx_uv].UGRD +
+                  x0 * y1 * device_meteorological_data_etas[(xidx + 1) * (dimY) * (dimZ_etas) + yidx * (dimZ_etas) + zidx_uv].UGRD +
+                  x1 * y0 * device_meteorological_data_etas[xidx * (dimY) * (dimZ_etas) + (yidx + 1) * (dimZ_etas) + zidx_uv].UGRD +
+                  x0 * y0 * device_meteorological_data_etas[(xidx + 1) * (dimY) * (dimZ_etas) + (yidx + 1) * (dimZ_etas) + zidx_uv].UGRD;
 
-    float ywind = x1*y1*device_meteorological_data_etas[xidx*(dimY)*(dimZ_etas) + yidx*(dimZ_etas) + zidx_uv].VGRD
-                    +x0*y1*device_meteorological_data_etas[(xidx+1)*(dimY)*(dimZ_etas) + yidx*(dimZ_etas) + zidx_uv].VGRD
-                    +x1*y0*device_meteorological_data_etas[xidx*(dimY)*(dimZ_etas) + (yidx+1)*(dimZ_etas) + zidx_uv].VGRD
-                    +x0*y0*device_meteorological_data_etas[(xidx+1)*(dimY)*(dimZ_etas) + (yidx+1)*(dimZ_etas) + zidx_uv].VGRD;
+    // Bilinear interpolation of V wind component (m/s)
+    float ywind = x1 * y1 * device_meteorological_data_etas[xidx * (dimY) * (dimZ_etas) + yidx * (dimZ_etas) + zidx_uv].VGRD +
+                  x0 * y1 * device_meteorological_data_etas[(xidx + 1) * (dimY) * (dimZ_etas) + yidx * (dimZ_etas) + zidx_uv].VGRD +
+                  x1 * y0 * device_meteorological_data_etas[xidx * (dimY) * (dimZ_etas) + (yidx + 1) * (dimZ_etas) + zidx_uv].VGRD +
+                  x0 * y0 * device_meteorological_data_etas[(xidx + 1) * (dimY) * (dimZ_etas) + (yidx + 1) * (dimZ_etas) + zidx_uv].VGRD;
 
-    float zwind = x1*y1*device_meteorological_data_etas[xidx*(dimY)*(dimZ_etas) + yidx*(dimZ_etas) + zidx_w].DZDT
-                    +x0*y1*device_meteorological_data_etas[(xidx+1)*(dimY)*(dimZ_etas) + yidx*(dimZ_etas) + zidx_w].DZDT
-                    +x1*y0*device_meteorological_data_etas[xidx*(dimY)*(dimZ_etas) + (yidx+1)*(dimZ_etas) + zidx_w].DZDT
-                    +x0*y0*device_meteorological_data_etas[(xidx+1)*(dimY)*(dimZ_etas) + (yidx+1)*(dimZ_etas) + zidx_w].DZDT;
+    // Bilinear interpolation of vertical motion (m/s)
+    float zwind = x1 * y1 * device_meteorological_data_etas[xidx * (dimY) * (dimZ_etas) + yidx * (dimZ_etas) + zidx_w].DZDT +
+                  x0 * y1 * device_meteorological_data_etas[(xidx + 1) * (dimY) * (dimZ_etas) + yidx * (dimZ_etas) + zidx_w].DZDT +
+                  x1 * y0 * device_meteorological_data_etas[xidx * (dimY) * (dimZ_etas) + (yidx + 1) * (dimZ_etas) + zidx_w].DZDT +
+                  x0 * y0 * device_meteorological_data_etas[(xidx + 1) * (dimY) * (dimZ_etas) + (yidx + 1) * (dimZ_etas) + zidx_w].DZDT;
 
-    p.x += xwind*d_dt;
-    p.y += ywind*d_dt;
-    p.z += zwind*d_dt;
+    // Update puff position: Forward Euler integration
+    p.x += xwind * d_dt;
+    p.y += ywind * d_dt;
+    p.z += zwind * d_dt;
 
-    if(p.z<2.0) p.z=2.0;
+    // Enforce minimum puff height
+    if (p.z < MIN_PUFF_HEIGHT) {
+        p.z = MIN_PUFF_HEIGHT;
+    }
 }
 
-__global__ void dry_deposition(
-    Gpuff::Puffcenter* d_puffs, 
+// ====================================================================================
+// CUDA Kernels - Deposition and Decay
+// ====================================================================================
+
+/**
+ * Apply dry deposition to puff concentrations
+ *
+ * Dry deposition removes material from puffs via gravitational settling
+ * and surface impaction. Depletion rate depends on deposition velocity
+ * and planetary boundary layer height.
+ *
+ * Physics:
+ *   - Exponential decay: C' = C * exp(-v_d * dt / H_pbl)
+ *   - v_d: deposition velocity (m/s), particle/gas specific
+ *   - H_pbl: Planetary boundary layer height (m)
+ *   - Higher PBL → slower relative depletion
+ *
+ * Thread organization: 1D grid, one thread per puff
+ *
+ * @param d_puffs Array of puff center data
+ * @param device_meteorological_data_pres Pressure-level meteorological data
+ * @param device_meteorological_data_unis Surface-level meteorological data (HPBL)
+ * @param device_meteorological_data_etas Eta-coordinate meteorological data
+ */
+__global__ void dry_deposition_kernel(
+    Gpuff::Puffcenter* d_puffs,
     PresData* device_meteorological_data_pres,
     UnisData* device_meteorological_data_unis,
-    EtasData* device_meteorological_data_etas) 
+    EtasData* device_meteorological_data_etas)
 {
-
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if(idx >= d_nop) return;
+    if (idx >= d_nop) return;
 
     Gpuff::Puffcenter& p = d_puffs[idx];
-    if(!p.flag) return;
+    if (!p.flag) return;
 
-    int xidx = int(p.x/1500.0);
-    int yidx = int(p.y/1500.0);
+    // Convert puff position to grid indices
+    int xidx = int(p.x / GRID_SPACING);
+    int yidx = int(p.y / GRID_SPACING);
 
-    float x0 = p.x/1500.0-xidx;
-    float y0 = p.y/1500.0-yidx;
+    // Calculate interpolation weights
+    float x0 = p.x / GRID_SPACING - xidx;
+    float y0 = p.y / GRID_SPACING - yidx;
+    float x1 = 1 - x0;
+    float y1 = 1 - y0;
 
-    float x1 = 1-x0;
-    float y1 = 1-y0;
+    // Bilinear interpolation of planetary boundary layer height (meters)
+    float mixing_height = x1 * y1 * device_meteorological_data_unis[xidx * (dimY) + yidx].HPBL +
+                          x0 * y1 * device_meteorological_data_unis[(xidx + 1) * (dimY) + yidx].HPBL +
+                          x1 * y0 * device_meteorological_data_unis[xidx * (dimY) + (yidx + 1)].HPBL +
+                          x0 * y0 * device_meteorological_data_unis[(xidx + 1) * (dimY) + (yidx + 1)].HPBL;
 
-    float mixing_height = x1*y1*device_meteorological_data_unis[xidx*(dimY) + yidx].HPBL
-                            +x0*y1*device_meteorological_data_unis[(xidx+1)*(dimY) + yidx].HPBL
-                            +x1*y0*device_meteorological_data_unis[xidx*(dimY) + (yidx+1)].HPBL
-                            +x0*y0*device_meteorological_data_unis[(xidx+1)*(dimY) + (yidx+1)].HPBL;
-
-    p.conc *= exp(-p.drydep_vel*d_dt/mixing_height);
-
+    // Apply dry deposition: exponential decay
+    p.conc *= exp(-p.drydep_vel * d_dt / mixing_height);
 }
 
-__global__ void wet_scavenging(
-    Gpuff::Puffcenter* d_puffs, 
+/**
+ * Apply wet scavenging (washout) to puff concentrations
+ *
+ * Wet scavenging removes material via precipitation scavenging.
+ * Only active when relative humidity exceeds threshold (80%).
+ *
+ * Physics:
+ *   - Washout coefficient: Lambda = 3.5e-5 * (RH - 0.8) / 0.2 [s^-1]
+ *   - Only active when RH > 80%
+ *   - Linear dependence on relative humidity above threshold
+ *   - Exponential decay: C' = C * exp(-Lambda * dt)
+ *
+ * Reference: Simplified washout model from EPA regulatory guidance
+ *
+ * Thread organization: 1D grid, one thread per puff
+ *
+ * @param d_puffs Array of puff center data
+ * @param device_meteorological_data_pres Pressure-level meteorological data (RH)
+ * @param device_meteorological_data_unis Surface-level meteorological data
+ * @param device_meteorological_data_etas Eta-coordinate meteorological data
+ */
+__global__ void wet_scavenging_kernel(
+    Gpuff::Puffcenter* d_puffs,
     PresData* device_meteorological_data_pres,
     UnisData* device_meteorological_data_unis,
-    EtasData* device_meteorological_data_etas) 
+    EtasData* device_meteorological_data_etas)
 {
-
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if(idx >= d_nop) return;
+    if (idx >= d_nop) return;
 
     Gpuff::Puffcenter& p = d_puffs[idx];
-    if(!p.flag) return;
+    if (!p.flag) return;
 
-    int xidx = int(p.x/1500.0);
-    int yidx = int(p.y/1500.0);
+    // Convert puff position to grid indices
+    int xidx = int(p.x / GRID_SPACING);
+    int yidx = int(p.y / GRID_SPACING);
+
+    // Find vertical pressure level index
     int zidx_pres = 1;
-
-    for(int i=0; i<dimZ_pres-1; i++){
-        if(p.z<device_meteorological_data_pres[xidx*(dimY)*(dimZ_pres) + yidx*(dimZ_pres) + i].HGT){
-            zidx_pres=i+1;
+    for (int i = 0; i < dimZ_pres - 1; i++) {
+        if (p.z < device_meteorological_data_pres[xidx * (dimY) * (dimZ_pres) + yidx * (dimZ_pres) + i].HGT) {
+            zidx_pres = i + 1;
             break;
         }
     }
 
-    if(zidx_pres<0) {
+    if (zidx_pres < 0) {
         printf("Invalid zidx_pres error.\n");
         zidx_pres = 1;
     }
 
-    float x0 = p.x/1500.0-xidx;
-    float y0 = p.y/1500.0-yidx;
+    // Calculate interpolation weights
+    float x0 = p.x / GRID_SPACING - xidx;
+    float y0 = p.y / GRID_SPACING - yidx;
+    float x1 = 1 - x0;
+    float y1 = 1 - y0;
 
-    float x1 = 1-x0;
-    float y1 = 1-y0;
+    // Bilinear interpolation of relative humidity (0-1)
+    float relative_humidity = x1 * y1 * device_meteorological_data_pres[xidx * (dimY) * (dimZ_pres) + yidx * (dimZ_pres) + zidx_pres].RH +
+                              x0 * y1 * device_meteorological_data_pres[(xidx + 1) * (dimY) * (dimZ_pres) + yidx * (dimZ_pres) + zidx_pres].RH +
+                              x1 * y0 * device_meteorological_data_pres[xidx * (dimY) * (dimZ_pres) + (yidx + 1) * (dimZ_pres) + zidx_pres].RH +
+                              x0 * y0 * device_meteorological_data_pres[(xidx + 1) * (dimY) * (dimZ_pres) + (yidx + 1) * (dimZ_pres) + zidx_pres].RH;
 
-    float Relh = x1*y1*device_meteorological_data_pres[xidx*(dimY)*(dimZ_pres) + yidx*(dimZ_pres) + zidx_pres].RH
-                +x0*y1*device_meteorological_data_pres[(xidx+1)*(dimY)*(dimZ_pres) + yidx*(dimZ_pres) + zidx_pres].RH
-                +x1*y0*device_meteorological_data_pres[xidx*(dimY)*(dimZ_pres) + (yidx+1)*(dimZ_pres) + zidx_pres].RH
-                +x0*y0*device_meteorological_data_pres[(xidx+1)*(dimY)*(dimZ_pres) + (yidx+1)*(dimZ_pres) + zidx_pres].RH;
+    // Calculate washout coefficient (only active above threshold)
+    if (relative_humidity > WET_SCAVENGING_RH_THRESHOLD) {
+        float lambda = WET_SCAVENGING_LAMBDA_COEFF * (relative_humidity - WET_SCAVENGING_RH_THRESHOLD) /
+                       (1.0f - WET_SCAVENGING_RH_THRESHOLD);
 
-    float Lambda = 3.5e-5*(Relh-0.8)/(1.0-0.8);
-
-    if(Relh>0.8) p.conc *= exp(-Lambda*d_dt);
-
+        // Apply wet scavenging: exponential decay
+        p.conc *= exp(-lambda * d_dt);
+    }
 }
 
-__global__ void radioactive_decay(
-    Gpuff::Puffcenter* d_puffs, 
+/**
+ * Apply radioactive decay to puff concentrations
+ *
+ * Updates puff concentration due to radioactive decay.
+ * Each puff carries its decay constant based on nuclide half-life.
+ *
+ * Physics:
+ *   - Exponential decay: C' = C * exp(-lambda * dt)
+ *   - lambda = ln(2) / t_half
+ *   - Decay constant stored in puff structure
+ *
+ * Thread organization: 1D grid, one thread per puff
+ * Memory access: Fully coalesced
+ *
+ * @param d_puffs Array of puff center data
+ * @param device_meteorological_data_pres Pressure-level meteorological data (unused)
+ * @param device_meteorological_data_unis Surface-level meteorological data (unused)
+ * @param device_meteorological_data_etas Eta-coordinate meteorological data (unused)
+ */
+__global__ void radioactive_decay_kernel(
+    Gpuff::Puffcenter* d_puffs,
     PresData* device_meteorological_data_pres,
     UnisData* device_meteorological_data_unis,
-    EtasData* device_meteorological_data_etas) 
+    EtasData* device_meteorological_data_etas)
 {
-
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if(idx >= d_nop) return;
+    if (idx >= d_nop) return;
 
     Gpuff::Puffcenter& p = d_puffs[idx];
-    if(!p.flag) return;
+    if (!p.flag) return;
 
-    p.conc *= exp(-p.decay_const*d_dt);
-
+    // Apply radioactive decay: exponential decay
+    p.conc *= exp(-p.decay_const * d_dt);
 }
 
 __global__ void puff_dispersion_update(
@@ -977,12 +1225,7 @@ __global__ void move_puffs_by_wind_RCAP2(
         //    + 1 * numTheta * MAX_NUCLIDES + 8 * MAX_NUCLIDES + nuc_idx]);
 
 
-        //printf("rad = %d, theta = %d\n", rad_idx, theta_idx);
-
-
-        // �ʿ信 ���� ���� ħ���� ������Ʈ
-        // float deposition = old_conc * (1.0f - f_total);
-        // d_ground_deposit�� ������ �ε����� deposition�� �߰�
+        //printf("rad = %d, theta = %d\n", rad_idx, theta_idx)
 
     }
 
@@ -1933,7 +2176,6 @@ __global__ void DirectInhalation1(
         Gpuff::Puffcenter_RCAP puff = d_puffs_RCAP[simIdx * d_totalpuff_per_Sim + puffIdx];
         Evacuee evacuee = d_evacuees[simIdx * d_totalevacuees_per_Sim + evacueeIdx];
 
-        // ���� ���� �Լ� ���
         float cosTheta = __cosf(evacuee.theta);
         float sinTheta = __sinf(evacuee.theta);
 
@@ -2519,22 +2761,21 @@ __global__ void ComputeExposureHmix_1D(
 ) {
     extern __shared__ float sdata[];
 
-    // 1���� ����ȭ: ��� ������� ������ �����Ͽ� ���� ���� �ε����� ��ȯ
+    // 1D optimization: convert all simulation parameters to a single global index
     int globalIdx = blockIdx.x * blockDim.x + threadIdx.x;
 
-    // �ʿ��� �ε��� ���: simIdx, evacueeIdx, puffIdx�� ���� �ε����κ��� ����
+    // Calculate required index ranges: decompose simIdx, evacueeIdx, puffIdx from global index
     int numEvacuees = d_totalevacuees_per_Sim * d_numSims;
     int numPuffs = d_totalpuff_per_Sim * d_numSims;
 
     if (globalIdx >= numEvacuees * numPuffs) {
-        return; // ��� ���� �Ѿ�� ������� �������� ����
+        return; // Return early if index exceeds valid range
     }
 
     int simIdx = globalIdx / (d_totalevacuees_per_Sim * d_totalpuff_per_Sim);
     int evacueeIdx = (globalIdx / d_totalpuff_per_Sim) % d_totalevacuees_per_Sim;
     int puffIdx = globalIdx % d_totalpuff_per_Sim;
 
-    // ������ �ڵ�� 2���� �ε������� ������ ��İ� ����
     float hmix = 1500.0;
     float* sdata_inhalation = sdata;
     float* sdata_cloudshine = sdata + blockDim.x;
@@ -2787,19 +3028,19 @@ __global__ void ComputeExposureHmix1(
         float cosTheta = __cosf(evacuee.theta);
         float sinTheta = __sinf(evacuee.theta);
 
-        // ��ġ ���
+        // Position calculation
         float dx = evacuee.r * cosTheta - puff.x;
         float dy = evacuee.r * sinTheta - puff.y;
-        float z_evac = 0.0f; // �ǳ����� ���� (����)
-        float H = puff.z;     // ������ ���� ����
+        float z_evac = 0.0f; // Evacuee height (ground level)
+        float H = puff.z;     // Puff center height
 
         float sigma_h = puff.sigma_h;
         float sigma_z = puff.sigma_z;
 
-        // �Ÿ� ���� ��� (���� �� ���� �Ÿ� ����)
+        // Distance squared calculation (3D distance including vertical separation)
         float distanceSq = dx * dx + dy * dy + (H - z_evac) * (H - z_evac);
 
-        // Inhalation�� ���� ����þ� ���� ��� (���� �ݻ� �� ȥ���� �ݻ� ����)
+        // Gaussian plume calculation for inhalation (ground reflection and mixing height reflection)
         float sumExponent = 0.0f;
         int nLimit = 3;
         for (int n = -nLimit; n <= nLimit; ++n) {
@@ -2817,17 +3058,17 @@ __global__ void ComputeExposureHmix1(
 
         float gaussianFactor = sumExponent / (2.0f * PI * sigma_h * sigma_z);
 
-        // CloudShine�� ���� �Ÿ� ���
+        // Distance calculation for CloudShine
         float distance = sqrtf(distanceSq);
-        float pointSourceFactor = 1.0f / (4.0f * PI * distanceSq); // ������ ��
+        float pointSourceFactor = 1.0f / (4.0f * PI * distanceSq); // Point source approximation
 
-        // ��� ���� ���� ����
+        // Check if concentration threshold is exceeded
         if (gaussianFactor > 1e-30f || pointSourceFactor > 1e-30f) {
             for (int nuclideIdx = 0; nuclideIdx < MAX_NUCLIDES; ++nuclideIdx) {
-                // Inhalation �� ���
+                // Inhalation dose calculation
                 float puffConcInhalation = puff.conc[nuclideIdx] * gaussianFactor;
 
-                // CloudShine ���� ��� (������ ��)
+                // CloudShine intensity calculation (point source approximation)
                 float puffIntensityCloudshine = puff.conc[nuclideIdx] * pointSourceFactor;
 
                 float totalInhalation = 0.0f;
@@ -2835,25 +3076,25 @@ __global__ void ComputeExposureHmix1(
 
 #pragma unroll
                 for (int organIdx = 0; organIdx < MAX_ORGANS; organIdx++) {
-                    // Inhalation �� (DATA_FIELDS + 2)
+                    // Inhalation dose (DATA_FIELDS + 2)
                     float inhalationValue = d_exposure[nuclideIdx * MAX_ORGANS * DATA_FIELDS + organIdx * DATA_FIELDS + 2];
                     if (inhalationValue > 0.0f) {
                         totalInhalation += inhalationValue;
                     }
 
-                    // CloudShine �� (DATA_FIELDS + 0)
+                    // CloudShine dose (DATA_FIELDS + 0)
                     float cloudshineValue = d_exposure[nuclideIdx * MAX_ORGANS * DATA_FIELDS + organIdx * DATA_FIELDS + 0];
                     if (cloudshineValue > 0.0f) {
                         totalCloudshine += cloudshineValue;
                     }
                 }
 
-                // ���� ��� �� ����
+                // Accumulate dose with time step
                 sdata_inhalation[threadIdx.x] += puffConcInhalation * totalInhalation * d_dt;
                 sdata_cloudshine[threadIdx.x] += puffIntensityCloudshine * totalCloudshine * d_dt;
             }
 
-            // ��ȣ ��� ����
+            // Apply protection factors
             sdata_inhalation[threadIdx.x] *= dPF->pfactor[puff.flag][4];
             sdata_cloudshine[threadIdx.x] *= dPF->pfactor[puff.flag][2];
         }
@@ -2863,7 +3104,6 @@ __global__ void ComputeExposureHmix1(
         float inhalationDose = sdata_inhalation[threadIdx.x];
         float cloudshineDose = sdata_cloudshine[threadIdx.x];
 
-        // ���� �� �ջ�
         for (int offset = warpSize / 2; offset > 0; offset /= 2) {
             inhalationDose += __shfl_down_sync(0xffffffff, inhalationDose, offset);
             cloudshineDose += __shfl_down_sync(0xffffffff, cloudshineDose, offset);
@@ -2891,13 +3131,11 @@ __global__ void DirectInhalation2(
     int organIdx = threadIdx.y;
 
     if (simIdx < d_numSims && evacueeIdx < d_totalevacuees_per_Sim) {
-        // ���� �޸𸮸� �ʱ�ȭ
         sdata[threadIdx.y * blockDim.x + threadIdx.x] = 0.0f;
 
         Gpuff::Puffcenter_RCAP puff = d_puffs_RCAP[simIdx * d_totalpuff_per_Sim + puffIdx];
         Evacuee evacuee = d_evacuees[simIdx * d_totalevacuees_per_Sim + evacueeIdx];
 
-        // ���� ���� �Լ� ���
         float cosTheta = __cosf(evacuee.theta);
         float sinTheta = __sinf(evacuee.theta);
 
@@ -2912,7 +3150,6 @@ __global__ void DirectInhalation2(
                 float puffEffect = puff.conc[nuclideIdx] * invDistanceSq;
 
                 if (puffEffect > 0.0f) {
-                    // �� �����尡 �ڽ��� organIdx�� �ش��ϴ� ����� ����
                     float exposureValue = d_exposure[nuclideIdx * MAX_ORGANS * DATA_FIELDS + organIdx * DATA_FIELDS + 2];
 
                     float totalExposure = 0.0f;
@@ -2920,19 +3157,15 @@ __global__ void DirectInhalation2(
                         totalExposure = exposureValue;
                     }
 
-                    // �����庰�� ���� �޸𸮿� ��� ����
                     sdata[threadIdx.y * blockDim.x + threadIdx.x] += puffEffect * totalExposure * d_dt;
                 }
             }
         }
 
-        // ProtectionFactors ���� (�����庰��)
         sdata[threadIdx.y * blockDim.x + threadIdx.x] *= dPF->pfactor[puff.flag][4] * dPF->pfactor[puff.flag][2];
 
         __syncthreads();
 
-        // ������ ���� (organIdx ��������)
-        // ���� X��(=puffIdx)�� ���� ������
         float val = sdata[threadIdx.y * blockDim.x + threadIdx.x];
         for (int offset = blockDim.x / 2; offset > 0; offset >>= 1) {
             if (threadIdx.x < offset) {
@@ -2941,7 +3174,6 @@ __global__ void DirectInhalation2(
             __syncthreads();
         }
 
-        // ���� Y��(=organIdx)�� ���� ������
         if (threadIdx.x == 0) {
             float organVal = sdata[threadIdx.y * blockDim.x];
             for (int offset = blockDim.y / 2; offset > 0; offset >>= 1) {
@@ -2952,7 +3184,6 @@ __global__ void DirectInhalation2(
             }
 
             if (threadIdx.y == 0) {
-                // ���� ����� ���� �޸𸮿� ����
                 d_evacuees[simIdx * d_totalevacuees_per_Sim + evacueeIdx].dose = sdata[0];
             }
         }
@@ -3165,8 +3396,6 @@ __global__ void computeEvacueeDoseReductionAtomic(
 //}
 
 //__global__ void printExposureData(float* d_exposure_data) {
-//    int i = blockIdx.x;  // �� ������ Nuclide�� ó��
-//    int j = threadIdx.x; // �� �����尡 Organ�� ó��
 //
 //    if (i < MAX_NUCLIDES && j < MAX_ORGANS) {
 //        printf("Nuclide %d:\n", i);

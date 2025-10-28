@@ -1,25 +1,45 @@
+/**
+ * GPUFF Structure Definitions
+ *
+ * Contains all data structures and constants used by the Gaussian Puff
+ * atmospheric dispersion model and RCAP consequence assessment system.
+ *
+ * Key Components:
+ * - Meteorological data structures (Pres, Unis, Etas)
+ * - Simulation configuration structures
+ * - Radionuclide transport and decay data
+ * - Evacuation and health effect parameters
+ * - Grid and receptor definitions
+ */
+
 #pragma once
 
-#define LDAPS_E 132.36
-#define LDAPS_W 121.06
-#define LDAPS_N 43.13
-#define LDAPS_S 32.20
+// Lambert conformal projection bounds for Korean Peninsula
+#define LDAPS_E 132.36   // Eastern longitude
+#define LDAPS_W 121.06   // Western longitude
+#define LDAPS_N 43.13    // Northern latitude
+#define LDAPS_S 32.20    // Southern latitude
+
+// Mathematical constants
 #define PI 3.141592
-#define invPI 0.31831
+#define invPI 0.31831    // 1/PI
 
-#define dimX 602
-#define dimY 781
-#define dimZ_pres 24
-#define dimZ_etas 71
+// Meteorological grid dimensions
+#define dimX 602         // Longitude grid points
+#define dimY 781         // Latitude grid points
+#define dimZ_pres 24     // Pressure level vertical layers
+#define dimZ_etas 71     // ETAS model vertical layers
 
-#define INPUT_NUM 1
-#define MAX_STRING_LENGTH 32
-#define MAX_NUCLIDES 80
-#define MAX_ORGANS 20
-#define DATA_FIELDS 5
-#define MAX_DNUC 2
+// Simulation limits
+#define INPUT_NUM 1              // Number of input files
+#define MAX_STRING_LENGTH 32     // Maximum string length for names
+#define MAX_NUCLIDES 80          // Maximum number of radionuclides
+#define MAX_ORGANS 20            // Maximum number of body organs for dose calculation
+#define DATA_FIELDS 5            // Dose conversion factor data fields
+#define MAX_DNUC 2               // Maximum daughter nuclides per decay chain
 
-#define EARTH_RADIUS 6371000.0
+// Physical constants
+#define EARTH_RADIUS 6371000.0   // Earth radius in meters
 
 
 struct PresData {
@@ -47,37 +67,50 @@ struct UnisData {
     float SFCR;     // No.132 [SFCR] Surface Roughness (m)
 };
 
+/**
+ * Source and Output Structures
+ */
+
+// Release point location
 struct Source {
-    float lat;
-    float lon;
-    float height;
+    float lat;      // Latitude (degrees)
+    float lon;      // Longitude (degrees)
+    float height;   // Release height above ground (m)
 };
 
+// Concentration result at a specific location
 struct Concentration {
-    int location;
-    int sourceterm;
-    double value;
+    int location;      // Location/receptor index
+    int sourceterm;    // Source term index
+    double value;      // Concentration value
 };
 
+/**
+ * RectangleGrid Class
+ *
+ * Rectangular grid for concentration calculations and output.
+ * Automatically sizes grid based on domain extent.
+ */
 class RectangleGrid {
 private:
 
 public:
-
+    // Domain boundaries
     float minX, minY, maxX, maxY;
     float intervalX, intervalY, intervalZ;
     int rows, cols, zdim;
 
-    struct GridPoint{
-        float x;
-        float y;
-        float z;
-        float conc;
+    // Grid point structure
+    struct GridPoint {
+        float x;       // X coordinate (m)
+        float y;       // Y coordinate (m)
+        float z;       // Height (m)
+        float conc;    // Concentration
     };
 
     GridPoint* grid;
 
-    RectangleGrid(float _minX, float _minY, float _maxX, float _maxY){
+    RectangleGrid(float _minX, float _minY, float _maxX, float _maxY) {
 
         float width = _maxX - _minX;
         float height = _maxY - _minY;
@@ -104,31 +137,40 @@ public:
             }
         }
 
-    } 
+    }
 
-    ~RectangleGrid(){
+    ~RectangleGrid() {
         delete[] grid;
     }
 };
 
-
+/**
+ * SimulationControl Structure
+ *
+ * Contains all top-level simulation parameters and file paths.
+ * Read from RCAP input files (typically SC100-SC400 sections).
+ */
 struct SimulationControl {
-
+    // Simulation identification
     char sim_title[MAX_STRING_LENGTH];
     char plant_name[MAX_STRING_LENGTH];
-    float plant_power;
+    float plant_power;                      // Thermal power (MWth)
     char plant_type[MAX_STRING_LENGTH];
-    //float loc_longitude;
-    //float loc_latitude;
-    int numRad;
-    int numTheta;
-    float* ir_distances;
+
+    // Spatial discretization
+    int numRad;                             // Number of radial rings
+    int numTheta;                           // Number of angular sectors
+    float* ir_distances;                    // Radial distances (m)
+
+    // Input file names
     char weather_file[MAX_STRING_LENGTH];
-    char nucl_lib_file[MAX_STRING_LENGTH];
-    char dcf_file[MAX_STRING_LENGTH];
-    char fcm_file[MAX_STRING_LENGTH];
-    bool early_dose;
-    bool late_dose;
+    char nucl_lib_file[MAX_STRING_LENGTH];  // Nuclide library file
+    char dcf_file[MAX_STRING_LENGTH];       // Dose conversion factors
+    char fcm_file[MAX_STRING_LENGTH];       // Food chain model
+
+    // Dose calculation flags
+    bool early_dose;                        // Calculate early (acute) dose
+    bool late_dose;                         // Calculate late (chronic) dose
 
     void print() const {
 
@@ -156,24 +198,34 @@ struct SimulationControl {
     }
 };
 
-
+/**
+ * RadioNuclideTransport Structure
+ *
+ * Describes radionuclide release scenarios including:
+ * - Source location and building dimensions
+ * - Temporal release patterns (puffs)
+ * - Nuclide-specific release fractions
+ * Read from RT100-RT220 sections in RCAP input files.
+ */
 struct RadioNuclideTransport {
+    int nPuffTotal;                 // Total number of puffs to release
+    float build_height;             // Building height for wake effects (m)
+    float build_width;              // Building width for wake effects (m)
 
-    int nPuffTotal;                 // RT200
-    float build_height;             // RT215
-    float build_width;              // RT215
+    double lon, lat;                // Source location (degrees)
+    float conc[MAX_NUCLIDES];       // Initial concentrations per nuclide
 
-    double lon, lat;
-    float conc[MAX_NUCLIDES];
-
+    /**
+     * RT_Puff - Individual puff release definition
+     */
     struct RT_Puff {
-        int puffID;                 // RT210
-        float rele_time;            // RT210
-        float duration;             // RT210
-        float rele_height;          // RT210
-        float rel_heat;             // RT210
-        int sizeDistri_iType;       // RT210
-        float release_fractions[9]; // RT220
+        int puffID;                   // Unique puff identifier
+        float rele_time;              // Release start time (s)
+        float duration;               // Release duration (s)
+        float rele_height;            // Release height above ground (m)
+        float rel_heat;               // Heat release rate for buoyancy (W)
+        int sizeDistri_iType;         // Particle size distribution type
+        float release_fractions[9];   // Release fractions for 9 nuclide groups
 
         RT_Puff() : puffID(0), rele_time(0.0f), duration(0.0f), rele_height(0.0f),
             rel_heat(0.0f), sizeDistri_iType(0) {
@@ -186,7 +238,6 @@ struct RadioNuclideTransport {
     RadioNuclideTransport() : nPuffTotal(0), lon(0.0f), lat(0.0f) {
         std::fill(std::begin(conc), std::end(conc), 0.0f);
     }
-    //RadioNuclideTransport() : nPuffTotal(0) {}
 
     void allocatePuffs(int totalPuffs) {
         nPuffTotal = totalPuffs;
@@ -194,12 +245,8 @@ struct RadioNuclideTransport {
     }
      
     void print(int ii, int input_num) const {
-
         std::cout << "<< RadioNuclide Transport Data >> " << ii + 1 << " of " << input_num << std::endl << std::endl;
-
         std::cout << "Number of Puffs: " << nPuffTotal << std::endl;
-        //std::cout << "Building Height (m): " << build_height << std::endl;
-        //std::cout << "Building Width (m): " << build_width << std::endl;
         std::cout << "Location (Longitude, Latitude): (" << std::setprecision(9) << lon << ", " << lat << ")\n" << std::endl;
 
         std::cout << "[Concentrations]\n";
@@ -228,16 +275,20 @@ struct RadioNuclideTransport {
 
 };
 
-
+/**
+ * WeatherSamplingData Structure
+ *
+ * Controls weather sampling for Monte Carlo simulations.
+ * Read from RT310-RT350 sections in RCAP input files.
+ */
 struct WeatherSamplingData {
-
-    bool isConstant;              // RT310 (true for const, false for stratified)
-    int nSamplePerDay;            // RT320
-    int randomSeed;               // RT340
-    float windSpeed;              // RT350
-    char stability;               // RT350
-    float rainRate;               // RT350
-    float mixHeight;              // RT350
+    bool isConstant;              // True for constant weather, false for time-varying
+    int nSamplePerDay;            // Number of weather samples per day
+    int randomSeed;               // Random seed for sampling
+    float windSpeed;              // Wind speed (m/s)
+    char stability;               // Pasquill-Gifford stability class (A-F)
+    float rainRate;               // Rainfall rate (mm/hr)
+    float mixHeight;              // Mixing layer height (m)
 
     WeatherSamplingData() : isConstant(false), nSamplePerDay(0), randomSeed(0),
         windSpeed(0.0f), stability('D'), rainRate(0.0f), mixHeight(0.0f) {}
@@ -255,22 +306,25 @@ struct WeatherSamplingData {
     }
 };
 
+/**
+ * EvacuationData Structure
+ *
+ * Describes evacuation parameters including:
+ * - Shelter-in-place timing
+ * - Evacuation speeds and durations
+ * Read from EP200-EP240 sections in RCAP input files.
+ */
 struct EvacuationData {
-    float alarmTime;                            // EP200
-    int evaEndRing;                             // EP210
-    int EP_endRing;                             // EP210
-    //std::vector<float> shelterDelay;          // EP220
-    //std::vector<float> shelterDuration;       // EP230
+    float alarmTime;                  // Time of evacuation alarm (s)
+    int evaEndRing;                   // Last ring to evacuate
+    int EP_endRing;                   // Evacuation planning zone end ring
 
-    float shelterDelay[20];
-    float shelterDuration[20];
+    float shelterDelay[20];           // Delay before sheltering per ring (s)
+    float shelterDuration[20];        // Duration of sheltering per ring (s)
 
-    int nSpeedPeriod;                           // EP240
-    //std::vector<float> speeds;                // EP240
-    //std::vector<float> durations;             // EP240
-
-    float speeds[5];
-    float durations[5];
+    int nSpeedPeriod;                 // Number of speed/duration periods
+    float speeds[5];                  // Evacuation speeds per period (m/s)
+    float durations[5];               // Duration of each speed period (s)
 
     EvacuationData() : alarmTime(0.0f), evaEndRing(0), EP_endRing(0), nSpeedPeriod(0) {}
 
@@ -305,211 +359,40 @@ struct EvacuationData {
     }
 };
 
-
-//struct DecayData {
-//    char daughter[MAX_STRING_LENGTH];
-//    double branching_fraction;
-//
-//    void initialize() {
-//        memset(daughter, 0, sizeof(daughter));
-//        branching_fraction = 0.0;
-//    }
-//};
-
-//__device__ __host__ struct NuclideData {
-//    char name[MAX_STRING_LENGTH];
-//    int id;
-//    double half_life;
-//    double atomic_weight;
-//    //char chemical_group[MAX_STRING_LENGTH];
-//    int chemical_group;
-//
-//    bool wet_deposition;
-//    bool dry_deposition;
-//
-//    double core_inventory;  // Ci/MWth
-//    //double core_inventory_bq;  // Bq
-//
-//    DecayData decay[2];
-//    int decay_count;
-//
-//    char organ_names[MAX_ORGANS][MAX_STRING_LENGTH];
-//    double exposure_data[MAX_ORGANS][DATA_FIELDS];
-//    int organ_count;
-//
-//    void initialize() {
-//        memset(name, 0, sizeof(name));
-//        id = -1;
-//        half_life = 0.0;
-//        atomic_weight = 0.0;
-//        chemical_group = 0;
-//
-//        wet_deposition = false;
-//        dry_deposition = false;
-//
-//        core_inventory = 0.0;
-//        decay_count = 0;
-//
-//        for (int i = 0; i < 2; ++i) {
-//            decay[i].initialize();
-//        }
-//
-//        organ_count = 0;
-//        for (int i = 0; i < MAX_ORGANS; ++i) {
-//            memset(organ_names[i], 0, sizeof(organ_names[i]));
-//            for (int j = 0; j < DATA_FIELDS; ++j) {
-//                exposure_data[i][j] = 0.0;
-//            }
-//        }
-//    }
-//
-//    void setChemicalGroup(const char* group) {
-//        if (strncmp(group, "xen", 3) == 0) {
-//            chemical_group = 1;
-//        }
-//        else if (strncmp(group, "iod", 3) == 0) {
-//            chemical_group = 2;
-//        }
-//        else if (strncmp(group, "ces", 3) == 0) {
-//            chemical_group = 3;
-//        }
-//        else if (strncmp(group, "tel", 3) == 0) {
-//            chemical_group = 4;
-//        }
-//        else if (strncmp(group, "str", 3) == 0) {
-//            chemical_group = 5;
-//        }
-//        else if (strncmp(group, "rut", 3) == 0) {
-//            chemical_group = 6;
-//        }
-//        else if (strncmp(group, "lan", 3) == 0) {
-//            chemical_group = 7;
-//        }
-//        else if (strncmp(group, "cer", 3) == 0) {
-//            chemical_group = 8;
-//        }
-//        else if (strncmp(group, "bar", 3) == 0) {
-//            chemical_group = 9;
-//        }
-//        else {
-//            chemical_group = 0;
-//        }
-//    }
-//
-//};
-
-//#pragma pack(push, 1)
-//
-//__device__ __host__ struct NuclideData {
-//    float exposure_data[MAX_ORGANS][DATA_FIELDS];
-//    char name[MAX_STRING_LENGTH];
-//    int id;
-//    float half_life;
-//    float atomic_weight;
-//    int chemical_group;
-//
-//    float wet_deposition;
-//    float dry_deposition;
-//
-//    float core_inventory;  // Ci/MWth
-//
-//    //DecayData decay[2];
-//    int decay_count;
-//
-//    //float exposure_data[MAX_ORGANS][DATA_FIELDS];
-//    char organ_names[MAX_ORGANS][MAX_STRING_LENGTH];
-//    int organ_count;
-//
-//    char daughter[MAX_DNUC][MAX_STRING_LENGTH];
-//    float branching_fraction[MAX_DNUC];
-//
-//    //__device__ __host__ void initialize() {
-//    //    for (int i = 0; i < MAX_STRING_LENGTH; ++i) {
-//    //        name[i] = 0;
-//    //    }
-//    //    id = -1;
-//    //    half_life = 0.0;
-//    //    atomic_weight = 0.0;
-//    //    chemical_group = 0;
-//
-//    //    wet_deposition = 0;
-//    //    dry_deposition = 0;
-//
-//    //    core_inventory = 0.0;
-//    //    decay_count = 0;
-//
-//    //    //for (int i = 0; i < 2; ++i) {
-//    //    //    decay[i].initialize();
-//    //    //}
-//
-//    //    organ_count = 0;
-//    //    for (int i = 0; i < MAX_ORGANS; ++i) {
-//    //        for (int j = 0; j < MAX_STRING_LENGTH; ++j) {
-//    //            organ_names[i][j] = 0;
-//    //        }
-//    //        for (int j = 0; j < DATA_FIELDS; ++j) {
-//    //            exposure_data[i][j] = 0.0;
-//    //        }
-//    //    }
-//    //    for (int i = 0; i < MAX_DNUC; ++i) {
-//    //        for (int j = 0; j < MAX_STRING_LENGTH; ++j) {
-//    //            daughter[i][j] = 0;
-//    //        }
-//    //        branching_fraction[i] = 0.0;
-//    //    }
-//    //}
-//
-//    //__device__ __host__ void setChemicalGroup(const char* group) {
-//    //    if (group[0] == 'x' && group[1] == 'e' && group[2] == 'n') {
-//    //        chemical_group = 1;
-//    //    }
-//    //    else if (group[0] == 'i' && group[1] == 'o' && group[2] == 'd') {
-//    //        chemical_group = 2;
-//    //    }
-//    //    else if (group[0] == 'c' && group[1] == 'e' && group[2] == 's') {
-//    //        chemical_group = 3;
-//    //    }
-//    //    else if (group[0] == 't' && group[1] == 'e' && group[2] == 'l') {
-//    //        chemical_group = 4;
-//    //    }
-//    //    else if (group[0] == 's' && group[1] == 't' && group[2] == 'r') {
-//    //        chemical_group = 5;
-//    //    }
-//    //    else if (group[0] == 'r' && group[1] == 'u' && group[2] == 't') {
-//    //        chemical_group = 6;
-//    //    }
-//    //    else if (group[0] == 'l' && group[1] == 'a' && group[2] == 'n') {
-//    //        chemical_group = 7;
-//    //    }
-//    //    else if (group[0] == 'c' && group[1] == 'e' && group[2] == 'r') {
-//    //        chemical_group = 8;
-//    //    }
-//    //    else if (group[0] == 'b' && group[1] == 'a' && group[2] == 'r') {
-//    //        chemical_group = 9;
-//    //    }
-//    //    else {
-//    //        chemical_group = 0;
-//    //    }
-//    //}
-//};
-//#pragma pack(pop)
-
+/**
+ * NuclideData Structure
+ *
+ * Contains complete radionuclide information including:
+ * - Physical properties (half-life, atomic weight)
+ * - Chemical group (for deposition modeling)
+ * - Deposition parameters
+ * - Decay chain information
+ * - Dose conversion factors for multiple organs
+ *
+ * Read from MACCS60.NDL and MACCS_DCF_New2.LIB files.
+ * Packed structure for efficient GPU transfer.
+ *
+ * Chemical Groups:
+ *   1: Xenon (Xe)   2: Iodine (I)   3: Cesium (Cs)
+ *   4: Tellurium (Te)   5: Strontium (Sr)   6: Ruthenium (Ru)
+ *   7: Lanthanum (La)   8: Cerium (Ce)   9: Barium (Ba)
+ */
 #pragma pack(push, 1)
 struct NuclideData {
-    char name[MAX_STRING_LENGTH];
-    int id;
-    float half_life;
-    float atomic_weight;
-    int chemical_group;
-    float wet_deposition;
-    float dry_deposition;
-    float core_inventory;
-    int decay_count;
-    float exposure_data[MAX_ORGANS * DATA_FIELDS];
-    char organ_names[MAX_ORGANS * MAX_STRING_LENGTH];
-    int organ_count;
-    char daughter[MAX_DNUC * MAX_STRING_LENGTH];
-    float branching_fraction[MAX_DNUC];
+    char name[MAX_STRING_LENGTH];                           // Nuclide name (e.g., "Xe-133")
+    int id;                                                 // Unique identifier
+    float half_life;                                        // Half-life (seconds)
+    float atomic_weight;                                    // Atomic weight (amu)
+    int chemical_group;                                     // Chemical group (1-9, see above)
+    float wet_deposition;                                   // Wet deposition parameter
+    float dry_deposition;                                   // Dry deposition velocity (m/s)
+    float core_inventory;                                   // Core inventory (Ci/MWth)
+    int decay_count;                                        // Number of daughter nuclides
+    float exposure_data[MAX_ORGANS * DATA_FIELDS];          // Dose conversion factors (flattened)
+    char organ_names[MAX_ORGANS * MAX_STRING_LENGTH];       // Organ names (flattened)
+    int organ_count;                                        // Number of organs
+    char daughter[MAX_DNUC * MAX_STRING_LENGTH];            // Daughter nuclide names (flattened)
+    float branching_fraction[MAX_DNUC];                     // Decay branching fractions
 };
 #pragma pack(pop)
 
@@ -889,6 +772,6 @@ struct ResultLine {
     int radVal;
     int thetaVal;
     std::string effect_type;   // "deterministic" or "stochastic_cf" or "stochastic_ci"
-    std::string effect_name;   // "HematopoieticSyndrome", "Leukemia_incidence" µî
+    std::string effect_name;   // "HematopoieticSyndrome", "Leukemia_incidence" ï¿½ï¿½
     float npeople;
 };

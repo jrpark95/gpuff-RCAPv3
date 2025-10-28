@@ -1,5 +1,39 @@
+// ============================================================================
+// GPUFF Initialization Module
+// ============================================================================
+// This file contains initialization and input file parsing functions for the
+// GPUFF (Gaussian Puff) atmospheric dispersion model with radiological
+// consequence assessment capabilities (RCAP).
+//
+// Main Responsibilities:
+// - Parse MACCS nuclear library data files
+// - Read dose conversion factors (DCF)
+// - Initialize simulation parameters
+// - Configure meteorological data structures
+// - Setup radionuclide transport parameters
+// ============================================================================
+
 #include "gpuff.cuh"
 
+// ============================================================================
+// Chemical Group Classification
+// ============================================================================
+// Maps chemical element group names to integer codes for radionuclide
+// classification. This follows the MACCS (MELCOR Accident Consequence Code
+// System) categorization scheme.
+//
+// Chemical Groups:
+//   1 - Xenon (xen)     : Noble gases
+//   2 - Iodine (iod)    : Halogens
+//   3 - Cesium (ces)    : Alkali metals
+//   4 - Tellurium (tel) : Chalcogens
+//   5 - Strontium (str) : Alkaline earth metals
+//   6 - Ruthenium (rut) : Transition metals
+//   7 - Lanthanum (lan) : Lanthanides
+//   8 - Cerium (cer)    : Lanthanides
+//   9 - Barium (bar)    : Alkaline earth metals
+//   0 - Unknown/Other
+// ============================================================================
 int setCG(const char* group) {
     if (strncmp(group, "xen", 3) == 0) return 1;
     else if (strncmp(group, "iod", 3) == 0) return 2;
@@ -13,6 +47,11 @@ int setCG(const char* group) {
     else return 0;
 }
 
+// ============================================================================
+// String Utility Functions
+// ============================================================================
+
+// Removes leading and trailing whitespace from a C-string in place
 void trim(char* str) {
     char* p = str;
     while (*p == ' ') ++p;
@@ -23,6 +62,9 @@ void trim(char* str) {
     *(p + 1) = '\0';
 }
 
+// Searches for a nuclide by name in the nuclide data vector
+// Returns the index if found, -1 if not found
+// Uses case-insensitive comparison
 int find_nuclide_index(std::vector<NuclideData>& ND, const std::string& nuclide_name) {
     for (int i = 0; i < ND.size(); i++) {
         if (STRICMP(ND[i].name, nuclide_name.c_str()) == 0) {
@@ -32,6 +74,38 @@ int find_nuclide_index(std::vector<NuclideData>& ND, const std::string& nuclide_
     return -1;
 }
 
+// ============================================================================
+// Simulation Configuration Reader
+// ============================================================================
+// Reads basic simulation parameters from setting.txt and source.txt
+//
+// INPUT FILES:
+// ------------
+// 1. setting.txt format:
+//    Time_end(s): <float>              - Total simulation duration in seconds
+//    dt(s): <float>                    - Time step size in seconds
+//    Plot_output_freq: <int>           - Output frequency (every N timesteps)
+//    Total_number_of_puff: <int>       - Total number of puffs to simulate
+//    Rural/Urban: <0/1>                - 0=Urban, 1=Rural (affects dispersion)
+//    Pasquill-Gifford/Briggs-McElroy-Pooler: <0/1>
+//                                      - 0=Briggs, 1=Pasquill-Gifford
+//
+// 2. source.txt format:
+//    [SOURCE]
+//    <lat> <lon> <height>              - Source location (degrees, meters)
+//    ...
+//
+//    [SOURCE_TERM]
+//    <srcnum> <decay> <depvel>         - Source term properties
+//    ...                                 decay: decay constant (1/s)
+//                                        depvel: dry deposition velocity (m/s)
+//
+//    [RELEASE_CASES]
+//    <location> <sourceterm> <value>   - Release case definition
+//    ...                                 location: source index (1-based)
+//                                        sourceterm: term index (1-based)
+//                                        value: concentration value (Bq)
+// ============================================================================
 void Gpuff::read_simulation_config(){
 
     FILE* file;
@@ -163,6 +237,25 @@ void Gpuff::read_simulation_config(){
 
 }
 
+// ============================================================================
+// Meteorological Vertical Level Reader
+// ============================================================================
+// Reads vertical coordinate (eta) levels from LDAPS meteorological data files
+//
+// INPUT FILES:
+// ------------
+// hgt_uv.txt : Heights for horizontal wind components (U/V)
+// hgt_w.txt  : Heights for vertical wind component (W)
+//
+// File Format:
+// Each line contains colon-separated fields with altitude value in 5th field
+// Example: field1:field2:field3:field4:<altitude>:...
+//
+// Units: meters above ground level (AGL)
+//
+// LDAPS: Local Data Assimilation and Prediction System
+// Eta coordinates: Terrain-following vertical coordinate system
+// ============================================================================
 void Gpuff::read_etas_altitudes(){
 
 
@@ -360,95 +453,74 @@ void Gpuff::vdepo_initialization(){
 }
 
 
-//void read_input_RCAP(const std::string& filename, SimulationControl& simControl) {
-//    std::ifstream infile(filename);
-//    if (!infile.is_open()) {
-//        std::cerr << "Error: Could not open file " << filename << std::endl;
-//        exit(EXIT_FAILURE);
-//    }
-//
-//    std::string line;
-//    while (std::getline(infile, line)) {
-//        std::istringstream iss(line);
-//        std::string keyword;
-//
-//        // Skip empty lines and comments
-//        if (line.empty() || line[0] == '!') {
-//            continue;
-//        }
-//
-//        if (line.find("SC10") != std::string::npos) {
-//            // SC10: Read sim_title
-//            iss >> keyword >> simControl.sim_title;
-//        }
-//        else if (line.find("SC20") != std::string::npos) {
-//            // SC20: Read plant_name, plant_power, plant_type, loc_longitude, loc_latitude
-//            std::string longitude, latitude;
-//            iss >> keyword >> simControl.plant_name >> simControl.plant_power >> simControl.plant_type >> longitude >> latitude;
-//
-//            // Process longitude and latitude (remove E/N and convert to float)
-//            if (longitude[0] == 'E' || longitude[0] == 'W') {
-//                simControl.loc_longitude = std::stof(longitude.substr(1));
-//                if (longitude[0] == 'W') simControl.loc_longitude = -simControl.loc_longitude;
-//            }
-//            if (latitude[0] == 'N' || latitude[0] == 'S') {
-//                simControl.loc_latitude = std::stof(latitude.substr(1));
-//                if (latitude[0] == 'S') simControl.loc_latitude = -simControl.loc_latitude;
-//            }
-//        }
-//        else if (line.find("SC40") != std::string::npos) {
-//            // SC40: Read coord, numRad, numTheta
-//            std::string coord;
-//            iss >> keyword >> coord >> simControl.numRad >> simControl.numTheta;
-//            simControl.ir_distances = new float[simControl.numRad];
-//        }
-//        else if (line.find("SC41") != std::string::npos) {
-//            // SC41: Read ir distances
-//            iss >> keyword;
-//            for (int i = 0; i < simControl.numRad; ++i) {
-//                iss >> simControl.ir_distances[i];
-//            }
-//        }
-//        else if (line.find("SC50") != std::string::npos) {
-//            iss >> keyword >> simControl.weather_file >> simControl.nucl_lib_file;
-//            iss >> simControl.dcf_file >> simControl.fcm_file;
-//
-//            // Remove leading and trailing spaces
-//            trim(simControl.dcf_file);
-//            trim(simControl.fcm_file);
-//        }
-//        else if (line.find("SC90") != std::string::npos) {
-//            // SC90: Read early_dose and late_dose
-//            std::string early_dose, late_dose;
-//            iss >> keyword >> early_dose >> late_dose;
-//            simControl.early_dose = (early_dose == "y" || early_dose == "Y");
-//            simControl.late_dose = (late_dose == "y" || late_dose == "Y");
-//        }
-//
-//
-//    }
-//
-//    infile.close();
-//}
 
 
+// Helper function for RT130 parsing (dry deposition velocity by particle size)
 void parse_RT130(const std::string& line) {
     std::istringstream iss(line);
     std::string keyword;
-    int particleSizeID;
-    float vDepo;
+    int particle_size_id;
+    float deposition_velocity_m_per_s;
 
-    iss >> keyword >> particleSizeID >> vDepo;
+    iss >> keyword >> particle_size_id >> deposition_velocity_m_per_s;
 
-    if (particleSizeID >= 1 && particleSizeID <= PARTICLE_COUNT) {
-        Vdepo[particleSizeID - 1] = vDepo;
+    if (particle_size_id >= 1 && particle_size_id <= PARTICLE_COUNT) {
+        Vdepo[particle_size_id - 1] = deposition_velocity_m_per_s;
     }
 }
 
-
-
-
-void read_input_RCAP(const std::string& filename, SimulationControl& SC, 
+// ============================================================================
+// RCAP Main Input File Parser
+// ============================================================================
+// Reads comprehensive RCAP (Radiological Consequence Assessment Program) input
+// This is the main scenario configuration file containing all parameters for
+// nuclear accident consequence modeling
+//
+// INPUT FILE STRUCTURE (in order):
+// ---------------------------------
+// *Simul_Con (Simulation Control)
+//   SC10: Simulation title
+//   SC20: Plant info (name, power, type, location)
+//   SC40: Spatial grid (coordinate system, radial rings, angular sectors)
+//   SC41: Radial distances (km, converted to meters)
+//   SC50: Input file names (weather, nuclide library, DCF, FCM)
+//   SC90: Dose calculation flags (early/late)
+//
+// *RN_Trans (Radionuclide Transport)
+//   RT110: Core inventory by nuclide (Bq)
+//   RT120: Release class properties (wet/dry deposition)
+//   RT130: Dry deposition velocity by particle size (m/s)
+//   RT150: Particle size distribution by element group
+//   RT200: Number of release pathways and puffs
+//   RT210: Puff release parameters (time, duration, height, heat)
+//   RT215: Building dimensions (height, width in meters)
+//   RT220: Release fractions by chemical group
+//   RT310: Weather sampling type (constant/stratified)
+//   RT320: Samples per day
+//   RT340: Random seed
+//   RT350: Constant weather (if applicable)
+//
+// *EP_Sim (Emergency Planning Simulation)
+//   EP200: Alarm time (seconds)
+//   EP210: Evacuation rings (inner/outer)
+//   EP220: Shelter delay by ring (hours)
+//   EP230: Shelter duration by ring (hours)
+//   EP240: Evacuation speeds and durations (m/s, hours)
+//   EP250: Evacuation directions by ring/sector (F/B/L/R)
+//
+// *Site_Data
+//   SD50: Surface roughness by sector (cm)
+//   SD150: Population by ring and sector
+//
+// *Model_Par (Model Parameters)
+//   MP130: Washout coefficients (wc1, wc2 for wet deposition)
+//   MP210: Protection factors (cloudshine, groundshine, inhalation, ingestion, resuspension)
+//   MP220: Resuspension parameters (coefficient, half-life)
+//   MP250: Acute fatality model (organ, alpha, beta, threshold)
+//   MP260: Acute morbidity model (injury types)
+//   MP270: Cancer effect model (risk coefficients)
+// ============================================================================
+void read_input_RCAP(const std::string& filename, SimulationControl& SC,
     std::vector<NuclideData>& ND, RadioNuclideTransport& RT, WeatherSamplingData& WD,
     EvacuationData& EP, EvacuationDirections& ED, SiteData& SD, ProtectionFactors& PF, HealthEffect& HE) {
 
@@ -1090,6 +1162,37 @@ void copy_simulation_data_to_gpu(SimulationControl* h_simControls, SimulationCon
     }
 }
 
+// ============================================================================
+// MACCS Dose Conversion Factor (DCF) Reader
+// ============================================================================
+// Reads dose conversion factors from MACCS-format DCF file
+//
+// INPUT FILE FORMAT:
+// ------------------
+// DC20 <nuclide_name>
+//   Starts a new nuclide entry
+//
+// DC30 + <organ_name> <cloud_shine> <ground_shine> <inhal_early> <inhal_late> <ingestion>
+//   Defines dose conversion factors for one organ
+//   Multiple DC30 lines can follow each DC20
+//
+// DOSE CONVERSION FACTORS:
+// ------------------------
+// Cloud shine    : External dose from passing radioactive cloud (Sv/Bq-s/m^3)
+// Ground shine   : External dose from deposited radionuclides (Sv-m^2/Bq-s)
+// Inhal early    : Inhalation dose, early phase (Sv/Bq inhaled)
+// Inhal late     : Inhalation dose, late phase (Sv/Bq inhaled)
+// Ingestion      : Ingestion dose (Sv/Bq ingested)
+//
+// ORGAN TYPES:
+// ------------
+// Common organs include: TESTES, BREAST, LUNGS, R_MARR (red marrow),
+// BONE_SU (bone surface), THYROID, REMAINDER, EFFECTIVE, SKIN
+//
+// MACCS: MELCOR Accident Consequence Code System
+// DCF values are based on ICRP (International Commission on Radiological
+// Protection) dose coefficients
+// ============================================================================
 void read_MACCS_DCF_New2(const std::string& filename, std::vector<NuclideData>& ND) {
     std::ifstream infile(filename);
     if (!infile.is_open()) {
@@ -1099,8 +1202,8 @@ void read_MACCS_DCF_New2(const std::string& filename, std::vector<NuclideData>& 
 
     std::string line;
     bool is_reading_nuclides = false;
-    int current_id = -1; 
-    std::string current_name;
+    int current_nuclide_id = -1;
+    std::string current_nuclide_name;
 
     while (std::getline(infile, line)) {
         if (line.empty() || line[0] == '!') {
@@ -1112,21 +1215,21 @@ void read_MACCS_DCF_New2(const std::string& filename, std::vector<NuclideData>& 
         iss >> code;
 
         if (code == "DC20") {
-            current_id++; 
-            iss >> current_name;
+            current_nuclide_id++;
+            iss >> current_nuclide_name;
 
-            if (current_id >= ND.size()) {
+            if (current_nuclide_id >= ND.size()) {
                 std::cerr << "Error: Exceeded the maximum number of nuclides" << std::endl;
                 exit(EXIT_FAILURE);
             }
 
             is_reading_nuclides = true;
-            ND[current_id].id = current_id;
-            strncpy(ND[current_id].name, current_name.c_str(), MAX_STRING_LENGTH);
-            ND[current_id].organ_count = 0;
+            ND[current_nuclide_id].id = current_nuclide_id;
+            strncpy(ND[current_nuclide_id].name, current_nuclide_name.c_str(), MAX_STRING_LENGTH);
+            ND[current_nuclide_id].organ_count = 0;
 
             if (CHECK_DCF) {
-                std::cout << std::endl << "No." << current_id << " [" << ND[current_id].name << "]" << std::endl << std::endl;
+                std::cout << std::endl << "No." << current_nuclide_id << " [" << ND[current_nuclide_id].name << "]" << std::endl << std::endl;
                 std::cout << std::left << std::setw(9) << "\t" << "(Cloud shine)\t(Ground shine)\t(Inhal early)\t(Inhal late)\t(Ingestion)" << std::endl;
             }
             continue;
@@ -1134,34 +1237,34 @@ void read_MACCS_DCF_New2(const std::string& filename, std::vector<NuclideData>& 
 
         if (is_reading_nuclides && (code == "DC30" || code == "+")) {
             std::string organ_name;
-            double cloud_shine, ground_shine, inhal_early, inhal_late, ingestion;
+            double cloud_shine_dcf, ground_shine_dcf, inhalation_early_dcf, inhalation_late_dcf, ingestion_dcf;
 
             iss >> code;
-            iss >> organ_name >> cloud_shine >> ground_shine >> inhal_early >> inhal_late >> ingestion;
+            iss >> organ_name >> cloud_shine_dcf >> ground_shine_dcf >> inhalation_early_dcf >> inhalation_late_dcf >> ingestion_dcf;
 
-            int organ_idx = ND[current_id].organ_count;
-            if (organ_idx >= MAX_ORGANS) {
-                std::cerr << "Error: Exceeded the maximum number of organs for nuclide " << ND[current_id].name << std::endl;
+            int organ_index = ND[current_nuclide_id].organ_count;
+            if (organ_index >= MAX_ORGANS) {
+                std::cerr << "Error: Exceeded the maximum number of organs for nuclide " << ND[current_nuclide_id].name << std::endl;
                 exit(EXIT_FAILURE);
             }
 
-            strncpy(&ND[current_id].organ_names[organ_idx * MAX_STRING_LENGTH], organ_name.c_str(), MAX_STRING_LENGTH);
-            ND[current_id].exposure_data[organ_idx * DATA_FIELDS + 0] = cloud_shine;
-            ND[current_id].exposure_data[organ_idx * DATA_FIELDS + 1] = ground_shine;
-            ND[current_id].exposure_data[organ_idx * DATA_FIELDS + 2] = inhal_early;
-            ND[current_id].exposure_data[organ_idx * DATA_FIELDS + 3] = inhal_late;
-            ND[current_id].exposure_data[organ_idx * DATA_FIELDS + 4] = ingestion;
+            strncpy(&ND[current_nuclide_id].organ_names[organ_index * MAX_STRING_LENGTH], organ_name.c_str(), MAX_STRING_LENGTH);
+            ND[current_nuclide_id].exposure_data[organ_index * DATA_FIELDS + 0] = cloud_shine_dcf;
+            ND[current_nuclide_id].exposure_data[organ_index * DATA_FIELDS + 1] = ground_shine_dcf;
+            ND[current_nuclide_id].exposure_data[organ_index * DATA_FIELDS + 2] = inhalation_early_dcf;
+            ND[current_nuclide_id].exposure_data[organ_index * DATA_FIELDS + 3] = inhalation_late_dcf;
+            ND[current_nuclide_id].exposure_data[organ_index * DATA_FIELDS + 4] = ingestion_dcf;
 
-            ND[current_id].organ_count++;
+            ND[current_nuclide_id].organ_count++;
 
             if (CHECK_DCF) {
-                std::cout << std::left << std::setw(10) << &ND[current_id].organ_names[organ_idx * MAX_STRING_LENGTH] << "\t";
+                std::cout << std::left << std::setw(10) << &ND[current_nuclide_id].organ_names[organ_index * MAX_STRING_LENGTH] << "\t";
                 std::cout << std::scientific << std::setprecision(2);
-                std::cout << ND[current_id].exposure_data[organ_idx * DATA_FIELDS + 0] << "\t" <<
-                    ND[current_id].exposure_data[organ_idx * DATA_FIELDS + 1] << "\t" <<
-                    ND[current_id].exposure_data[organ_idx * DATA_FIELDS + 2] << "\t" <<
-                    ND[current_id].exposure_data[organ_idx * DATA_FIELDS + 3] << "\t" <<
-                    ND[current_id].exposure_data[organ_idx * DATA_FIELDS + 4] << std::endl;
+                std::cout << ND[current_nuclide_id].exposure_data[organ_index * DATA_FIELDS + 0] << "\t" <<
+                    ND[current_nuclide_id].exposure_data[organ_index * DATA_FIELDS + 1] << "\t" <<
+                    ND[current_nuclide_id].exposure_data[organ_index * DATA_FIELDS + 2] << "\t" <<
+                    ND[current_nuclide_id].exposure_data[organ_index * DATA_FIELDS + 3] << "\t" <<
+                    ND[current_nuclide_id].exposure_data[organ_index * DATA_FIELDS + 4] << std::endl;
             }
 
         }
@@ -1176,6 +1279,39 @@ void read_MACCS_DCF_New2(const std::string& filename, std::vector<NuclideData>& 
 
 
 
+// ============================================================================
+// MACCS Nuclide Data Library (NDL) Reader
+// ============================================================================
+// Reads radionuclide physical properties from MACCS60 nuclide library file
+//
+// INPUT FILE FORMAT:
+// ------------------
+// NL10 <name> <half_life> <unit> <atomic_weight> <chemical_group>
+//   Nuclide identification and basic properties
+//   half_life units: s (seconds), m (minutes), h (hours), d (days), y (years)
+//   chemical_group: xen, iod, ces, tel, str, rut, lan, cer, bar
+//
+// NL20 <core_inventory>
+//   Core inventory in Ci/MWth (Curies per megawatt thermal)
+//
+// NL30 <daughter_name> <branching_fraction>
+//   Decay chain information (can have multiple NL30 lines)
+//   branching_fraction: probability of this decay path (0.0 to 1.0)
+//
+// NUCLEAR PHYSICS CONCEPTS:
+// -------------------------
+// Half-life: Time for half the radioactive atoms to decay
+// Atomic weight: Mass number of the isotope (amu)
+// Core inventory: Amount of nuclide in reactor core per unit thermal power
+// Branching fraction: Probability of decay to a specific daughter nuclide
+// Decay chain: Series of radioactive decays from parent to daughter nuclides
+//
+// UNITS:
+// ------
+// Half-life: Converted to seconds internally
+// Core inventory: Ci/MWth (Curies per Megawatt thermal)
+// Atomic weight: g/mol (grams per mole)
+// ============================================================================
 void read_MACCS60_NDL(const std::string& filename, std::vector<NuclideData>& ND) {
     std::ifstream infile(filename);
     if (!infile.is_open()) {
@@ -1184,7 +1320,7 @@ void read_MACCS60_NDL(const std::string& filename, std::vector<NuclideData>& ND)
     }
 
     std::string line;
-    int current_index = -1;
+    int current_nuclide_index = -1;
 
     while (std::getline(infile, line)) {
         if (line.empty() || line[0] == '!') {
@@ -1199,51 +1335,51 @@ void read_MACCS60_NDL(const std::string& filename, std::vector<NuclideData>& ND)
             std::string nuclide_name, half_life_str, half_life_unit;
             iss >> nuclide_name >> half_life_str >> half_life_unit;
 
-            // Find the corresponding nuclide index
-            current_index = find_nuclide_index(ND, nuclide_name);
+            current_nuclide_index = find_nuclide_index(ND, nuclide_name);
 
-            if (current_index == -1) {
+            if (current_nuclide_index == -1) {
                 std::cerr << "Error: Nuclide " << nuclide_name << " not found in existing data." << std::endl;
                 continue;
             }
 
-            // Process half-life and convert to seconds
-            double half_life = std::stod(half_life_str);
+            // Convert half-life to seconds based on input unit
+            double half_life_seconds = std::stod(half_life_str);
             if (half_life_unit == "d") {
-                half_life *= 86400; // days to seconds
+                half_life_seconds *= 86400.0;          // days to seconds
             }
             else if (half_life_unit == "h") {
-                half_life *= 3600; // hours to seconds
+                half_life_seconds *= 3600.0;           // hours to seconds
             }
             else if (half_life_unit == "m") {
-                half_life *= 60; // minutes to seconds
+                half_life_seconds *= 60.0;             // minutes to seconds
             }
             else if (half_life_unit == "y") {
-                half_life *= 31557600; // years to seconds (365.25 days)
+                half_life_seconds *= 31557600.0;       // years to seconds (365.25 days)
             }
-            ND[current_index].half_life = half_life;
+            ND[current_nuclide_index].half_life = half_life_seconds;
 
-            iss >> ND[current_index].atomic_weight;
-            std::string chemical_group;
-            iss >> chemical_group;
-            ND[current_index].chemical_group = setCG(chemical_group.c_str());
+            iss >> ND[current_nuclide_index].atomic_weight;
+            std::string chemical_group_name;
+            iss >> chemical_group_name;
+            ND[current_nuclide_index].chemical_group = setCG(chemical_group_name.c_str());
         }
         else if (code == "NL20") {
-            double core_inventory;
-            iss >> core_inventory;
-            if (current_index != -1) {
-                ND[current_index].core_inventory = core_inventory;
+            double core_inventory_ci_per_mwth;
+            iss >> core_inventory_ci_per_mwth;
+            if (current_nuclide_index != -1) {
+                ND[current_nuclide_index].core_inventory = core_inventory_ci_per_mwth;
             }
         }
         else if (code == "NL30") {
-            if (current_index != -1 && ND[current_index].decay_count < MAX_DNUC) {
-                std::string daughter;
-                double branching_fraction;
-                iss >> daughter >> branching_fraction;
+            if (current_nuclide_index != -1 && ND[current_nuclide_index].decay_count < MAX_DNUC) {
+                std::string daughter_nuclide_name;
+                double decay_branching_fraction;
+                iss >> daughter_nuclide_name >> decay_branching_fraction;
 
-                strncpy(&ND[current_index].daughter[ND[current_index].decay_count * MAX_STRING_LENGTH], daughter.c_str(), MAX_STRING_LENGTH);
-                ND[current_index].branching_fraction[ND[current_index].decay_count] = branching_fraction;
-                ND[current_index].decay_count++;
+                strncpy(&ND[current_nuclide_index].daughter[ND[current_nuclide_index].decay_count * MAX_STRING_LENGTH],
+                        daughter_nuclide_name.c_str(), MAX_STRING_LENGTH);
+                ND[current_nuclide_index].branching_fraction[ND[current_nuclide_index].decay_count] = decay_branching_fraction;
+                ND[current_nuclide_index].decay_count++;
             }
         }
 
@@ -1273,111 +1409,37 @@ void print_MACCS60_NDL(const std::vector<NuclideData>& ND) {
 }
 
 
-//void copy_MACCS_data_to_device(MACCSData& h_maccsData, MACCSData*& d_maccsData) {
-//
-//    cudaMalloc((void**)&d_maccsData, sizeof(MACCSData));
-//
-//    NuclideData* d_nuclides;
-//    cudaMalloc((void**)&d_nuclides, sizeof(NuclideData) * h_maccsData.nuclide_count);
-//
-//    cudaMemcpy(d_nuclides, h_maccsData.nuclides, sizeof(NuclideData) * h_maccsData.nuclide_count, cudaMemcpyHostToDevice);
-//
-//    cudaMemcpy(&(d_maccsData->nuclides), &d_nuclides, sizeof(NuclideData*), cudaMemcpyHostToDevice);
-//
-//    cudaMemcpy(d_maccsData, &h_maccsData, sizeof(MACCSData), cudaMemcpyHostToDevice);
-//}
-//
-//void Gpuff::initializePuffs(
-//    int input_num,
-//    const std::vector<RadioNuclideTransport>& RT,
-//    const std::vector<NuclideData>& ND
-//) {
-//    int totalPuffs = 0;
-//
-//    for (int i = 0; i < input_num; i++) {
-//        totalPuffs += RT[i].nPuffTotal;
-//    }
-//
-//    puffs_RCAP.reserve(RCAP_metdata.size() * totalPuffs);
-//
-//    double baseLon = RT[0].lon;
-//    double baseLat = RT[0].lat;
-//
-//    const double metersPerLatDegree = 111320.0;
-//    const double metersPerLonDegree = 88290.0;
-//
-//    printf("RCAP_metdata = %d\n", RCAP_metdata.size());
-//
-//    double xx1, yy1, xx3, yy3, xx5, yy5;
-//
-//    for (int i = 0; i < 6; i++) {
-//        xx1 = (RT[i].lon - baseLon) * metersPerLonDegree;
-//        yy1 = (RT[i].lat - baseLat) * metersPerLonDegree;
-//        printf("[%d] x = %f, y = %f\n", i, xx1, yy1);
-//    }
-//
-//    xx3 = (RT[3].lon - baseLon) * metersPerLonDegree;
-//    yy3 = (RT[3].lat - baseLat) * metersPerLonDegree;
-//    xx5 = (RT[5].lon - baseLon) * metersPerLonDegree;
-//    yy5 = (RT[5].lat - baseLat) * metersPerLonDegree;
-//
-//    printf("dist = %f\n", sqrt((xx3 - xx5) * (xx3 - xx5) + (yy3 - yy5) * (yy3 - yy5)));
-// 
-//
-//    for (size_t i = 0; i < RCAP_metdata.size(); i++) {
-//        for (int j = 0; j < input_num; j++) {
-//            for (int k = 0; k < RT[j].nPuffTotal; k++) {
-//
-//                //std::cout << RT[j].nPuffTotal << std::endl;
-//
-//                float _x = static_cast<float>((RT[j].lon - baseLon) * metersPerLonDegree);
-//                float _y = static_cast<float>((RT[j].lat - baseLat) * metersPerLatDegree);
-//                float _z = RT[j].RT_puffs[k].rele_height;
-//
-//                float _concentration[MAX_NUCLIDES];
-//                    //RT[j].conc;
-//                for (int nuc = 0; nuc < MAX_NUCLIDES; nuc++) {
-//                    _concentration[nuc] = RT[j].conc[nuc] * RT[j].RT_puffs[k].release_fractions[ND[nuc].chemical_group];
-//                }
-//
-//                float _releasetime = RT[j].RT_puffs[k].rele_time;
-//                int _unitidx = j;
-//                //std::cout << "input_num = " << input_num << std::endl;
-//                //std::cout << "j = " << j << std::endl;
-//
-//                float _windvel = RCAP_metdata[i].spd;
-//
-//                int time_steps = static_cast<int>(_releasetime / 360); // Calculate the number of hours passed
-//                int new_diridx = (i + time_steps) % RCAP_metdata.size(); // Use modulo to wrap around if we exceed the dataset
-//
-//                //if(i+k< RCAP_metdata.size()) new_diridx  = i + k;
-//                //else new_diridx = i + k - RCAP_metdata.size();
-//
-//                float _windir = RCAP_metdata[new_diridx].dir;
-//                //std::cout << "_windir = " << RCAP_metdata[i].dir << ", new_diridx = "<< RCAP_metdata[new_diridx].dir << std::endl;
-//
-//                int _stab = RCAP_metdata[i].stab;
-//                float _rain = RCAP_metdata[i].rain;
-//
-//                //std::cout << "_concentration[0] =  " << _concentration[0] << std::endl;
-//                //std::cout << "_concentration[1] =  " << _concentration[1] << std::endl;
-//                //std::cout << "_concentration[2] =  " << _concentration[2] << std::endl;
-//                //std::cout << "_concentration[3] =  " << _concentration[3] << std::endl;
-//                //std::cout << "_concentration[4] =  " << _concentration[4] << std::endl;
-//
-//
-//                puffs_RCAP.emplace_back(_x, _y, _z, 
-//                    _concentration, _releasetime, _unitidx, _windvel, _windir, _stab, _rain, i);
-//
-//            }
-//        }
-//    }
-//}
 
+// ============================================================================
+// Coordinate Conversion Utilities
+// ============================================================================
+
+// Converts degrees to radians
 inline double toRadians(double degrees) {
     return degrees * PI / 180.0;
 }
 
+// ============================================================================
+// Puff Initialization for RCAP
+// ============================================================================
+// Creates puff objects for each meteorological scenario and release source
+// Converts geographic coordinates to local Cartesian coordinates
+//
+// COORDINATE SYSTEM:
+// ------------------
+// Uses spherical Earth approximation for coordinate conversion:
+// - Origin: First source location (RT[0].lon, RT[0].lat)
+// - X-axis: Eastward (meters)
+// - Y-axis: Northward (meters)
+// - Earth radius: 6,371,000 meters
+//
+// PUFF PROPERTIES:
+// ----------------
+// - Position: (x, y, z) in meters from origin
+// - Concentration: Activity per nuclide (Bq)
+// - Release time: Seconds from simulation start
+// - Meteorology: Wind speed, direction, stability, precipitation
+// ============================================================================
 void Gpuff::initializePuffs(
     int input_num,
     const std::vector<RadioNuclideTransport>& RT,
@@ -1390,95 +1452,114 @@ void Gpuff::initializePuffs(
 
     puffs_RCAP.reserve(RCAP_metdata.size() * totalPuffs);
 
-    double baseLon = RT[0].lon;
-    double baseLat = RT[0].lat;
+    double base_longitude = RT[0].lon;
+    double base_latitude = RT[0].lat;
 
     printf("RCAP_metdata = %d\n", RCAP_metdata.size());
 
-    //double lonDiff3 = toRadians(RT[3].lon - baseLon);
-    //double latDiff3 = toRadians(RT[3].lat - baseLat);
-    //double baseLatRad3 = toRadians(baseLat);
-
-    //float _x3 = static_cast<float>(EARTH_RADIUS * lonDiff3 * cos(baseLatRad3));
-    //float _y3 = static_cast<float>(EARTH_RADIUS * latDiff3);
-
-    //double lonDiff5 = toRadians(RT[5].lon - baseLon);
-    //double latDiff5 = toRadians(RT[5].lat - baseLat);
-    //double baseLatRad5 = toRadians(baseLat);
-
-    //float _x5 = static_cast<float>(EARTH_RADIUS * lonDiff5 * cos(baseLatRad5));
-    //float _y5 = static_cast<float>(EARTH_RADIUS * latDiff5);
-
-    //float dist = sqrt((_x3 - _x5) * (_x3 - _x5) + (_y3 - _y5) * (_y3 - _y5));
-    //printf("dist = %f\n", dist);
 
 
+    for (size_t met_index = 0; met_index < RCAP_metdata.size(); met_index++) {
+        for (int source_index = 0; source_index < input_num; source_index++) {
+            for (int puff_index = 0; puff_index < RT[source_index].nPuffTotal; puff_index++) {
 
-    for (size_t i = 0; i < RCAP_metdata.size(); i++) {
-        for (int j = 0; j < input_num; j++) {
-            for (int k = 0; k < RT[j].nPuffTotal; k++) {
+                // Convert geographic coordinates to local Cartesian (meters)
+                double longitude_diff_rad = toRadians(RT[source_index].lon - base_longitude);
+                double latitude_diff_rad = toRadians(RT[source_index].lat - base_latitude);
+                double base_latitude_rad = toRadians(base_latitude);
 
-                double lonDiff = toRadians(RT[j].lon - baseLon);
-                double latDiff = toRadians(RT[j].lat - baseLat);
+                float puff_x_meters = static_cast<float>(EARTH_RADIUS * longitude_diff_rad * std::cos(base_latitude_rad));
+                float puff_y_meters = static_cast<float>(EARTH_RADIUS * latitude_diff_rad);
+                float puff_z_meters = RT[source_index].RT_puffs[puff_index].rele_height;
 
-                double baseLatRad = toRadians(baseLat);
-                double targetLatRad = toRadians(RT[j].lat);
-
-                float _y = static_cast<float>(EARTH_RADIUS * latDiff);
-                float _x = static_cast<float>(EARTH_RADIUS * lonDiff * std::cos(baseLatRad));
-
-                float _z = RT[j].RT_puffs[k].rele_height;
-
-                float _concentration[MAX_NUCLIDES];
-                for (int nuc = 0; nuc < MAX_NUCLIDES; nuc++) {
-                    _concentration[nuc] = RT[j].conc[nuc] * RT[j].RT_puffs[k].release_fractions[ND[nuc].chemical_group];
-                    if (_concentration[nuc]>1.0) std::cout << "nuc = " << nuc << ", conc = " << _concentration[nuc] << std::endl;
+                // Calculate concentration for each nuclide
+                float nuclide_concentrations[MAX_NUCLIDES];
+                for (int nuclide_idx = 0; nuclide_idx < MAX_NUCLIDES; nuclide_idx++) {
+                    nuclide_concentrations[nuclide_idx] = RT[source_index].conc[nuclide_idx] *
+                        RT[source_index].RT_puffs[puff_index].release_fractions[ND[nuclide_idx].chemical_group];
+                    if (nuclide_concentrations[nuclide_idx] > 1.0) {
+                        std::cout << "nuc = " << nuclide_idx << ", conc = " << nuclide_concentrations[nuclide_idx] << std::endl;
+                    }
                 }
 
-                float _releasetime = RT[j].RT_puffs[k].rele_time;
-                int _unitidx = j;
+                float release_time_seconds = RT[source_index].RT_puffs[puff_index].rele_time;
+                int unit_index = source_index;
 
-                float _windvel = RCAP_metdata[i].spd;
-                int time_steps = static_cast<int>(_releasetime / 360);
-                int new_diridx = (i + time_steps) % RCAP_metdata.size();
+                // Assign meteorology from current timestep
+                float wind_speed_m_per_s = RCAP_metdata[met_index].spd;
 
-                float _windir = RCAP_metdata[new_diridx].dir;
-                int _stab = RCAP_metdata[i].stab;
-                float _rain = RCAP_metdata[i].rain;
+                // Calculate wind direction index based on release time
+                int time_steps_since_start = static_cast<int>(release_time_seconds / 360);
+                int wind_direction_index = (met_index + time_steps_since_start) % RCAP_metdata.size();
 
-                puffs_RCAP.emplace_back(_x, _y, _z,
-                    _concentration, _releasetime, _unitidx, _windvel, _windir, _stab, _rain, i);
+                float wind_direction_degrees = RCAP_metdata[wind_direction_index].dir;
+                int stability_class = RCAP_metdata[met_index].stab;
+                float rain_rate_mm_per_h = RCAP_metdata[met_index].rain;
+
+                puffs_RCAP.emplace_back(puff_x_meters, puff_y_meters, puff_z_meters,
+                    nuclide_concentrations, release_time_seconds, unit_index,
+                    wind_speed_m_per_s, wind_direction_degrees, stability_class, rain_rate_mm_per_h, met_index);
             }
         }
     }
 }
 
-void Gpuff::initializeEvacuees(std::vector<Evacuee>& evacuees, const SimulationControl& SC, 
+// ============================================================================
+// Evacuee Initialization (Polar Coordinates)
+// ============================================================================
+// Creates evacuee objects for each populated grid cell in polar coordinates
+// Each evacuee represents a population group at a specific radial distance
+// and angular direction from the source
+//
+// SPATIAL DISCRETIZATION:
+// -----------------------
+// - Radial: Defined by SC.ir_distances[] (meters from source)
+// - Angular: Divided into numTheta sectors (typically 16, representing compass directions)
+// - Population: Distributed according to SD.population[ring][sector]
+//
+// EVACUEE PROPERTIES:
+// -------------------
+// - Position: (r, theta) in polar coordinates
+// - Population: Number of people in this cell
+// - Speed: Initially 0.0 (set by evacuation model during simulation)
+// - Flag: true if within evacuation zone, false otherwise
+//
+// METEOROLOGY SCENARIOS:
+// ----------------------
+// Creates evacuees for each meteorological scenario to enable
+// probabilistic consequence assessment
+// ============================================================================
+void Gpuff::initializeEvacuees(std::vector<Evacuee>& evacuees, const SimulationControl& SC,
     const EvacuationData& EP, const SiteData& SD) {
 
-    int numRad = SC.numRad;
-    int numTheta = SC.numTheta;
+    int num_radial_rings = SC.numRad;
+    int num_angular_sectors = SC.numTheta;
 
-    for (int met = 0; met < RCAP_metdata.size(); met++) {
-        for (int i = 0; i < numRad; ++i) {
-            for (int j = 0; j < numTheta; ++j) {
-                int population = SD.population[i][j];
-                if (population > 0) {
+    for (int met_scenario = 0; met_scenario < RCAP_metdata.size(); met_scenario++) {
+        for (int ring_index = 0; ring_index < num_radial_rings; ++ring_index) {
+            for (int sector_index = 0; sector_index < num_angular_sectors; ++sector_index) {
+                int population_count = SD.population[ring_index][sector_index];
+                if (population_count > 0) {
                     Evacuee evacuee;
-                    evacuee.population = static_cast<float>(population);
-                    evacuee.r = SC.ir_distances[i];
-                    evacuee.theta = (2 * PI * j / numTheta);
+                    evacuee.population = static_cast<float>(population_count);
+                    evacuee.r = SC.ir_distances[ring_index];
+                    evacuee.theta = (2 * PI * sector_index / num_angular_sectors);
                     evacuee.speed = 0.0f;
-                    evacuee.rad0 = i;
-                    if(i > EP.evaEndRing-1) evacuee.flag = false;
-                    else evacuee.flag = true;
+                    evacuee.rad0 = ring_index;
 
-                    evacuee.prev_rad_idx = i;
-                    evacuee.prev_theta_idx = j;
-                    evacuee.met_idx = met;
+                    // Set evacuation flag based on evacuation zone
+                    if (ring_index > EP.evaEndRing - 1) {
+                        evacuee.flag = false;  // Outside evacuation zone
+                    } else {
+                        evacuee.flag = true;   // Inside evacuation zone
+                    }
+
+                    evacuee.prev_rad_idx = ring_index;
+                    evacuee.prev_theta_idx = sector_index;
+                    evacuee.met_idx = met_scenario;
 
                     evacuees.push_back(evacuee);
-                    if (met == 0) totalevacuees_per_Sim++;
+                    if (met_scenario == 0) totalevacuees_per_Sim++;
                 }
             }
         }
@@ -1486,121 +1567,61 @@ void Gpuff::initializeEvacuees(std::vector<Evacuee>& evacuees, const SimulationC
 
 }
 
-//void Gpuff::initializeEvacuees_xy(std::vector<Evacuee>& evacuees, const SimulationControl& SC,
-//    const EvacuationData& EP, const SiteData& SD) {
+// ============================================================================
+// Evacuee Initialization (Cartesian Coordinates)
+// ============================================================================
+// Creates evacuee objects on a uniform Cartesian grid
+// Used for detailed spatial analysis or visualization
 //
-//    int NN = 500;
+// GRID CONFIGURATION:
+// -------------------
+// - X range: -6000 to 500 meters (6.5 km west-to-east extent)
+// - Y range: -1500 to 1500 meters (3 km south-to-north extent)
+// - Resolution: 1000 x 250 grid cells
+// - Population per cell: 100 persons (uniform distribution)
 //
-//    //printf("RCAP_metdata = %d\n", RCAP_metdata.size());
+// DOSE TRACKING:
+// --------------
+// Each evacuee tracks:
+// - Inhalation dose (Sv)
+// - Cloud shine dose (Sv)
+// - Initialized to 1.0e-40 (near-zero) to avoid numerical issues
 //
-//
-//    for (int met = 0; met < RCAP_metdata.size(); met++) {
-//        for (int i = 0; i < NN; ++i) {
-//            for (int j = 0; j < NN; ++j) {
-//
-//                if (1) {
-//                    Evacuee evacuee;
-//                    evacuee.population = 100;
-//                    evacuee.speed = 0.0f;
-//                    evacuee.flag = true;
-//
-//                    evacuee.prev_rad_idx = i;
-//                    evacuee.prev_theta_idx = j;
-//
-//                    evacuee.x = (4000.0 - (-300.0)) * i / NN - 300.0;
-//                    evacuee.y = (700.0 - (-3600.0)) * j / NN - 3600.0;
-//
-//                    evacuee.dose_inhalation = 1.0e-40;
-//                    evacuee.dose_cloudshine = 1.0e-40;
-//
-//
-//                    //printf("i = %d, j = %d\n", i, j);
-//
-//
-//                    evacuees.push_back(evacuee);
-//                    if (met == 0) totalevacuees_per_Sim++;
-//                }
-//            }
-//        }
-//    }
-//
-//}
-
-
-//void Gpuff::initializeEvacuees_xy(std::vector<Evacuee>& evacuees, const SimulationControl& SC,
-//    const EvacuationData& EP, const SiteData& SD) {
-//
-//    int NN = 500;
-//
-//    //printf("RCAP_metdata = %d\n", RCAP_metdata.size());
-//
-//
-//    for (int met = 0; met < RCAP_metdata.size(); met++) {
-//        for (int i = 0; i < 250; ++i) {
-//            for (int j = 0; j < 1000; ++j) {
-//
-//                if (1) {
-//                    Evacuee evacuee;
-//                    evacuee.population = 100;
-//                    evacuee.speed = 0.0f;
-//                    evacuee.flag = true;
-//
-//                    evacuee.prev_rad_idx = i;
-//                    evacuee.prev_theta_idx = j;
-//
-//                    evacuee.x = (1500.0 - (-1500.0)) * i / 250 - 1500.0;
-//                    evacuee.y = (6000.0 - (-500.0)) * j / 1000 - 500.0;
-//
-//                    evacuee.dose_inhalation = 1.0e-40;
-//                    evacuee.dose_cloudshine = 1.0e-40;
-//
-//
-//                    //printf("i = %d, j = %d\n", i, j);
-//
-//
-//                    evacuees.push_back(evacuee);
-//                    if (met == 0) totalevacuees_per_Sim++;
-//                }
-//            }
-//        }
-//    }
-//
-//}
-
+// NOTE: This function creates a fixed grid for testing/visualization
+//       Production runs should use initializeEvacuees() with realistic
+//       population distribution
+// ============================================================================
 void Gpuff::initializeEvacuees_xy(std::vector<Evacuee>& evacuees, const SimulationControl& SC,
     const EvacuationData& EP, const SiteData& SD) {
 
-    int NN = 500;
+    const int grid_x_cells = 1000;
+    const int grid_y_cells = 250;
+    const float x_min_meters = -6000.0f;
+    const float x_max_meters = 500.0f;
+    const float y_min_meters = -1500.0f;
+    const float y_max_meters = 1500.0f;
+    const float population_per_cell = 100.0f;
 
-    //printf("RCAP_metdata = %d\n", RCAP_metdata.size());
+    for (int met_scenario = 0; met_scenario < RCAP_metdata.size(); met_scenario++) {
+        for (int i = 0; i < grid_x_cells; ++i) {
+            for (int j = 0; j < grid_y_cells; ++j) {
 
+                Evacuee evacuee;
+                evacuee.population = population_per_cell;
+                evacuee.speed = 0.0f;
+                evacuee.flag = true;
 
-    for (int met = 0; met < RCAP_metdata.size(); met++) {
-        for (int i = 0; i < 1000; ++i) {
-            for (int j = 0; j < 250; ++j) {
+                evacuee.prev_rad_idx = i;
+                evacuee.prev_theta_idx = j;
 
-                if (1) {
-                    Evacuee evacuee;
-                    evacuee.population = 100;
-                    evacuee.speed = 0.0f;
-                    evacuee.flag = true;
+                evacuee.x = (x_max_meters - x_min_meters) * i / grid_x_cells + x_min_meters;
+                evacuee.y = (y_max_meters - y_min_meters) * j / grid_y_cells + y_min_meters;
 
-                    evacuee.prev_rad_idx = i;
-                    evacuee.prev_theta_idx = j;
+                evacuee.dose_inhalation = 1.0e-40f;
+                evacuee.dose_cloudshine = 1.0e-40f;
 
-                    evacuee.x = (500.0 - (-6000.0)) * i / 1000 - 6000.0;
-                    evacuee.y = (1500.0 - (-1500.0)) * j / 250 - 1500.0;
-
-                    evacuee.dose_inhalation = 1.0e-40;
-                    evacuee.dose_cloudshine = 1.0e-40;
-
-
-                    //printf("i = %d, j = %d\n", i, j);
-
-
-                    evacuees.push_back(evacuee);
-                    if (met == 0) totalevacuees_per_Sim++;
-                }
+                evacuees.push_back(evacuee);
+                if (met_scenario == 0) totalevacuees_per_Sim++;
             }
         }
     }

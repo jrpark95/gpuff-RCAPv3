@@ -1,19 +1,10 @@
 {
   "permissions": {
-    "allow": [
-      "Bash(nvcc:*)",
-      "Bash(dir \"C:\\Program Files\\Microsoft Visual Studio\" /b)",
-      "Read(//c/Program Files/Microsoft Visual Studio/2022/**)",
-      "Bash(cmd /c \"\"\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat\"\" x64 && nvcc main.cu -o gpuff.exe -allow-unsupported-compiler -rdc=true\")",
-      "Bash(cmd /c \"\"\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat\"\" x64 >nul && msbuild gpuff-RCAPv2.vcxproj /p:Configuration=Release /p:Platform=x64\")",
-      "Bash(./build.bat)",
-      "Bash(./gpuff.exe)",
-      "Bash(git init:*)",
-      "Bash(git config:*)",
-      "Bash(git add:*)",
-      "Bash(git rm:*)"
-    ],
+    "allow": [],
     "deny": [],
-    "ask": []
-  }
+    "ask": [],
+    "defaultMode": "bypassPermissions"
+  },
+  "spinnerTipsEnabled": false,
+  "outputStyle": "default"
 }
