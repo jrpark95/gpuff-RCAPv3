@@ -1,0 +1,592 @@
+=== CLOUDSHINE RELATED SECTIONS ===
+Found in 15 pages
+
+
+
+--- PAGE 5 ---
+
+Abstract
+The code currently used by NRC's emergency operations center for making dose projections for
+atmospheric releases during radiological emergencies is RASCAL version 3.0.5 (Radiological
+Assessment System for Consequence AnaLysis). This code was developed by NRC. The first version was
+created about 20 years ago. Since then the code has been undergoing continual improvement to expand
+its capabilities and to update the models used in its calculations. This report describes the models and
+calculational methods used in RASCAL 3.0.5. This report updates and supercedes the information in
+NUREG-1741, "RASCAL 3.0: Description of Models and Methods," 2001.
+RASCAL 3.0.5 evaluates releases from: nuclear power plants, spent fuel storage pools and casks, fuel
+cycle facilities, and radioactive material handling facilities.
+While RASCAL 3.0.5 operates as a single piece of software, it is really a set of inter-linked modules each
+with a different function. These are:
+I. Source term: this module calculates a time-dependent source term, which for nuclear power
+plants, is composed of about 50 radionuclides including parents and daughters. This module is
+unique in the world for its ability to model a wide variety of accidents based on plant conditions
+for many different facility types.
+2. Meteorological data processor: this module inputs weather observations and forecasts along with
+local topography to generate time-dependent wind fields that will transport the plume.
+3. Atmospheric transport and diffusion: this module uses the wind fields with a two-dimensional
+Gaussian puff model to transport the plume downwind and to calculate concentrations of each
+radionuclide as a function of time and location.
+4. Dose calculator: this module calculates various types of doses resulting from airborne releases
+(TEDE, thyroid, acute, etc.) to individuals at each location from three dose pathways -inhalation,
+cloudshine, and groundshine. It also calculates the longer-term intermediate phase doses from
+deposited radionuclides. The calculations are completely consistent with the EPA protective
+action guide manual and the methods adopted by the Federal Radiological Monitoring and
+Assessment Center (FRMAC).
+5. Display of results: this module allows the user to display a wide variety of calculated results as
+either a picture of the plume footprint on a map background for each of the result types or as
+numeric table.
+6. Uranium hexafluoride module: for uranium hexafluoride releases, RASCAL contains a heavy gas
+model to account for the exothermic reaction with air and gravitational slumping of the plume.
+iii
+
+--- PAGE 9 ---
+
+4.6.3 Total Surface Deposition ............... .4-19
+4.7 Depletion Due to Deposition ................. .4-20
+4.8 Radiological Decay and Ingrowth ............. .. . .. . .. .. .4-20
+4.9 Dose Calculations .......................... .. . .. . .. .. .4-20
+4.9.1 Inhalation Doses ...................... .. . .. . .. .. .4-20
+4.9.2 Groundshine Doses .................... .. . .. . .. .. .4-21
+4.9.3 Cloudshine Doses ..................... .. . .. . .. .. 4-21
+4.9.4 Open- and Closed-Window Dose Rates .... .. . .. . .. .. 4-27
+4.9.5 Total Effective Dose Equivalent .......... .. . .. . .. .. 4-28
+4.9.6 Total Acute Bone Dose Equivalent ....... .. . .. . .. .. .4-29
+4.10 R eferences .............................. .. . .. . .. .. .4-29
+5 UF6 Transport and Diffusion Model ................ .... 5-1
+5.1 UF 6 Model Assumptions and Equations ......... .... 5-1
+5.2 Chemical/Thermodynamic Model ............. .... 5-4
+5.2.1 Compressibility Factor .................. .... 5-4
+5.2.2 UF D ensity ......................... . .. . ... . .. .... 5-4
+6
+5.2.3 UF Vapor Pressure ................... . .. . ... . .. .... 5-5
+6
+5.2.4 U F Enthalpy ......................... .. . . ... . .. .... 5-6
+6
+5.2.5 Uranium Enrichment ................... .. . .. .. .. . .... 5-7
+5.2.6 HF-HO System ...................... .... 5-7
+5.2.7 HF Self Association ................... .... 5-7
+5.2.8 Partial Vapor Pressures of HF ........... .... 5-8
+5.2.9 Partial Vapor Pressure of H 0 ........... .... 5-8
+2
+5.2. 10 Enthalpy of HF-H 0 Vapor Mixtures ..... .... 5-9
+2
+5.2.11 Enthalpy of HF-H0 Liquid Mixtures .... .... 5-9
+2
+5.2.12 UOF, Enthalpy ...................... .... 5-9
+5.2.13 Mixture Enthalpies and Plume Temperature .... 5-9
+5.3 Dispersion and Deposition of HF and U0 F ...... ... 5-11
+2 2
+5.4 C alculated R esult Types ................................................... ... 5-12
+5.5 Comparison of RASCAL UJF6 Plume Model with Experimental Measurements and Results from
+O ther M odels .............................................................. 5-14
+5 .6 R eferences ................................................................ 5-15
+6 M eteorological D ata Processor ...................................................... 6-1
+6.1 Model Domain .. . .. .. .. .. . .. .. .. . .. .. .. . .. .. . ... . .. .. . .. .. . .. .. . .. .. . .. .. . 6 -1
+6.2 M eteorological Stations ...................... 6-1
+6.3 M eteorological Data Input ................... .................................. 6-3
+6.3.1 Surface W inds ........................ .................................. 6-3
+6.3.2 Atmospheric Stability Class ............. .................................. 6-3
+6.3.3 Precipitation Type .................... .................................. 6-5
+6.3.4 M ixing Height ........................ .................................. 6-5
+6.3.5 Tem perature ......................... .................................. 6-5
+6.3.6 Pressure ............................. .................................. 6-6
+6.3.7 H um idity ............................ .................................. 6-6
+6.3.8 Temporal Interpolation of Input Values .... .................................. 6-6
+6.4 Other Meteorological Parameters .............. .................................. 6-8
+6.4.1 Monin-Obukhov Length ................ .................................. 6-8
+vii
+
+--- PAGE 15 ---
+
+1 Nuclear Power Plant Source Term Calculations
+RASCAL 3.0.5 has a module called "Source Term to Dose" that first calculates a time-dependent "source
+term," for the atmospheric release of radioactive materials. The source term is the rate at which
+radioactive material is released from the facility into the atmosphere. The code next calculates the
+atmospheric transport and dispersion and the deposition of the radioactive materials that were released.
+Finally, the code calculates doses from the cloud shine, ground shine, and inhalation pathways as a
+function of location.
+This chapter describes how the "Source Term to Dose" module in RASCAL 3.0.5 calculates the time-
+dependent source term for nuclear power plant accidents. The methods used in the RASCAL 3.0.5 source
+term calculations for nuclear power plant accidents are based largely on the methods described in
+NUREG-1228 (McKenna and Giitter 1988).
+Before we describe the detailed methods that RASCAL 3.0.5 uses to calculate specific a source term
+types, we first describe the nuclear power plant parameters that are used in the calculations.
+1.1 Nuclear Power Plant Parameters
+1.1.1 Core Inventories
+For nuclear power plant source terms based on core damage, the radionuclide inventories assumed to be
+in the reactor core are shown in Table 1.1.
+The values in Table 1.1 are for low-enriched uranium fuel. The values were derived from Table 2.2 of
+NUREG-1228 (MeKenna and Glitter 1988). The derivation was done by dividing the fission product
+inventories in NUREG-1228 by 3 to convert from Ci/MWe to Ci/MWt, and then rounding to 2 significant
+figures. The inventories of nuclides with a half-life of more than one year were scaled up from a bumup
+of 18,000 to 30,000 MWD/MTU.
+The inventories in NUREG-1228 were derived from the Reactor Safety Study, WASH-1400. Table VI
+13-1 of WASH-1400 ranked the nuclides in the core by importance to early health effects. The nuclides
+with greater importance for early health effects were included in the NUREG-1228 core inventory list. In
+additional, NUREG-1228 added noble gases that had lesser importance for early health effects because
+noble gases are the most likely group of fission products to be released to the environment by a nuclear
+power plant accident. According to Figure 2-4 of NUREG-1228, the iodine and tellurium nuclides
+contribute almost two-thirds of the bone marrow dose for a major nuclear power plant release. Krypton,
+cesium, strontium and barium are the other major contributors.
+1-1
+
+--- PAGE 90 ---
+
+daughters of Xe are included in the groundshine dose calculations. In general, the contribution of these
+daughters to the total dose is small.
+4.7 Depletion Due to Deposition
+Both atmospheric models in RASCAL 3.0.5 calculate depletion caused by wet deposition. Only the puff
+model accounts for depletion from dry deposition. The plume model does not account for depletion from
+dry deposition because the calculation is relatively time consuming and dry deposition generally does not
+result in significant depletion of the plume near the source.
+In the puff model, the activity in the puffs (Q) is updated every 5 min. The activity removed from each
+puff is determined by integrating the total deposition rate under the puff in space and time. In the plume
+model, the fraction of activity remaining in the plume at each distance during periods of precipitation is
+estimated assuming an exponential decrease in activity with travel time, i.e., Q'(x) = Q'oexp(-¾x/u).
+4.8 Radiological Decay and Ingrowth
+The atmospheric dispersion and transport models in RASCAL 3.0.5 calculate radiological decay and
+ingrowth at 5-minute intervals for both airborne and deposited radionuclides. The decay schemes include
+as many as four progeny and account for branched decay chains. The 5-minute decay and ingrowth
+calculations continue to the end of the calculation period specified by the user.
+The 5-minute intervals for decay and ingrowth provides reasonably smooth changes in activity for long-
+lived radionuclides, for example, radionuclides with half-lives of 30 minutes or longer. However, for
+short-lived radionuclides, such as rubidium-88 (t,, 2 = 17.8 min) or, barium-137m (ti 12 = 2.5 min), there is a
+significant decrease in activity present each decay interval. For example, barium-137m activity decreases
+by about a factor of four every 5 minutes. If short-lived isotopes provide a significant contribution to
+doses, the step changes in activity may be very evident in the doses and dose rates. Should this artifact of
+the calculational procedure be observed, the doses and dose rates calculated just after decay calculations
+are most nearly correct, and doses and dose rates calculated just prior to decay calculations are over
+estimates.
+RASCAL 3.0.5 groundshine dose calculations extend until 96 hours have elapsed from the beginning of
+the model run specified by the user. Decay and ingrowth calculations during this extended period are
+made at I-hour intervals.
+4.9 Dose Calculations
+RASCAL 3.0.5 calculated doses from inhalation, from groundshine, and from cloudshine.
+4.9.1 Inhalation Doses
+Committed effective dose equivalents (CEDE) and organ committed dose equivalents (CDE) are
+calculated for 15-minute periods. These dose equivalents are the sums over all radionuclides of products
+4-20
+
+--- PAGE 91 ---
+
+of the exposure to the radionuclide during the 15-minute period, a radionuclide and organ specific dose
+factor, and the breathing rate. The general expression for the dose equivalents is
+D1 5 = vv DF JZf(t)dtI , (4.38)
+h 0
+where
+D,5 = effective or organ committed dose equivalent due to inhalation during a 15-minute period,
+v, = breathing rate,
+DF, = committed or organ specific dose factor for radionuclide n,
+X,, = radionuclide n concentration,
+t = time.
+Inhalation dose factors used in RASCAL 3.0.5 are from FederalG uidance Report No. 11 (Eckerman,
+Wolbarst, and Richardson 1988). RASCAL 3.0.5 uses a breathing rate of 3.33x10 4 m3/s (20 I/min).
+At the end of each 15-minute period, the committed dose equivalents at each receptor node are written to
+*p uff and plume model output files. They are then set to zero prior to beginning model calculations for the
+next 15-minute period.
+4.9.2 Groundshine Doses
+The puff and plume models calculate groundshine dose equivalents as the sum over all radionuclides of
+product of the surface contamination by the radionuclide and a radionuclide-specific dose factor. The
+general expression for the groundshine dose equivalent is
+where
+D. DF o. t)dt (4.39)
+D,, = dose equivalent from groundshine during the period,
+DFn = radionuclide n specific ground-shine dose factor,
+o,, = radionuclide n surface concentration, and
+t = time.
+The integration in Eq. (4.39) is from t to t+15 minutes. These integration times are used because the
+surface concentration at any time is cumulative from the beginning of the event and is not set to zero at the
+beginning of the period. After the surface is contaminated, groundshine doses can be incurred, even if
+airborne material is not present.
+4.9.3 Cloudshine Doses
+RASCAL calculates cloudshine doses using four models. The models include a semi-infinite cloud model
+and a finite-puff model originally developed for MESORAD (Scherpelz, et al. 1986). The first of these
+models assumes that activity is uniformly distributed through a large volume, and the second assumes that
+activity is concentrated in a finite number of points distributed through a volume to represent the actual
+4-21
+
+--- PAGE 92 ---
+
+activity distribution. The use of the semi-infinite cloud model is usually inappropriate in the immediate
+vicinity of the release point, and application of the MESORAD finite-plume model to cloudshine dose
+estimates near the release point did not prove satisfactory. Consequently, two additional cloudshine dose
+model have been developed and are used in RASCAL 3.0.5.
+The new cloudshine models are based on line sources and plane sources and are analogous to the point-
+source model. These models are used, along with the point-source model, until plumes and puffs grow to
+sufficient size that the assumptions associated with the semi-infinite cloud model are met. The finite-
+plume, cloudshine models in RASCAL 3.0.5 make use of precalculated dose rate vs distance curves.
+These curves are provided in the radionuclide database for each radionuclide for a I Ci (0.01 Sv) point
+source, and a I Ci/m (0.01 Sv/m) infinite-line source. The remainder of this section describes the
+cloudshine models.
+4.9.3.1 Puff Model Cloudshine Dose Calculations
+There are three stages in the cloudshine dose calculations. Near the source where puff dimensions are
+small compared to the mean path length of photons, RASCAL uses a point-kernel dose model. When the
+puff radius becomes sufficient (oy=400 m), cloud-shine dose rates beneath the centerline of the plume are
+calculated using an infinite-slab model. The dose rate at ground level is calculated assuming that the
+activity in the plume is equally divided among ten horizontal slabs with slab heights determined by the
+release height and vertical dispersion coefficients. The change in dose rate with distance from slabs is due
+only to buildup and absorption of photons; the change in dose rate across the plume is proportional to the
+crosswind variation of activity concentration in the slab. This model will be discussed further. Finally,
+when the vertical dimensions of the plume become sufficient (a,=400 m), cloudshine is calculated using a
+semi-infinite cloud model.
+The initial versions of RASCAL used the MESORAD finite-puff, cloudshine model (Scherpelz et al.
+1986, Ramsdell et al. 1988). This model first calculates composite characteristics (photon energies,
+photons per disintegration, etc.) of the gamma radiation from the radionuclide mix in a puff. Next, the
+model calculates the dose rate vs distance from a point source having the composite characteristics using
+Up (p) 2.13x 106 1,[f, B,(JP)e-,o"PE TW] (4.40)
+44 n( p 2
+where
+Dp '(p) = dose rate in (rem/h)/Ci,
+p = distance from point source,
+fy = fraction of disintegrations producing ys of energy, E,,
+By(u.,p) = buildup factor for air,
+/Iay = linear attenuation factor for air,
+EY= gamma energy,
+T= mass energy absorption coefficient for tissue (n,1p,),
+t
+WY= ratio of whole body dose to surface dose.
+The constant 2.13 x 106 is a collection of unit conversion constants to give dose rate in (rem/h)/Ci. The
+components of the constant are described following Eq. 19 in Scherpelz, et al. (1986).
+4-22
+
+--- PAGE 93 ---
+
+The model then calculates the dose rate at ground level as a function of horizontal distance from the
+ground-level position of center of the puff. This calculation involves summation over volume elements
+distributed throughout the puff.
+D'(r)= D' p(PO )MAij (4.41)
+I j k
+where
+D '(r) = dose rate at r,
+r = distance from the receptor to the projection of the puff center on the ground,
+i,j,k = indices associated with the volume elements,
+D ',(Puk) = dose rate at distance p from a point source in volume element ijk,
+Piqk = distance from the center of the volume element ijk to the receptor,
+Mil = fraction of the total puff activity in volume element ijk.
+For purposes of the cloudshine calculation, puffs were assumed to be circular cylinders with three layers.
+The volume elements were defined in 3, 5, or 8 annular rings with either 6 or 16 sectors. The fraction of
+activity in volume elements varied by annulus and level. Finally, the dose at a receptor for a period is
+accumulated by summing the product of dose rates and the time step for all puffs for all time steps in the
+period.
+In RASCAL 3.0.5, this process has been modified by eliminating the calculation of composite
+characteristics from the gamma energies. In its place, the puff model calculates the dose rate vs distance
+from a point source that has all of the activity in the puff. Thus, Eq. (4.40) is replaced by
+N
+O'p(p) E Q D'P,,(,p) (4.42)
+n=l
+where
+N = number of radionuclides,
+Qn = activity of radionuclide n in the puff,
+Dp(p) = dose rate at distance p from a I -Ci point source of radionuclide n.
+The overall puff geometry remains the same in the puff model as it was in earlier versions of RASCAL.
+However, the internal geometry has changed. The puff is divided into ten layers with each layer
+containing one-tenth of the activity. The number of annular rings has been fixed at six, with each ring
+containing one-sixth of the puff activity, and the number of sectors has been fixed at 12. With these
+changes, the number of volume elements has been increased, and the fraction of activity in each volume
+element becomes 1/720 of the total activity. In the puff model, Eq. (4.41) becomes
+D'(r) = I Z E D'p(Pk ) (4.43)
+720 b s k
+As before, symmetry is used to reduce the computational load.
+4-23
+
+--- PAGE 94 ---
+
+When the horizontal dispersion parameter reaches 400 m, the puff radius is large enough that the
+horizontal variations in the cloud-shine dose rate are directly proportional to the horizontal variation in
+concentration in the puff. At this point, MESORAD changed to a semi-infinite cloud model, and previous
+versions of RASCAL changed to calculating dose rates beneath the center of the puff using the finite-puff
+model and dose rates elsewhere using the horizontal variation in concentration. The puff model changes
+from the point-source based cloud-shine model used in earlier versions of RASCAL to a new plane-source
+based model. The plane-source model assumes that the puff is a vertical cylinder as is assumed in the
+point-source model. However, rather than assuming that activity is distributed among volume elements,
+the activity is assumed to be concentrated on ten horizontal slabs (planes).
+To calculate the activity in each slab, the concentration at the center of the puff (y--O) is first integrated
+vertically from the bottom of the puff to the top. This is similar to the integration done in calculating the
+depletion from wet deposition
+f Qn Q
+e2dZ 4.44)
+O, .
+=Z)._,I . (2,T) 31-"2 ,2 exp I exp[-O, ]dz=_2Q~/7a"' f o; exp l -{ Oly] J(
+where
+(2), = vertically integrated concentration of radionuclide n at the center of the puff.
+This concentration is then divided by the number of slabs (ten) to get the concentration in each slab.
+Within the cylinder, the vertical position of the slabs is determined by the effective release height, the
+mixing-layer thickness, and the vertical-dispersion coefficient. When a Gaussian distribution is partitioned
+so the area under the curve is divided into ten equal parts and the center of mass of each part is
+determined, these centers of mass fall at ±0.127a, ±0.385a, ±0.674;, +1.037a, and ±1.645a. Using this as
+a basis, the slab heights are initially estimated as h_+0.127_, h_+0.385oF, he_+0.6740z, he±1.037a, and
+h_+1.645G .The initial heights may lie below ground level or above the top of the mixing-layer. Any
+2
+heights that fall outside these bounds are adjusted to account for reflection by the boundaries. Signs of.
+heights that are negative are changed to positive, and heights (hp) that are above the mixing layer are
+replaced by 2H-hP.
+The dose rate at ground level from a slab is calculated as
+D'2,(r,z ) ). = - _' W r 2ýD,r exp - 04 _k o A - ý . 2e(4 ( 4 I 5 + k ) - z) , (4.45)
+where
+z z height of the slab above the receptor, which is assumed to be at I m (m),
+DFP, = dose factor radionuclide n for an infinite plane [(rem/s)/(Ci/m2)1,
+= total gamma ray absorption coefficient for air (m-'),
+k = ratio of energy in scattered photons to absorbed energy.
+4-24
+
+--- PAGE 95 ---
+
+The infinite plane dose factor is approximated by
+DF, = DF i/241.2 (4.46)
+where
+DFic. = semi-infinite cloud-dose factor [(rem/s)/(Ci/m3)] and
+241.2 = constant with units of meters evaluated by comparing dose rates calculated by Eq. (4.45) with
+semi-infinite cloud-dose rates in plumes for which the semi-infinite cloud model is appropriate.
+Semi-infinite dose factors contained in Federal Guidance Report No. 12 (Eckerman and Ryman 1993) are
+used to estimate the infinite-plane dose factors. These calculations were carried out for 30 radionuclides
+that are typically released in reactor accidents involving fuel damage. The standard deviation of the
+estimates of the constant value was 0.04.
+In Eq. (4.45), the term (l+kpz) represents the buildup factor due to scattered photons, and exp(-ptz)
+represents the absorption of energy by the air. These terms are discussed by Healy and Baker (1968) and
+Healy (1984). In RASCAL 3.0.5, u and k are assumed to be constants with values appropriate for -0.7
+MeV photons (,u=0.0 I, k= 1.4) based on Figure 16.4 of Healy (1984).
+Ultimately, the dose rate at a receptor is
+D'(r)- 2=af exp - 0.5 Z (I+ kz,) exp( uz) (4.47)
+where the summation is over all slabs.
+When the vertical extent of the puff is sufficient for the semi-infinite cloud model to be appropriate (oY
+> 400 m, or a uniformly mixed plume with a vertical depth >600 m), the cloudshine dose rate is calculated
+using the semi-infinite cloud model
+D'(r)= [2(r)/Q]I Q, DF.ic (4.48)
+n
+where
+[z(r)/Q] is calculated using Eq. (4.2) or a variation thereof, as appropriate.
+The semi-infinite dose factors from Federal Guidance Report No. 12 (Eckerman and Ryman 1993) are
+used in this calculation.
+4-25
+
+--- PAGE 96 ---
+
+4.9.3.2 Plume Model Cloudshine Dose Calculations
+In the plume model, near the source, the plume is divided into a large number of equal-strength line
+sources spaced to properly represent the distribution of activity in the plume. The dose rates from these
+line sources are used to calculate the ground-level dose rate as a function of horizontal distance from the
+plume axis. This relationship is then used to calculate dose rates and 15-minute doses at receptor
+locations. When the width of the plume is sufficient (ay = 400 m), the plume model switches from the
+line-source model to an infinite-slab model. Finally, when the vertical dimensions of the plume are
+sufficient to make the semi-infinite cloud model appropriate (aY= 400 meters or a uniformly mixed plume
+with a thickness of 600 meters), the plume model switches to a semi-infinite cloud model.
+Dose rates from line sources are calculated using
+N
+D',(6)= Q'I.D'n(p) , (4.49)
+n=[
+where
+D '(p) = dose rate (rem/s) at a distance p from an infinite line source of Q ' (Ci/m),
+Q = line-source strength (Ci/m), Q ",= Q ' /u where Q ' is in Ci/s,
+I
+D = line-source dose rate factor [(rem/s)/(Ci/m)] for radionuclide n.
+n(p)
+Equation (4.49) is analogous to Eq. (4.42) with changes in the definitions of source term and dose factors.
+The line-source dose rates are combined to get the plume dose rate by summing over all line sources, just
+as the point-source dose rates were combined to get a puff dose rate. The number of line sources used is
+determined by the horizontal dispersion parameter, oy. If a5y > 200 m, 100 lines (1Oxl0) are used to
+describe the concentration distribution in the plume. Otherwise, the concentration distribution is described
+by 36 lines (6x6). In either case, the lines are spaced horizontally and vertically such that each line
+represents the same fraction of the total activity in the plume. The plume dose rate is given by
+D'(y) - DD (YI , (4.50)
+where
+D '(y) = plume dose rate,
+y = distance from the ground-level projection of the center of the plume,
+CR = finite line correction factor,
+N, = number of line sources (36 or 100),
+i,j = line source indices,
+D',(yj) = infinite line, line-source dose rate.
+A finite-line source correction factor is included in Eq. (4.50) to account for the fact that the plume does
+not extend upwind of the release point. A correction factor could be calculated by numerical integration of
+4-26
+
+--- PAGE 97 ---
+
+a rather complex equation. However, an approximate correction factor of adequate accuracy for
+emergency response dose calculations can be estimated using
+j)
+C, = 0.5 1[+( R' , (4.51)
++ h,)
+where
+x = downwind distance (m) to a point beneath the plume centerline at the intersection of the plume
+centerline and a perpendicular line passing through the receptor,
+R = distance (m) from the release point to the receptor,
+he = effective release height.
+In the case of a ground-level release and a receptor on the plume centerline, the correction factor will be
+one. However, generally the correction factor is less than one. For a 0.7 MeV photon, the correction factor
+given by Eq. (4.51) corresponds to a receptor at a position approximately 100 m off of the plume
+centerline. Doses will be slightly over estimated for receptors that are closer than 100 m and slightly under
+estimated for receptors that are farther than 100 m from the centerline.
+When the horizontal dispersion parameter exceeds 400 m, the plume model shifts from a line-source
+based, finite-plume model to an infinite-plane model. The infinite-plane model is similar to the model
+used by in the puff model. The differences between the two models are associated with the calculation of
+concentrations, not with the cloudshine calculation. Thus, Eq. (4.47) for the plume model becomes
+et[- 0r) r (I + kuz,)exp( - ) (4.52)
+Finally, when the vertical extent of the plume is sufficient (a, = 400 m, or a uniformly mixed plume with a
+600 m vertical extent), the plume model shifts to a semi-infinite plume, cloudshine model. Equation (4.48)
+for the plume model becomes
+O'(r) = [,Z(r)/O']E Q',,DF.icn (4.53)
+X(r)/Q 'is calculated using Eq. (4.5) or a variation thereof, as appropriate.
+4.9.4 Open- and Closed-Window Dose Rates
+The open- and closed-window dose rates, which are reported in mrad/h, are intended for use in
+comparisons with field radiation measurements. The open-window dose rate has four components. These
+components are gamma and beta radiation from airborne activity and gamma and beta radiation from
+surface contamination. The closed-window dose rates have only the gamma radiation components.
+Beta dose rates are calculated using the semi-infinite cloud model with appropriate dose factors. Similarly,
+the gamma and beta groundshine dose rates are calculated using the models used to calculate external
+4-27
+
+--- PAGE 98 ---
+
+doses to the body, with dose factors for air in place of dose factors for tissue. Dose factors used in these
+calculations were extracted from the original data used in producing Federal Guidance Report No. 12 by
+its authors, and are included in the RASCAL 3.0.5 radionuclide database.
+The gamma dose rates for airborne activity in finite plumes are calculated using the same algorithms used
+in the puff model and the plume model for finite-plume, cloudshine doses with adjustment for the
+difference in energy absorption coefficients of tissue and air. The adjustment is made to the dose rates for
+each isotope by multiplying the dose rate for tissue by the ratio of the semi-infinite cloud dose factor for
+air and the semi-infinite cloud dose factor for tissue. Thus, the gamma dose rate for an isotope is
+DF. .i,.
+OD DFSici (4.54)
+where D 'is the cloudshine dose rate calculated for tissue. Semi-infinite cloud-dose factors for.tissue from
+Federal Guidance Report No. 12 (Eckerman and Ryman 1993) are used in this calculation along with
+semi-infinite cloud-dose factors for air calculated by A. L. Sjoreen using the methods listed in (Scherpelz
+1986). The semi-infinite dose factors for air are included in the RASCAL 3.0.5 radionuclide database.
+The open- and closed-window dose rates are larger than the sum of the cloudshine and groundshine doses
+because the dose factors for air are larger than those for tissue. Typically, the cloudshine gamma dose rate
+for air is about a factor 1.4 larger than the dose rate for tissue, and the groundshine gamma dose rate for
+air is about a factor 1.3 larger than the dose rate for tissue. These ratios may be significantly larger greater
+than 2) if radionuclides with low energy gamma emissions (<0. I MeV) contribute significantly to the dose
+rates.
+4.9.5 Total Effective Dose Equivalent
+The early phase (plume phase) total effective dose equivalent (TEDE) that RASCAL 3.0.5 calculates is
+the sum of the external gamma dose (cloudshine) from the plume, the committed effective dose equivalent
+(CEDE), and the external dose over a four-day period from radionuclides deposited on the ground (4-day
+groundshine dose). This TEDE is calculated assuming that no protective actions such as evacuation or
+sheltering are taken. Thus, the calculations assume that people are outdoors during plume passage and will
+remain outdoors exposed to ground shine from deposited radionuclides for four days after the
+radionuclides have been deposited.
+Thus, the early phase TEDE that RASCAL 3.0.5 calculates is larger than the TEDE that would be
+expected for people who took protective actions or who continued their normal activities (spending much
+time indoors).
+The reason that RASCAL 3.0.5 calculates dose assuming that no actions to reduce dose are taken is to
+determine if doses without any protective actions would exceed the EPA protective action guides. The
+need for protective actions is based on the TEDE that would be received if no protective actions of any
+type were taken, even actions such as simply spending some time indoors.
+The RASCAL 3.0.5 dose estimates should not be used as an estimate of the TEDE that would be received
+by people who did not intentionally take protective actions because even performing normal everyday
+activities will reduce doses to below those estimated by RASCAL 3.0.5.
+4-28
+
+--- PAGE 99 ---
+
+RASCAL 3.0.5 can provide a more realistic estimate of the doses that people would actually receive, but
+that requires some effort. To account for evacuation, the end of calculation time can be set to the time at
+which people evacuate. The TEDE then is the sum of the inhalation dose, cloudshine dose, and period
+ground shine dose. If sheltering prior to evacuation is to be taken into account, each dose component must
+be reduced by an appropriate reduction factor for sheltering before the three dose components are
+summed.
+4.9.6 Total Acute Bone Dose Equivalent
+Total acute bone dose equivalent is another multiple pathway dose calculated in RASCAL 3.0.5. The total
+acute bone dose equivalent is the sum of the cloudshine dose, the ground shine dose, and a 4-day
+inhalation dose to bone red marrow.
+4.10 References
+Athey, G. F., et al. 1993. RASCAL Version 2.0 User's Guide. Vol. I., Rev. I., NUREG/CR-5247, U.S.
+Nuclear Regulatory Commission. Washington, D.C.
+Bander, T.J. 1982. PA VAN: An Atmospheric Dispersion Programf or Evaluating Design Basis
+Accidental Releases for Radioactive Materialsf rom Nuclear Power Stations. NUREG/CR-2858, U.S.
+Nuclear Regulatory Commission. Washington, D.C.
+Briggs, G. A. 1969. Plume Rise, TID-25075, U.S. Atomic Energy Commission. Washington, D.C.
+Briggs, G. A. 1975. "Plume Rise Predictions," Lectures on Air Pollution and Environmental Impact
+Analyses. American Meteorological Society, Boston, Mass.
+Briggs, G. A. 1984. "Plume Rise and Buoyancy Effects." Atmospheric Science and Power Production.
+Ed. D. Randerson, DOE/TIC-27601, U. S. Department of Energy.
+Csanady, G. T. 1973. Turbulent Diffusion in the Environment. D. Reidel, Boston, Mass.
+Draxler, R. R. 1984. "Diffusion and Transport Experiments." Atmospheric Science and Power
+Production. Ed. D. Randerson, DOE/TIC-27601, U. S. Department of Energy. Washington, D.C.
+Eckerman, K. F., A. B. Wolbarst, and A. B. C. Richardson. 1988. Federal Guidance Report No. 11.
+Limiting Values of Radionuclide Intake and Air Concentrationa nd Dose Conversion Factorsf or
+Inhalation,S ubmersion, and Ingestion. U. S. Environmental Protection Agency. Washington, D.C.
+Eckerman, K. F., and J. C. Ryman. 1993. Federal Guidance Report No. 12. External Exposure to
+Radionuclides in Air, Water, and Soil. U. S. Environmental Protection Agency. Washington, D.C.
+Eimutis, E. C., and M. G. Konicek. 1972. "Derivations of Continuous Functions for the Lateral and
+Vertical Atmospheric Dispersion Coefficients." Atmospheric Environment, 6:859-63.
+Englemann, R. J. 1968. "Calculation of Precipitation Scavenging." Meteorology and Atomic Energy
+1968. Ed. D. Slade, TID-24190, U.S. Atomic Energy Agency.
+4-29
+
+--- PAGE 115 ---
+
+0 Inhaled uranium (mg)
+Inhaled uranium is calculated from the total exposure using a breathing rate passed from the user
+interface. The default breathing rate is 3.33 X104 m3/s.
+Committed effective dose equivalent from inhaled uranium (rem)
+The committed effective dose equivalent (CEDE) from uranium is calculated from the inhaled
+uranium, the specific activity of the uranium, and the inhalation dose factors from Federal Guidance
+Report No* I I (Eckerman et al. 1988). In addition, all dose calculations have been eliminated except
+for the calculation of the inhalation CEDE for uranium. This CEDE can be considered equivalent to
+the TEDE since cloudshine and groundshine doses are negligible. The UF plume model does not
+6
+calculate cloudshine or groundshine doses because they are negligible.
+" Deposited uranium (g/m2)
+Deposited uranium includes uranium in any UF that condenses before reacting with atmospheric
+6
+water and uranium in UO F, that deposits from U0 F plume. UF vapor does not deposit, and there is
+2 22 6
+no enhanced deposition of UO F following its formation.
+2 2
+" Average HF concentration in the lung (ppm by volume)
+The HF concentration calculated by UF plume model is the HF concentration in the lungs. The
+6
+concentration in the lungs includes inhaled HF plus HF formed as a result of the reaction of inhaled
+UF with water in the lungs. If no UF is inhaled, the HF concentration in the lung is the same as the
+6 6
+concentration in the atmosphere.
+" 1-h equivalent HF concentration in the lung (ppm by volume)
+The I- h equivalent HF concentration in the lung is an effective concentration calculated for short-
+duration releases for comparison with toxicity limits. It is calculated as
+Clhe '- C(t) (5.38)
+3-600)
+where
+Ch, = lh equivalent concentration (ppm),
+C(t) = average concentration for duration t (ppm),
+t = duration of the exposure to concentration C(t) (s).
+HF deposition (g/m').
+HF deposition is calculated from the atmospheric HF exposure using a 0.003 m/s deposition velocity.
+5-13
+
+--- PAGE 137 ---
+
+7 Intermediate Phase Dose Calculations
+This chapter describes the intermediate phase dose calculations in RASCAL 3.0.5. The intermediate phase
+of a radiological emergency begins after the release has terminated. Dose calculations for the intermediate
+phase are done to determine if the concentrations of radionuclides on the ground are likely to cause doses
+to residents that would be in excess of the intermediate phase protective action guides established by the
+U. S. Environmental Protection Agency (EPA 1992). Those protective action guides are 2 rem for the first
+year, 0.5 rem for the second year, and 5 rem for the entire 50 years following the event.
+In the Field Measurements to Dose module of RASCAL 3.0.5, the user enters the ground concentrations
+of deposited radionuclides at a location. Then, RASCAL 3.0.5 calculates the intermediate phase doses for
+the first year, the second year, and the cumulative dose over 50 years. The doses can be calculated with or
+without a delay in reentry into the contaminated area. The reentry delay can be any number of days
+between 0 to 730 days (2 years).
+In addition, RASCAL 3.0.5 calculates "derived response levels" or "DRLs." A derived response level is a
+measurable quantity that indicates that the deposited activity could result in an intermediate phase dose
+equal to one of the intermediate phase protective action guides. One type of DRL is the closed window
+(gamma) dose rate in mR/hour equal to the first, second, or 50 year intermediate phase PAG. The other
+DRL is the ground concentration of a marker radionuclide equivalent to a PAG.
+The DRLs are calculated for reentry delay times ranging from 0 days to 100 days. When significant
+quantities of short-lived radionuclides are present, the DRLs will be different depending on how long after
+the release the measurement is made. In addition, the assumed reentry delay will change the DRLs.
+7.1 Intermediate Phase Doses
+The intermediate phase doses calculated by RASCAL are the sums of three components: external dose
+from groundshine, internal dose from the inhalation of resuspended particles, and internal dose from the
+inadvertent ingestion of surface contamination.
+Inadvertent ingestion is not included as a pathway in the EPA Protective Action Guide manual nor in the
+assessments done by the Federal Radiological Monitoring and Assessment Center (FRMAC). Therefore,
+the default intake for inadvertent ingestion in RASCAL is zero. However, the RASCAL user can include
+inadvertent ingestion by selecting an intake larger than zero.
+7.1.1 Groundshine Doses
+RASCAL calculates groundshine doses Dgs(T) from the surface concentration for occupancy time intervals
+T. The calculation is
+Dg, (7) = GRF x[Cg, x (7.1)
+g(=)]
+7-1

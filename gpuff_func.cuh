@@ -760,6 +760,8 @@ void Gpuff::time_update_RCAP(){
 void Gpuff::time_update_RCAP2(const SimulationControl& SC, const EvacuationData& EP,
     const std::vector<RadioNuclideTransport>& RT, const std::vector<NuclideData>& ND, NuclideData* d_ND, const ProtectionFactors* dPF, const EvacuationData* dEP, int input_num) {
 
+    std::cout << "\n[TIME_UPDATE:001] ==== ENTERING time_update_RCAP2() ====" << std::endl;
+
     cudaError_t err = cudaGetLastError();
 
     float current_time = 0.0f;
@@ -771,6 +773,7 @@ void Gpuff::time_update_RCAP2(const SimulationControl& SC, const EvacuationData&
     cudaEvent_t start, stop;
     float timesum = 0;
 
+    std::cout << "[TIME_UPDATE:002] Starting simulation loop (time_end=" << time_end << ")" << std::endl;
     while (current_time <= time_end) {
 
 
@@ -1035,9 +1038,26 @@ void Gpuff::time_update_polar(){
  *   - Must call free_puffs_RCAP_device_memory() before destruction
  */
 void Gpuff::allocate_and_copy_puffs_RCAP_to_device() {
+    std::cout << "[PUFF_COPY:001] Entering allocate_and_copy_puffs_RCAP_to_device" << std::endl;
+    std::cout << "[PUFF_COPY:002] puffs_RCAP.size() = " << puffs_RCAP.size() << std::endl;
+
     size_t size = puffs_RCAP.size() * sizeof(Puffcenter_RCAP);
+    std::cout << "[PUFF_COPY:003] Allocating " << size << " bytes on device" << std::endl;
+
     cudaMalloc(&d_puffs_RCAP, size);
+    std::cout << "[PUFF_COPY:004] Device memory allocated" << std::endl;
+
     cudaMemcpy(d_puffs_RCAP, puffs_RCAP.data(), size, cudaMemcpyHostToDevice);
+    std::cout << "[PUFF_COPY:005] Data copied to device" << std::endl;
+
+    // Print first few puff data to check for unexpected output
+    std::cout << "[PUFF_COPY:006] First puff data check:" << std::endl;
+    if(puffs_RCAP.size() > 0) {
+        for(int i = 0; i < std::min(5, (int)puffs_RCAP.size()); i++) {
+            std::cout << "  Puff[" << i << "].x = " << puffs_RCAP[i].x << std::endl;
+        }
+    }
+    std::cout << "[PUFF_COPY:007] Exiting function" << std::endl;
 }
 
 /**
@@ -1072,6 +1092,7 @@ void Gpuff::allocate_and_copy_evacuees_to_device() {
  *   - Copies SC.ir_distances (host) to d_radius (device)
  */
 void Gpuff::allocate_and_copy_radius_to_device(SimulationControl SC) {
+    // Removed debug output that was causing terminal spam
     cudaMalloc(&d_radius, SC.numRad * sizeof(float));
     cudaMemcpy(d_radius, SC.ir_distances, SC.numRad * sizeof(float), cudaMemcpyHostToDevice);
 }

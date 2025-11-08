@@ -1,0 +1,798 @@
+=== INHALATION RELATED SECTIONS ===
+Found in 21 pages
+
+
+
+--- PAGE 5 ---
+
+Abstract
+The code currently used by NRC's emergency operations center for making dose projections for
+atmospheric releases during radiological emergencies is RASCAL version 3.0.5 (Radiological
+Assessment System for Consequence AnaLysis). This code was developed by NRC. The first version was
+created about 20 years ago. Since then the code has been undergoing continual improvement to expand
+its capabilities and to update the models used in its calculations. This report describes the models and
+calculational methods used in RASCAL 3.0.5. This report updates and supercedes the information in
+NUREG-1741, "RASCAL 3.0: Description of Models and Methods," 2001.
+RASCAL 3.0.5 evaluates releases from: nuclear power plants, spent fuel storage pools and casks, fuel
+cycle facilities, and radioactive material handling facilities.
+While RASCAL 3.0.5 operates as a single piece of software, it is really a set of inter-linked modules each
+with a different function. These are:
+I. Source term: this module calculates a time-dependent source term, which for nuclear power
+plants, is composed of about 50 radionuclides including parents and daughters. This module is
+unique in the world for its ability to model a wide variety of accidents based on plant conditions
+for many different facility types.
+2. Meteorological data processor: this module inputs weather observations and forecasts along with
+local topography to generate time-dependent wind fields that will transport the plume.
+3. Atmospheric transport and diffusion: this module uses the wind fields with a two-dimensional
+Gaussian puff model to transport the plume downwind and to calculate concentrations of each
+radionuclide as a function of time and location.
+4. Dose calculator: this module calculates various types of doses resulting from airborne releases
+(TEDE, thyroid, acute, etc.) to individuals at each location from three dose pathways -inhalation,
+cloudshine, and groundshine. It also calculates the longer-term intermediate phase doses from
+deposited radionuclides. The calculations are completely consistent with the EPA protective
+action guide manual and the methods adopted by the Federal Radiological Monitoring and
+Assessment Center (FRMAC).
+5. Display of results: this module allows the user to display a wide variety of calculated results as
+either a picture of the plume footprint on a map background for each of the result types or as
+numeric table.
+6. Uranium hexafluoride module: for uranium hexafluoride releases, RASCAL contains a heavy gas
+model to account for the exothermic reaction with air and gravitational slumping of the plume.
+iii
+
+--- PAGE 9 ---
+
+4.6.3 Total Surface Deposition ............... .4-19
+4.7 Depletion Due to Deposition ................. .4-20
+4.8 Radiological Decay and Ingrowth ............. .. . .. . .. .. .4-20
+4.9 Dose Calculations .......................... .. . .. . .. .. .4-20
+4.9.1 Inhalation Doses ...................... .. . .. . .. .. .4-20
+4.9.2 Groundshine Doses .................... .. . .. . .. .. .4-21
+4.9.3 Cloudshine Doses ..................... .. . .. . .. .. 4-21
+4.9.4 Open- and Closed-Window Dose Rates .... .. . .. . .. .. 4-27
+4.9.5 Total Effective Dose Equivalent .......... .. . .. . .. .. 4-28
+4.9.6 Total Acute Bone Dose Equivalent ....... .. . .. . .. .. .4-29
+4.10 R eferences .............................. .. . .. . .. .. .4-29
+5 UF6 Transport and Diffusion Model ................ .... 5-1
+5.1 UF 6 Model Assumptions and Equations ......... .... 5-1
+5.2 Chemical/Thermodynamic Model ............. .... 5-4
+5.2.1 Compressibility Factor .................. .... 5-4
+5.2.2 UF D ensity ......................... . .. . ... . .. .... 5-4
+6
+5.2.3 UF Vapor Pressure ................... . .. . ... . .. .... 5-5
+6
+5.2.4 U F Enthalpy ......................... .. . . ... . .. .... 5-6
+6
+5.2.5 Uranium Enrichment ................... .. . .. .. .. . .... 5-7
+5.2.6 HF-HO System ...................... .... 5-7
+5.2.7 HF Self Association ................... .... 5-7
+5.2.8 Partial Vapor Pressures of HF ........... .... 5-8
+5.2.9 Partial Vapor Pressure of H 0 ........... .... 5-8
+2
+5.2. 10 Enthalpy of HF-H 0 Vapor Mixtures ..... .... 5-9
+2
+5.2.11 Enthalpy of HF-H0 Liquid Mixtures .... .... 5-9
+2
+5.2.12 UOF, Enthalpy ...................... .... 5-9
+5.2.13 Mixture Enthalpies and Plume Temperature .... 5-9
+5.3 Dispersion and Deposition of HF and U0 F ...... ... 5-11
+2 2
+5.4 C alculated R esult Types ................................................... ... 5-12
+5.5 Comparison of RASCAL UJF6 Plume Model with Experimental Measurements and Results from
+O ther M odels .............................................................. 5-14
+5 .6 R eferences ................................................................ 5-15
+6 M eteorological D ata Processor ...................................................... 6-1
+6.1 Model Domain .. . .. .. .. .. . .. .. .. . .. .. .. . .. .. . ... . .. .. . .. .. . .. .. . .. .. . .. .. . 6 -1
+6.2 M eteorological Stations ...................... 6-1
+6.3 M eteorological Data Input ................... .................................. 6-3
+6.3.1 Surface W inds ........................ .................................. 6-3
+6.3.2 Atmospheric Stability Class ............. .................................. 6-3
+6.3.3 Precipitation Type .................... .................................. 6-5
+6.3.4 M ixing Height ........................ .................................. 6-5
+6.3.5 Tem perature ......................... .................................. 6-5
+6.3.6 Pressure ............................. .................................. 6-6
+6.3.7 H um idity ............................ .................................. 6-6
+6.3.8 Temporal Interpolation of Input Values .... .................................. 6-6
+6.4 Other Meteorological Parameters .............. .................................. 6-8
+6.4.1 Monin-Obukhov Length ................ .................................. 6-8
+vii
+
+--- PAGE 10 ---
+
+6.4.2 W ind Speed vs. Height ................................................... 6-8
+6.4.3 M ixing H eight .......................................................... 6-9
+6.4.4 Dry Air and W ater Vapor Density ......................................... 6-12
+6.4.5 Precipitation R ate ...................................................... 6-13
+6.5 Calculating Spatially Varying Meteorological Conditions ........................... 6-14
+6.5.1 W ind F ields ..................................................... ...... 6-14
+6.5.2 Adjustment of W ind Fields for Topography ................................. 6-15
+6.5.3 Stability and Precipitation ................................................ 6-15
+6.5.4 M ixing H eight ......................................................... 6-16
+6.6 Calculating Meteorological Conditions at the Source ............................... 6-16
+6.7 R eferences ................................................................ 6-16
+7 Interm ediate Phase Dose Calculations ................................................. 7-I
+7.1 Interm ediate Phase D oses ...................................................... 7-1
+7.1.1 G roundshine D oses ...................................................... 7-1
+7.1.2 Inadvertent Ingestion Doses ............................................... 7-4
+7.1.3 Inhalation D oses ......................................................... 7-4
+7.1.4 Precalculated Intermediate Phase Dose Conversion Parameters ................... 7-6
+7.1.5 Dose Conversion Parameter Calculations with Delayed Reentry .................. 7-6
+7.2 D ecay and Ingrow th ......................................................... 7-7
+7.3 Derived Response Levels (DRLs) .............................................. 7-11
+7.3.1 Exposure Rate Derived Response Levels .................................... 7-1I
+7.3.2 Marker Nuclide Derived Response Levels ................................... 7-12
+7.4 R eferences ................................................................. 7-12
+viii
+
+--- PAGE 11 ---
+
+List of Figures
+1.1 PW R Containment M onitor Response ................................................ 1-13
+1.2 BWR Mark I and IIDry Well Containment Monitor Response ........................... 1-14
+1.3 BWR Mark I and II Wet Well Containment Monitor Response ........................... 1-15
+1.4 BWR Mark III Dry Well Containment Monitor Response ..... ....................... 1-16
+1.5 BWR Mark III Wet Well Containment Monitor Response ............................ 1-17
+4.1 Ratios of predicted concentrations in wakes by a model without wake correction to observed
+concentrations as a function of wind speed ........................................... 4-10
+5.1 Comparison of UF6Plume model predictions of average uranium concentrations with measured
+concentrations and predictions of other models ....................................... 5-14
+List of Tables
+1. Nuclear Power Plant Core Inventory During Operation for Low Enriched Uranium Fuel ....... 1-2
+1.2 Radionuclide Concentrations in Reactor Coolant ....................................... 1-4
+1.3 BWR Event Timings and Fraction of Core Activity Inventory Released ..................... 1-8
+1 .4 PWR Event Timings and Fraction of Core Activity Inventory Released ..................... 1-9
+1.5 Fraction of Total Noble Gas Activity for each Noble Gas Nuclide at Shutdown ............. 1-20
+1.6 Fraction of Total Radioiodine Activity for each Radioiodine Nuclide at Shutdown ........... 1-20
+1.7 PWR Release Pathways Available for Each Source Term Type .......................... 1-23
+1.8 BWR Release Pathways Available for Each Source Term Type .......................... 1-23
+1.9 Summary of Nuclear Power Plant Reduction Factor Multipliers .......................... 1-24
+1. 10 Methods for Specifying Release Rate for each Release Pathway ........................ 1-28
+1. 11 Short-lived Daughters Assumed to be in Equilibrium with the Parent Activity .............. 1-31
+1.12 Spreadsheets Prepared for Quality Assurance Testing of the RASCAL 3.0.5 Time-dependent
+S o urce T erm ... ... ... .... . ........ ...... . .... .... .... .... ... .... .... ... . ... . .. 1-3 3
+2.1 Fuel Release Fractions Used in Spent Fuel Accidents ................................... 2-2
+3.1 U F C ylinder Inventories ......................................................... 3-2
+6
+3.2 Default Release Fractions and Rates Based on UF Form and Cylinder Damage Type ......... 3-2
+6
+3.3 UF Release Fractions Based on Valve Location ....................................... 3-2
+6
+3.4 Pathways with/without UF6 Conversion Prior to Release to Atmosphere .................... 3-3
+3.5 Paducah GDP Buildings and Default Inventory and Release Rates ......................... 3-4
+3.6 Portsmouth GDP Buildings and Default Inventory and Release Rates ...................... 3-4
+3.7 Fractions Available for Release and Inhalation Fractions Used in Uranium Oxide Fires ........ 3-6
+3.8 Fractions Available for Release and Inhalation Fractions Used in Uranium Oxide Explosions ... 3-7
+3.9 Fission Yields Used in Criticality Calculations ..................................... 3-8
+3.10 Activity (Ci) Released in Criticality of 10"' Fissions ................................... 3-9
+3.11 Fire Release Fractions by Compound Form ......................................... 3-11
+3.12 Fire Release Fractions by Element ................................................ 3-12
+3.13 Uranium Specific Activity for Different Enrichments ................................. 3-13
+4.1 Constant Values for Calculation of Atmospheric Dispersion Parameters .................... 4-9
+4.2 RASCAL 3.0.5 W ashout Coefficients .............................................. 4-19
+6.1 Estimated Pasquill-Gifford Stability Class Based on NRC Delta TM Method ................ 6-4
+6.2 Estimated Atmospheric Stability Class for Missing Stability Classes ....................... 6-4
+ix
+
+--- PAGE 15 ---
+
+1 Nuclear Power Plant Source Term Calculations
+RASCAL 3.0.5 has a module called "Source Term to Dose" that first calculates a time-dependent "source
+term," for the atmospheric release of radioactive materials. The source term is the rate at which
+radioactive material is released from the facility into the atmosphere. The code next calculates the
+atmospheric transport and dispersion and the deposition of the radioactive materials that were released.
+Finally, the code calculates doses from the cloud shine, ground shine, and inhalation pathways as a
+function of location.
+This chapter describes how the "Source Term to Dose" module in RASCAL 3.0.5 calculates the time-
+dependent source term for nuclear power plant accidents. The methods used in the RASCAL 3.0.5 source
+term calculations for nuclear power plant accidents are based largely on the methods described in
+NUREG-1228 (McKenna and Giitter 1988).
+Before we describe the detailed methods that RASCAL 3.0.5 uses to calculate specific a source term
+types, we first describe the nuclear power plant parameters that are used in the calculations.
+1.1 Nuclear Power Plant Parameters
+1.1.1 Core Inventories
+For nuclear power plant source terms based on core damage, the radionuclide inventories assumed to be
+in the reactor core are shown in Table 1.1.
+The values in Table 1.1 are for low-enriched uranium fuel. The values were derived from Table 2.2 of
+NUREG-1228 (MeKenna and Glitter 1988). The derivation was done by dividing the fission product
+inventories in NUREG-1228 by 3 to convert from Ci/MWe to Ci/MWt, and then rounding to 2 significant
+figures. The inventories of nuclides with a half-life of more than one year were scaled up from a bumup
+of 18,000 to 30,000 MWD/MTU.
+The inventories in NUREG-1228 were derived from the Reactor Safety Study, WASH-1400. Table VI
+13-1 of WASH-1400 ranked the nuclides in the core by importance to early health effects. The nuclides
+with greater importance for early health effects were included in the NUREG-1228 core inventory list. In
+additional, NUREG-1228 added noble gases that had lesser importance for early health effects because
+noble gases are the most likely group of fission products to be released to the environment by a nuclear
+power plant accident. According to Figure 2-4 of NUREG-1228, the iodine and tellurium nuclides
+contribute almost two-thirds of the bone marrow dose for a major nuclear power plant release. Krypton,
+cesium, strontium and barium are the other major contributors.
+1-1
+
+--- PAGE 61 ---
+
+1 kg of UF 6= 0.88 kg U0 2 F 2 + 0.23 kg HF.
+To determine the uranium activity from the uranium mass and enrichment, RASCAL converts the mass
+of UF to activity using the enrichment level and the specific activity. This conversion described in
+6
+Section 3.9.
+Releases through a building or filters both allow the user to specify a release fraction for the HF and the
+U0 F, a building air exchange rate (changes per hour), and a start and end time for the release. This
+2 2
+release fraction is different from that described earlier. These numbers represent a reduction due to the
+building or filters; the previous was a reduction by the cylinder.
+No radiological decay is computed in UF accident scenarios.
+6
+3.4 Fires Involving Uranium Oxide
+Uranium oxide fires may occur in several different types of facilities. In the milling of uranium ore, a fire
+can occur in a drum of milled ore or during the process of extracting solvent. After the ore is milled, the
+production of reactor fuel begins with creating a powder from the U0 .Both wet and dry processes are
+2
+used to produce this powder. Uranium-oxide-contaminated waste can be stored in several forms, and any
+of these can be involved in a fire.
+Inventory and fractions availablef or release
+The user first selects one of five locations for the fire and specifies additional conditions. This defines
+the default fraction available for release (AIFs) and inhalation fractions (IFs).The AFs and IFs are
+considered to be conservative. The IF is the fraction of the material released that is expected to be
+inhaled. The material is defined as all vapors and any particulate material that has a diameter of< 10 gim.
+(Note that the IFs are not used in the source term calculation. They are used in the calculation of
+inhalation dose to reduce the amount of material inhaled.) The default values for the AFs and IFs are
+shown in Table 3.7 (DOE 1994).
+3-5
+
+--- PAGE 62 ---
+
+Table 3.7 Fractions Available for Release and Inhalation Fractions Used in Uranium Oxide
+Fires
+Location of fire Condition AF IF
+Production process Dry process 1x 10-3 1
+Wet process 3x1O.5 1
+HE PA filter At high temperature 1x 104 1
+Failure 1 1
+Incinerator exhaust 4x 101 1
+Waste fire Solid packaged in drums 5x10-4 1
+Solid loosely packed 5x10.2 1
+Combustible liquid 3x10.2 1
+Non-combustible liquid 2x10.3 1
+Uranium mill Drum in a fire 1X 10-3 1
+Solvent extraction 3x10-2 1
+Source. DOE 1994.
+Next, the user specifies the mass of the U0 material at risk and specifies a uranium enrichment level.
+2
+RASCAL calculates the uranium mass by first multiplying the mass of UO by 0.88 (ratio of atomic
+2
+weights U and U0 ). Then, the uranium mass is converted to activity based on enrichment as described in
+2
+Section 3.9. The source term available for release is the product of this activity times the fraction
+available for release.
+Releasep athway
+Releases outside the building have no further reductions. The release rate to the atmosphere is constant at
+a rate set by dividing the available activity for release (Ci) by the release duration specified.
+Releases inside the building are similar but reduce the available activity to release before calculating a
+release rate to the atmosphere. The inventory is multiplied by a reduction factor or 0.5 for unfiltered
+releases and multiplied by 0.01 if filtered.
+3.5 Explosions Involving Uranium Oxide
+Uranium oxide explosions are characterized as (1) those caused by the detonation of high explosives in
+contact with the material, (2) those caused by a fire (deflagration), and (3) those caused by a sudden
+pressure change in the material container (venting). The U0 in the explosion may be in liquid, solid, or
+2
+powder form, or it simply may be surface contamination.
+3-6
+
+--- PAGE 63 ---
+
+Table 3.8 Fractions Available for Release and Inhalation Fractions Used in Uranium
+Oxide Explosions
+Explosion characteristics Material form of the Fraction Inhalation
+uranium oxide available fraction
+for release
+Detonation Liquid 1 1
+Solid 1 2x101
+Powder 1 2x10"1
+Surface contamination 1 x10-3 1
+Deflagration Liquid 1 x106 1
+Solid 0 0
+Powder 5x 10-3 3x101
+Surface contamination 1x 103 1
+Venting Liquid 2x10-3 1
+Solid 0 0
+Powder Ix101 7x101
+Surface contamination 1 X1 0-3 1
+Source: DOE 1994.
+Next, the user specifies the mass of the U0 material at risk and specifies a uranium enrichment level.
+2
+RASCAL calculates the uranium mass by first multiplying the mass of UO by 0.88 (ratio of atomic
+2
+weights U and U0 ). Then the uranium mass is converted to activity based on enrichment as described in
+2
+Section 3.9. The source term available for release is the product of this activity times the release fraction.
+Release pathw ay
+Releases outside the building have no further reductions. The release rate to the atmosphere is constant at
+a rate set by dividing the available activity for release (Ci) by the release duration specified.
+Releases inside the building are similar but reduce the available activity to release before calculating a
+release rate to the atmosphere. The activity is multiplied by 0.5 for unfiltered releases and multiplied by
+0.01 if filtered.
+3.6 Criticality Accidents
+A criticality accident results from the uncontrolled release of energy from an assemblage of fissile
+material. In RASCAL 3.0.5, a criticality accident may be modeled using the physical system scenarios in
+NUREG/CR-64 10 (SAIC 1998) or using criticality data entered directly by the user.
+3-7
+
+--- PAGE 68 ---
+
+Table 3.12 Fire Release Fractions by Element"
+Release Release Release Release
+Elementb fractionc Element fraction Element fraction Element fraction
+H (gas) 0.5 Se 0.01 I 0.5 W 0.01
+C 0.01 Kr 1.0 Xe 1.0 Ir 0.001
+Na 0.01 Rb 0.01 Cs 0.01 Au 0.01
+P 0.5 Sr 0.01 Ba 0.01 Hg 0.01
+S 0.5 Y 0.01 La 0.01 TI 0.01
+Cl 0.5 Zr 0.01 Ce 0.01 Pb 0.01
+K 0.01 Nb 0.01 Pr 0.01 Bi 0.01
+Ca 0.01 Mo 0.01 Pm 0.01 Po 0.01
+Sc 0.01 Tc 0.01 Sm 0.01 Ra 0.001
+Ti 0.01 Ru 0.1 Eu 0.01 Ac 0.001
+V 0.01 Rh 0.01 Gd 0.01 Th 0.001
+Cr 0.01 Ag 0.01 Tb 0.01 Pa 0.001
+Mn 0.01 Cd 0.01 Ho 0.01 U 0.001
+Fe 0.01 In 0.01 Tm 0.01 Np 0.001
+Co 0.001 Sn 0.01 Yb 0.01 Pu 0.001
+Zn 0.01 Sb 0.01 Hf 0.01 Am 0.001
+Ge 0.01 Te 0.01 Ta 0.001
+Table F-3 from McKenna et al. 1996. The release fraction for ruthenium was changed from the value of
+a
+0.01 in NUREG- 1140 to a value of 0.1. NUREG- 1140 assumed that ruthenium was nonvolatile (McGuire
+1988). However, research in NUREG/CR-6218 (Power, Kmetyk, and Schmidt 1994) indicates (in Table 5)
+that at high temperatures ruthenium starts to become volatile. The ruthenium release fraction of 0.1 is less
+than the value of 0.5 used in NUREG- 1140 for compounds because ruthenium is less volatile than other
+volatile compounds, becoming highly volatile only at temperatures not normally reached in building fires.
+The carbon release fraction is appropriate for carbon compounds other than CO,. Those compounds deliver
+most of the dose. The dose conversion factors used for carbon are for those carbon compounds.
+b If the specific physical form of the nuclide is known, Table 2.1 may be used.
+c The fire release fraction is the fraction of the isotope released when the material is involved in a fire, and
+equals the total activity released (Ci), users should divide by the activity involved in fire (Ci).
+Fire release fractions are element specific. The fire reduction factors are shown in Tables 3.1 land 3.12
+and are from NUREG- 1140 (McGuire 1988).
+3-12
+
+--- PAGE 75 ---
+
+In the plume model, when the wind speed falls below 0.5 m/s (1 mph), RASCAL 3.0.5 switches from the
+standard Gaussian plume model previously described to a plume model derived by Frenkiel (1953). In
+this model, described by Csanady (1973) and Kao (1984), the dispersion parameters of ac, ao, u are
+assumed to be functions of along wind, cross wind, and vertical turbulence levels of ao, u, a,, and travel
+time (e.g., a.=rt). With this assumption,
+a,,______ + Ux YU U 2"X2 ~ Ux\1 (4.7)
+X1Q'= ,,3/.2 ,-exp/--Tef- I,' ,X
+(27rj) ' Ykor-,-, , [rr 2 a,, rfj
+where
+a,,, a,,, and u., = along wind, cross wind, and vertical turbulence measures, respectively (m/s)
+r = a pseudo-diagonal distance from a point directly above the release point to the intake.
+The definition of r is
+2= X 2 y ++,+ - (4.8)
+where
+x = the downwind distance,
+y = the cross wind distance from the plume center line,
+z = the vertical distance from the plume center line.
+For positions under the center line of a plume, y = 0.0 and z = h+Alh where h is the release height and Ah
+is the plume rise, if any. Thus,
+r2 = x2 + (h + Ah)2 (4.9)
+Equation (4.7) is well behaved in low-wind speed conditions and gives finite X/Q values for calm wind
+(mean wind velocity = 0) as long as a, and a, are nonzero. For calm winds (wind speeds < 0.5 m/s), Eq.
+(4.7) has a simple form that is similar to the standard Gaussian puff model. It is
+0r
+X/QQ = (2T )3 322o rý a. r22 (4.10)
+The crosswind position y is assumed to be zero, and the resulting X/Q' is a function only of x and z. The
+X/Q' calculated at each distance is applied in all directions.
+4-5
+
+--- PAGE 90 ---
+
+daughters of Xe are included in the groundshine dose calculations. In general, the contribution of these
+daughters to the total dose is small.
+4.7 Depletion Due to Deposition
+Both atmospheric models in RASCAL 3.0.5 calculate depletion caused by wet deposition. Only the puff
+model accounts for depletion from dry deposition. The plume model does not account for depletion from
+dry deposition because the calculation is relatively time consuming and dry deposition generally does not
+result in significant depletion of the plume near the source.
+In the puff model, the activity in the puffs (Q) is updated every 5 min. The activity removed from each
+puff is determined by integrating the total deposition rate under the puff in space and time. In the plume
+model, the fraction of activity remaining in the plume at each distance during periods of precipitation is
+estimated assuming an exponential decrease in activity with travel time, i.e., Q'(x) = Q'oexp(-¾x/u).
+4.8 Radiological Decay and Ingrowth
+The atmospheric dispersion and transport models in RASCAL 3.0.5 calculate radiological decay and
+ingrowth at 5-minute intervals for both airborne and deposited radionuclides. The decay schemes include
+as many as four progeny and account for branched decay chains. The 5-minute decay and ingrowth
+calculations continue to the end of the calculation period specified by the user.
+The 5-minute intervals for decay and ingrowth provides reasonably smooth changes in activity for long-
+lived radionuclides, for example, radionuclides with half-lives of 30 minutes or longer. However, for
+short-lived radionuclides, such as rubidium-88 (t,, 2 = 17.8 min) or, barium-137m (ti 12 = 2.5 min), there is a
+significant decrease in activity present each decay interval. For example, barium-137m activity decreases
+by about a factor of four every 5 minutes. If short-lived isotopes provide a significant contribution to
+doses, the step changes in activity may be very evident in the doses and dose rates. Should this artifact of
+the calculational procedure be observed, the doses and dose rates calculated just after decay calculations
+are most nearly correct, and doses and dose rates calculated just prior to decay calculations are over
+estimates.
+RASCAL 3.0.5 groundshine dose calculations extend until 96 hours have elapsed from the beginning of
+the model run specified by the user. Decay and ingrowth calculations during this extended period are
+made at I-hour intervals.
+4.9 Dose Calculations
+RASCAL 3.0.5 calculated doses from inhalation, from groundshine, and from cloudshine.
+4.9.1 Inhalation Doses
+Committed effective dose equivalents (CEDE) and organ committed dose equivalents (CDE) are
+calculated for 15-minute periods. These dose equivalents are the sums over all radionuclides of products
+4-20
+
+--- PAGE 91 ---
+
+of the exposure to the radionuclide during the 15-minute period, a radionuclide and organ specific dose
+factor, and the breathing rate. The general expression for the dose equivalents is
+D1 5 = vv DF JZf(t)dtI , (4.38)
+h 0
+where
+D,5 = effective or organ committed dose equivalent due to inhalation during a 15-minute period,
+v, = breathing rate,
+DF, = committed or organ specific dose factor for radionuclide n,
+X,, = radionuclide n concentration,
+t = time.
+Inhalation dose factors used in RASCAL 3.0.5 are from FederalG uidance Report No. 11 (Eckerman,
+Wolbarst, and Richardson 1988). RASCAL 3.0.5 uses a breathing rate of 3.33x10 4 m3/s (20 I/min).
+At the end of each 15-minute period, the committed dose equivalents at each receptor node are written to
+*p uff and plume model output files. They are then set to zero prior to beginning model calculations for the
+next 15-minute period.
+4.9.2 Groundshine Doses
+The puff and plume models calculate groundshine dose equivalents as the sum over all radionuclides of
+product of the surface contamination by the radionuclide and a radionuclide-specific dose factor. The
+general expression for the groundshine dose equivalent is
+where
+D. DF o. t)dt (4.39)
+D,, = dose equivalent from groundshine during the period,
+DFn = radionuclide n specific ground-shine dose factor,
+o,, = radionuclide n surface concentration, and
+t = time.
+The integration in Eq. (4.39) is from t to t+15 minutes. These integration times are used because the
+surface concentration at any time is cumulative from the beginning of the event and is not set to zero at the
+beginning of the period. After the surface is contaminated, groundshine doses can be incurred, even if
+airborne material is not present.
+4.9.3 Cloudshine Doses
+RASCAL calculates cloudshine doses using four models. The models include a semi-infinite cloud model
+and a finite-puff model originally developed for MESORAD (Scherpelz, et al. 1986). The first of these
+models assumes that activity is uniformly distributed through a large volume, and the second assumes that
+activity is concentrated in a finite number of points distributed through a volume to represent the actual
+4-21
+
+--- PAGE 98 ---
+
+doses to the body, with dose factors for air in place of dose factors for tissue. Dose factors used in these
+calculations were extracted from the original data used in producing Federal Guidance Report No. 12 by
+its authors, and are included in the RASCAL 3.0.5 radionuclide database.
+The gamma dose rates for airborne activity in finite plumes are calculated using the same algorithms used
+in the puff model and the plume model for finite-plume, cloudshine doses with adjustment for the
+difference in energy absorption coefficients of tissue and air. The adjustment is made to the dose rates for
+each isotope by multiplying the dose rate for tissue by the ratio of the semi-infinite cloud dose factor for
+air and the semi-infinite cloud dose factor for tissue. Thus, the gamma dose rate for an isotope is
+DF. .i,.
+OD DFSici (4.54)
+where D 'is the cloudshine dose rate calculated for tissue. Semi-infinite cloud-dose factors for.tissue from
+Federal Guidance Report No. 12 (Eckerman and Ryman 1993) are used in this calculation along with
+semi-infinite cloud-dose factors for air calculated by A. L. Sjoreen using the methods listed in (Scherpelz
+1986). The semi-infinite dose factors for air are included in the RASCAL 3.0.5 radionuclide database.
+The open- and closed-window dose rates are larger than the sum of the cloudshine and groundshine doses
+because the dose factors for air are larger than those for tissue. Typically, the cloudshine gamma dose rate
+for air is about a factor 1.4 larger than the dose rate for tissue, and the groundshine gamma dose rate for
+air is about a factor 1.3 larger than the dose rate for tissue. These ratios may be significantly larger greater
+than 2) if radionuclides with low energy gamma emissions (<0. I MeV) contribute significantly to the dose
+rates.
+4.9.5 Total Effective Dose Equivalent
+The early phase (plume phase) total effective dose equivalent (TEDE) that RASCAL 3.0.5 calculates is
+the sum of the external gamma dose (cloudshine) from the plume, the committed effective dose equivalent
+(CEDE), and the external dose over a four-day period from radionuclides deposited on the ground (4-day
+groundshine dose). This TEDE is calculated assuming that no protective actions such as evacuation or
+sheltering are taken. Thus, the calculations assume that people are outdoors during plume passage and will
+remain outdoors exposed to ground shine from deposited radionuclides for four days after the
+radionuclides have been deposited.
+Thus, the early phase TEDE that RASCAL 3.0.5 calculates is larger than the TEDE that would be
+expected for people who took protective actions or who continued their normal activities (spending much
+time indoors).
+The reason that RASCAL 3.0.5 calculates dose assuming that no actions to reduce dose are taken is to
+determine if doses without any protective actions would exceed the EPA protective action guides. The
+need for protective actions is based on the TEDE that would be received if no protective actions of any
+type were taken, even actions such as simply spending some time indoors.
+The RASCAL 3.0.5 dose estimates should not be used as an estimate of the TEDE that would be received
+by people who did not intentionally take protective actions because even performing normal everyday
+activities will reduce doses to below those estimated by RASCAL 3.0.5.
+4-28
+
+--- PAGE 99 ---
+
+RASCAL 3.0.5 can provide a more realistic estimate of the doses that people would actually receive, but
+that requires some effort. To account for evacuation, the end of calculation time can be set to the time at
+which people evacuate. The TEDE then is the sum of the inhalation dose, cloudshine dose, and period
+ground shine dose. If sheltering prior to evacuation is to be taken into account, each dose component must
+be reduced by an appropriate reduction factor for sheltering before the three dose components are
+summed.
+4.9.6 Total Acute Bone Dose Equivalent
+Total acute bone dose equivalent is another multiple pathway dose calculated in RASCAL 3.0.5. The total
+acute bone dose equivalent is the sum of the cloudshine dose, the ground shine dose, and a 4-day
+inhalation dose to bone red marrow.
+4.10 References
+Athey, G. F., et al. 1993. RASCAL Version 2.0 User's Guide. Vol. I., Rev. I., NUREG/CR-5247, U.S.
+Nuclear Regulatory Commission. Washington, D.C.
+Bander, T.J. 1982. PA VAN: An Atmospheric Dispersion Programf or Evaluating Design Basis
+Accidental Releases for Radioactive Materialsf rom Nuclear Power Stations. NUREG/CR-2858, U.S.
+Nuclear Regulatory Commission. Washington, D.C.
+Briggs, G. A. 1969. Plume Rise, TID-25075, U.S. Atomic Energy Commission. Washington, D.C.
+Briggs, G. A. 1975. "Plume Rise Predictions," Lectures on Air Pollution and Environmental Impact
+Analyses. American Meteorological Society, Boston, Mass.
+Briggs, G. A. 1984. "Plume Rise and Buoyancy Effects." Atmospheric Science and Power Production.
+Ed. D. Randerson, DOE/TIC-27601, U. S. Department of Energy.
+Csanady, G. T. 1973. Turbulent Diffusion in the Environment. D. Reidel, Boston, Mass.
+Draxler, R. R. 1984. "Diffusion and Transport Experiments." Atmospheric Science and Power
+Production. Ed. D. Randerson, DOE/TIC-27601, U. S. Department of Energy. Washington, D.C.
+Eckerman, K. F., A. B. Wolbarst, and A. B. C. Richardson. 1988. Federal Guidance Report No. 11.
+Limiting Values of Radionuclide Intake and Air Concentrationa nd Dose Conversion Factorsf or
+Inhalation,S ubmersion, and Ingestion. U. S. Environmental Protection Agency. Washington, D.C.
+Eckerman, K. F., and J. C. Ryman. 1993. Federal Guidance Report No. 12. External Exposure to
+Radionuclides in Air, Water, and Soil. U. S. Environmental Protection Agency. Washington, D.C.
+Eimutis, E. C., and M. G. Konicek. 1972. "Derivations of Continuous Functions for the Lateral and
+Vertical Atmospheric Dispersion Coefficients." Atmospheric Environment, 6:859-63.
+Englemann, R. J. 1968. "Calculation of Precipitation Scavenging." Meteorology and Atomic Energy
+1968. Ed. D. Slade, TID-24190, U.S. Atomic Energy Agency.
+4-29
+
+--- PAGE 115 ---
+
+0 Inhaled uranium (mg)
+Inhaled uranium is calculated from the total exposure using a breathing rate passed from the user
+interface. The default breathing rate is 3.33 X104 m3/s.
+Committed effective dose equivalent from inhaled uranium (rem)
+The committed effective dose equivalent (CEDE) from uranium is calculated from the inhaled
+uranium, the specific activity of the uranium, and the inhalation dose factors from Federal Guidance
+Report No* I I (Eckerman et al. 1988). In addition, all dose calculations have been eliminated except
+for the calculation of the inhalation CEDE for uranium. This CEDE can be considered equivalent to
+the TEDE since cloudshine and groundshine doses are negligible. The UF plume model does not
+6
+calculate cloudshine or groundshine doses because they are negligible.
+" Deposited uranium (g/m2)
+Deposited uranium includes uranium in any UF that condenses before reacting with atmospheric
+6
+water and uranium in UO F, that deposits from U0 F plume. UF vapor does not deposit, and there is
+2 22 6
+no enhanced deposition of UO F following its formation.
+2 2
+" Average HF concentration in the lung (ppm by volume)
+The HF concentration calculated by UF plume model is the HF concentration in the lungs. The
+6
+concentration in the lungs includes inhaled HF plus HF formed as a result of the reaction of inhaled
+UF with water in the lungs. If no UF is inhaled, the HF concentration in the lung is the same as the
+6 6
+concentration in the atmosphere.
+" 1-h equivalent HF concentration in the lung (ppm by volume)
+The I- h equivalent HF concentration in the lung is an effective concentration calculated for short-
+duration releases for comparison with toxicity limits. It is calculated as
+Clhe '- C(t) (5.38)
+3-600)
+where
+Ch, = lh equivalent concentration (ppm),
+C(t) = average concentration for duration t (ppm),
+t = duration of the exposure to concentration C(t) (s).
+HF deposition (g/m').
+HF deposition is calculated from the atmospheric HF exposure using a 0.003 m/s deposition velocity.
+5-13
+
+--- PAGE 137 ---
+
+7 Intermediate Phase Dose Calculations
+This chapter describes the intermediate phase dose calculations in RASCAL 3.0.5. The intermediate phase
+of a radiological emergency begins after the release has terminated. Dose calculations for the intermediate
+phase are done to determine if the concentrations of radionuclides on the ground are likely to cause doses
+to residents that would be in excess of the intermediate phase protective action guides established by the
+U. S. Environmental Protection Agency (EPA 1992). Those protective action guides are 2 rem for the first
+year, 0.5 rem for the second year, and 5 rem for the entire 50 years following the event.
+In the Field Measurements to Dose module of RASCAL 3.0.5, the user enters the ground concentrations
+of deposited radionuclides at a location. Then, RASCAL 3.0.5 calculates the intermediate phase doses for
+the first year, the second year, and the cumulative dose over 50 years. The doses can be calculated with or
+without a delay in reentry into the contaminated area. The reentry delay can be any number of days
+between 0 to 730 days (2 years).
+In addition, RASCAL 3.0.5 calculates "derived response levels" or "DRLs." A derived response level is a
+measurable quantity that indicates that the deposited activity could result in an intermediate phase dose
+equal to one of the intermediate phase protective action guides. One type of DRL is the closed window
+(gamma) dose rate in mR/hour equal to the first, second, or 50 year intermediate phase PAG. The other
+DRL is the ground concentration of a marker radionuclide equivalent to a PAG.
+The DRLs are calculated for reentry delay times ranging from 0 days to 100 days. When significant
+quantities of short-lived radionuclides are present, the DRLs will be different depending on how long after
+the release the measurement is made. In addition, the assumed reentry delay will change the DRLs.
+7.1 Intermediate Phase Doses
+The intermediate phase doses calculated by RASCAL are the sums of three components: external dose
+from groundshine, internal dose from the inhalation of resuspended particles, and internal dose from the
+inadvertent ingestion of surface contamination.
+Inadvertent ingestion is not included as a pathway in the EPA Protective Action Guide manual nor in the
+assessments done by the Federal Radiological Monitoring and Assessment Center (FRMAC). Therefore,
+the default intake for inadvertent ingestion in RASCAL is zero. However, the RASCAL user can include
+inadvertent ingestion by selecting an intake larger than zero.
+7.1.1 Groundshine Doses
+RASCAL calculates groundshine doses Dgs(T) from the surface concentration for occupancy time intervals
+T. The calculation is
+Dg, (7) = GRF x[Cg, x (7.1)
+g(=)]
+7-1
+
+--- PAGE 140 ---
+
+7.1.2 Inadvertent Ingestion Doses
+Calculation of inadvertent ingestion doses is similar to the calculation of groundshine doses. It is as
+follows
+Ding(T) = ING x [Cgi x DCPing(T)] (7.6)
+where
+Dig(T) = inadvertent ingestion dose (rem) for occupancy time interval T,
+ING = inadvertent ingestion rate (m2/day),
+Cgi = ground surface concentration (Ci/m2) of radionuclide i
+DCPingi(T)= intermediate phase inadvertent ingestion dose conversion
+parameter [rem /(Ci day`)]
+The intermediate phase inadvertent ingestion dose conversion parameter DCPingi(T) is calculated
+essentially the same as for groundshine in Equation 7.2.
+N
+DCPi,,gi (T) = [Eeingn( T) x EDCn] (7.7)
+n=O.
+The effective dose rate coefficients EDC, for inadvertent ingestion are based on Table 2.2 of Federal
+Guidance Report No. 11 (Eckerman et a] 1988), and may include implicit daughters as was discussed in
+Section 7.1.1 for groundshine doses.
+The effective exposure duration Ee ingn(T) includes decay, ingrowth and weathering in the same manner as
+described for groundshine above. The inadvertent ingestion weathering function used in RASCAL is the
+same as that used for groundshine. The same weathering factor is used because no data could be found for
+weathering applied to the inadvertent ingestion pathway. This approach is probably conservative because
+removable radioactive materials on the most commonly touched surfaces are likely to be depleted quickly.
+For reasonable inadvertent ingestion rates ING (zero to 10- m2/d), intermediate phase inadvertent
+ingestion doses are generally small compared to groundshine doses.
+7.1.3 Inhalation Doses
+Intermediate phase inhalation doses are generally smaller than either intermediate phase groundshine
+doses or inadvertent ingestion doses. The doses are calculated assuming that activity on the ground is
+resuspended and then inhaled. The calculation is
+D4Mlh(T= V x R,, [CX x DCP~lhLi M (7.8)
+0
+i=1I
+where
+Dilh(T) = inhalation dose (rem) for occupancy time interval T,
+7-4
+
+--- PAGE 141 ---
+
+Vb = breathing rate (m3/s),
+R= initial resuspension factor (rn')
+Cgj= ground surface concentration (Ci/m2) of radionuclide i
+DCPinh A(T) = inhalation intermediate phase dose conversion parameter [rem-s/Ci].
+The default breathing rate Vb is 2.67x 10.4 m3/s, which represents a long term breathing rate that includes
+both waking and sleeping breathing rates.
+The inhalation intermediate phase dose conversion parameter DCFihi(T)i ncludes decay and ingrowth and
+the time-dependent (Weathering) portion of the resuspension function.
+For inhalation, the intermediate phase dose conversion parameters include decay, ingrowth, and
+resuspension. These dose conversion parameters are calculated as
+where
+N
+DCPfhi (T) = -[Eea.(T) x ECF] (7.9)
+n=O
+DCPifh,(T)= intermediate phase dose conversion parameter for the parent radionuclide
+Eean(T) = effective exposure duration to airborne activity of the parent nuclide (n = 0) or daughters
+(nŽ 1) during T accounting for decay, ingrowth, and resuspension
+ECF. = effective dose factor based on Table 2.1 in FGR 11 including implicit daughters as previously
+described.
+The summation is over the parent and all daughters.
+The effective exposure duration to airborne activity, Eea/(T) for each radionuclide (parent and daughters)
+is
+Eean(T) = A,, IoA (t)R,(t)dt (7.10)
+where
+A/(t) = activity of the radionuclide
+R,(t) = time-dependent resuspension factor
+RASCAL implements the resuspension factor model in NCRP Report No. 129 (NCRP 1999). For the first
+day, the initial resuspension factor is constant with a default value of 106 m'. Beyond 1,000 days, the
+resuspension factor is also constant with a value of 10' m'. For days I through 1,000, the resuspension
+factor R,(t) is modeled as
+7-5
+
+--- PAGE 142 ---
+
+R, (t) = Ro / t (7.11)
+where
+R,, =initial resuspension factor with a default value of I0 6/m
+t = time in days
+When expressions for the activity and the resuspension factor are substituted into Equation 7.11, the
+effective exposure cannot be calculated by closed form integration. In RASCAL, the effective exposure
+duration for intermediate phase inhalation doses is estimated using numerical integration.
+7.1.4 Precalculated Intermediate Phase Dose Conversion Parameters
+The RASCAL database contains precalculated dose conversion parameters for groundshine, inadvertent
+ingestion, and inhalation for the first 30 days, the first year, the second year, and 50 years for 219
+radionuclides. The precalculated dose conversion parameters reduce computing time and facilitate
+comparison with hand calculations.
+7.1.5 Dose Conversion Parameter Calculations with Delayed Reentry
+Dose conversion parameters for delayed reentry are calculated as the difference between the factor
+without delayed reentry and the factor for the delay period. For example, the first year dose conversion
+parameter for a 30-day delay in reentry is calculated as
+DCP(30d to ly) = DCP(O to ly) - DCP(O to 30d) (7.12)
+where
+DCP(30 d to I y) = dose conversion parameter over the interval from 30 days to 1 year
+DCP(O to 1 y) = dose conversion parameter for the first year
+DCP(O to 30 d) = dose conversion parameter for the first 30 days
+Intermediate phase dose conversion parameters for the first year D(O to I y), the second year D(J to 2 y),
+and 50 years D(O to 50 y) have been precalculated. Intermediate phase dose conversion parameters for the
+delay period are calculated as needed, after the delay period is defined.
+7-6
+
+--- PAGE 148 ---
+
+ECFegi = exposure rate dose coefficient for contaminated soil from Table 111.3 of FGR No. 12
+(Eckerman and Ryman 1993)
+3600 s/hr converts the exposure rate to an hourly rate.
+The occupancy time interval for the intermediate phase dose conversion parameters are usually for the
+occupancy time intervals established for the EPA protective action guides for the intermediate phase.
+7.3.2 Marker Nuclide Derived Response Levels
+In some instances it may be difficult to use the exposure rate DRIL to identify areas where doses might
+exceed the protective action guides. Examples are when the exposure rate is near background levels or
+when there are no gamma-emitting radionuclides in the mix. In those instances, it may be easier to
+measure the surface concentration of a particular marker radionuclide rather than the exposure rate.
+The marker nuclide DRL is the concentration of that nuclide expected to cause doses to inhabitants equal
+to the protective action guides. Following the method in the FRMAC Manual (SNL 2003), RASCAL
+calculates marker DRLs as follows
+DRLiark = PAG x Cgk
+SCýj [(GRF x DCP ~+ (ING x DCFPng) + (R,,, x VXx (7.17),
+where
+Cgk ý ground concentration of the marker radionuclide (mCi/rn2)
+As with the exposure rate DRLs, the RASCAL calculation includes an optional inadvertent ingestion
+component not included in the FRMAC DRL calculation.
+7.4 References
+Anspaugh, L. R., S. L. Simon, K. I. Gordeev, I. A. Likhtarev, R. M. Maxwell, and S. M. Shinkarev. 2002.
+"Movement of Radionuclides in Terrestrial Ecosystems by Physical Processes. Health Physics 82(5):669-
+679.
+Benedict, M., T. H. Pigford, and H. W. Levi. 1987. Nuclear Chemical Engineering, 2 nd Ed. McGraw-
+Hill, New York.
+Eckerman, K.F., A. B. Wobarst, and A.C. B.Richardson. 1988. Limiting Values of Radionuclide Intake
+and Air Concentration and Dose Conversion Factorsf or Inhalation,S ubmersion, and Ingestion. Federal
+Guidance Report No. 11. EPA-520/11-88-020, U.S. Environmental Protection Agency.
+Eckerman, K. F. and J. C. Ryman. 1993. External Exposure to Radionuclides in Air Water, and Soil.
+Federal Guidance Report No. 12. EPA-402-R-93-081, U.S. Environmental Protection Agency.
+7-12
+
+--- PAGE 151 ---
+
+NRC FORM 335 U.S. NUCLEAR REGULATORY COMMISSION 1. REPORT NUMBER
+(9-2004) (Assigned by NRC, Add Vol., Supp., Rev.,
+NRCMD 3.7 and Addendum Numbers, if any.)
+BIBLIOGRAPHIC DATA SHEET
+(See instructions on the reverse) NUREG-1887
+2. TITLE AND SUBTITLE 3. DATE REPORT PUBLISHED
+RASCAL 3.0.5: Description of Models and Methods MONTH YEAR
+August 2007
+4, FIN OR GRANT NUMBER
+Ri110
+5. AUTHOR(S) 6. TYPE OF REPORT
+Stephen A. McGuire
+James Van Ramsdell, Pacific Northwest Laboratories Final technical report
+George F. Athey, Athey Consulting 7. PERIOD COVERED (Inclusive Dates)
+NA
+8. PERFORMING ORGANIZATION -NAME AND ADDRESS (It NRC. provide Division. Office or Region, U.S. Nuclear Regulatory Commission, and mailing address. if contractor,
+provide name and mailing address.)
+Divsion of Preparedness and Response
+Office of Nuclear Security and Incident Response
+U. S. Nuclear Regulatory Commission
+Washington, DC 20555
+9. SPONSORING ORGANIZATION -NAME AND ADDRESS (If NRC, type 'Same as above", if contractor,p rovide NRC Division. Office or Region, U.S. Nuclear Regulatory Commission.
+and mailing address.)
+same as above
+10. SUPPLEMENTARY NOTES
+Supercedes NUREG-1741.
+11. ABSTRACT (200 words or less)
+The code currently used by NRC's emergency operations center for making dose projections for radiological emergencies is
+RASCAL version 3.0.5 (Radiological Assessment System for Consequence AnaLysis). This code was developed by NRC. The
+first version was created about 20 years ago. Since then the code has been undergoing continual improvement to expand its
+capabilities and to update the models used in its calculations. This report describes the models and calculational methods
+used in RASCAL 3.0.5. This report updates and supercedes the information in NUREG-1741, "RASCAL 3.0: Description of
+Models and Methods," 2001.
+RASCAL 3.0.5 evaluates releases from: nuclear power plants, spent fuel storage pools and casks, fuel cycle facilities, and
+radioactive material handling facilities.
+12. KEY WORDS/DESCRIPTORS (List words or phrases that will assist researchers in locating the report.) 13. AVAILABILITY STATEMENT
+RASCAL, emergency response, dose assessment, dose projections, plume modeling unlimited
+14. SECURITY CLASSIFICATION
+(This Page)
+unclassified
+(This Report)
+unclassified
+15. NUMBER OF PAGES
+16. PRICE
+NRC FORM 335 (9-2004) PRINTED ON RECYCLED PAPER

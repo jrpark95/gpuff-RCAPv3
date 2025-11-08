@@ -524,16 +524,23 @@ void read_input_RCAP(const std::string& filename, SimulationControl& SC,
     std::vector<NuclideData>& ND, RadioNuclideTransport& RT, WeatherSamplingData& WD,
     EvacuationData& EP, EvacuationDirections& ED, SiteData& SD, ProtectionFactors& PF, HealthEffect& HE) {
 
+    std::cout << "\n[READ_RCAP:001] ==== ENTERING read_input_RCAP() ====" << std::endl;
+    std::cout << "[READ_RCAP:002] Opening file: " << filename << std::endl;
+
     std::ifstream infile(filename);
     if (!infile.is_open()) {
         std::cerr << "Error: Could not open file " << filename << std::endl;
         exit(EXIT_FAILURE);
     }
+    std::cout << "[READ_RCAP:003] File opened successfully" << std::endl;
 
     std::string line;
     int plumeIndex = 0;
+    int lineNumber = 0;
 
+    std::cout << "[READ_RCAP:004] Starting to parse file line by line..." << std::endl;
     while (std::getline(infile, line)) {
+        lineNumber++;
 
         if (line.empty() || line[0] == '!') {
             continue;
@@ -772,16 +779,24 @@ void read_input_RCAP(const std::string& filename, SimulationControl& SC,
             }
         }
         else if (line.find("EP240") != std::string::npos) {
-            iss >> keyword >> keyword >> EP.nSpeedPeriod;
-            //EP.speeds.resize(EP.nSpeedPeriod);
-            //EP.durations.resize(EP.nSpeedPeriod - 1);
+            std::cout << "\n[READ_RCAP:EP240] >>> FOUND EP240 at line " << lineNumber << std::endl;
+            std::cout << "[READ_RCAP:EP240] Raw line: " << line << std::endl;
 
+            iss >> keyword >> keyword >> EP.nSpeedPeriod;
+            std::cout << "[READ_RCAP:EP240] nSpeedPeriod = " << EP.nSpeedPeriod << std::endl;
+
+            std::cout << "[READ_RCAP:EP240] Reading speeds array..." << std::endl;
             for (int i = 0; i < EP.nSpeedPeriod; ++i) {
                 iss >> EP.speeds[i];
+                std::cout << "[READ_RCAP:EP240] speeds[" << i << "] = " << EP.speeds[i] << std::endl;
             }
+
+            std::cout << "[READ_RCAP:EP240] Reading durations array..." << std::endl;
             for (int i = 0; i < EP.nSpeedPeriod - 1; ++i) {
                 iss >> EP.durations[i];
+                std::cout << "[READ_RCAP:EP240] durations[" << i << "] = " << EP.durations[i] << std::endl;
             }
+            std::cout << "[READ_RCAP:EP240] <<< EP240 parsing complete" << std::endl;
         }
         //else if (line.find("EP250") != std::string::npos || line[0] == '+') {
         //    int id, iR;
@@ -979,6 +994,8 @@ void read_input_RCAP(const std::string& filename, SimulationControl& SC,
     }
 
     infile.close();
+    std::cout << "[READ_RCAP:999] File closed, EXITING read_input_RCAP()" << std::endl;
+    std::cout << "[READ_RCAP:999] ================================\n" << std::endl;
 }
 
 void read_input_RCAPn(int numi, const std::string& filename, SimulationControl& SC, std::vector<NuclideData>& ND, RadioNuclideTransport& RT) {
@@ -1478,7 +1495,7 @@ void Gpuff::initializePuffs(
                     nuclide_concentrations[nuclide_idx] = RT[source_index].conc[nuclide_idx] *
                         RT[source_index].RT_puffs[puff_index].release_fractions[ND[nuclide_idx].chemical_group];
                     if (nuclide_concentrations[nuclide_idx] > 1.0) {
-                        std::cout << "nuc = " << nuclide_idx << ", conc = " << nuclide_concentrations[nuclide_idx] << std::endl;
+                        //std::cout << "nuc = " << nuclide_idx << ", conc = " << nuclide_concentrations[nuclide_idx] << std::endl;
                     }
                 }
 

@@ -30,8 +30,8 @@
 //
 // ====================================================================================
 
-#include "gpuff.cuh"
-#include "gpuff_kernels.h"
+// Note: gpuff.cuh already includes this file - removing include to fix circular dependency
+// #include "gpuff_kernels.h"  // Commented out - file doesn't exist
 
 // ====================================================================================
 // Constants

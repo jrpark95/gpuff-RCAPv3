@@ -684,9 +684,9 @@ void Gpuff::evac_output_binary_RCAP(int timestep) {
         swapBytes(vval);
         vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
 
-        if (evacuee.prev_theta_idx == 8) printf("%f  ", evacuee.speed);
+        //if (evacuee.prev_theta_idx == 8) printf("%f  ", evacuee.speed);
     }
-    printf("\n");
+    //printf("\n");
 
     // Evacuation speed
     vtkFile << "SCALARS speed float 1\n";

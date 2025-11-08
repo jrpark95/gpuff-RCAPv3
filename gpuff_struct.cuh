@@ -333,29 +333,30 @@ struct EvacuationData {
         std::cout << "Eva End Ring: " << evaEndRing << "\n";
         std::cout << "EP End Ring: " << EP_endRing << "\n";
 
-        std::cout << "Shelter Delay: ";
-        for (float delay : shelterDelay) {
-            std::cout << delay << " ";
-        }
-        std::cout << "\n";
+        // Commented out to prevent terminal spam
+        // std::cout << "Shelter Delay: ";
+        // for (float delay : shelterDelay) {
+        //     std::cout << delay << " ";
+        // }
+        // std::cout << "\n";
 
-        std::cout << "Shelter Duration: ";
-        for (float duration : shelterDuration) {
-            std::cout << duration << " ";
-        }
-        std::cout << "\n";
+        // std::cout << "Shelter Duration: ";
+        // for (float duration : shelterDuration) {
+        //     std::cout << duration << " ";
+        // }
+        // std::cout << "\n";
 
-        std::cout << "Speeds: ";
-        for (float speed : speeds) {
-            std::cout << speed << " ";
-        }
-        std::cout << "\n";
+        // std::cout << "Speeds: ";
+        // for (float speed : speeds) {
+        //     std::cout << speed << " ";
+        // }
+        // std::cout << "\n";
 
-        std::cout << "Durations: ";
-        for (float duration : durations) {
-            std::cout << duration << " ";
-        }
-        std::cout << "\n";
+        // std::cout << "Durations: ";
+        // for (float duration : durations) {
+        //     std::cout << duration << " ";
+        // }
+        // std::cout << "\n";
     }
 };
 
@@ -588,13 +589,14 @@ struct EvacuationDirections {
     }
 
     void print() const {
-        for (int i = 0; i < rows; ++i) {
-            std::cout << "Row " << i + 1 << ": ";
-            for (int j = 0; j < cols; ++j) {
-                std::cout << get(i, j) << " ";
-            }
-            std::cout << std::endl;
-        }
+        // Commented out to prevent terminal spam
+        // for (int i = 0; i < rows; ++i) {
+        //     std::cout << "Row " << i + 1 << ": ";
+        //     for (int j = 0; j < cols; ++j) {
+        //         std::cout << get(i, j) << " ";
+        //     }
+        //     std::cout << std::endl;
+        // }
     }
 };
 
@@ -618,20 +620,21 @@ struct SiteData {
     }
 
     void print() const {
-        std::cout << "Surface Roughness (cm):\n\n";
-        for (int i = 0; i < roughness.size(); ++i) {
-            std::cout << "Dir" << i + 1 << "\t:" << roughness[i] << std::endl;
-        }
-        std::cout << std::endl;
+        // Commented out to prevent terminal spam
+        // std::cout << "Surface Roughness (cm):\n\n";
+        // for (int i = 0; i < roughness.size(); ++i) {
+        //     std::cout << "Dir" << i + 1 << "\t:" << roughness[i] << std::endl;
+        // }
+        // std::cout << std::endl;
 
-        std::cout << "\nPopulation Distribution:\n\n";
-        for (int i = 0; i < population.size(); ++i) {
-            std::cout << "Row " << i + 1 << ": ";
-            for (int j = 0; j < population[i].size(); ++j) {
-                std::cout << population[i][j] << "\t";
-            }
-            std::cout << std::endl;
-        }
+        // std::cout << "\nPopulation Distribution:\n\n";
+        // for (int i = 0; i < population.size(); ++i) {
+        //     std::cout << "Row " << i + 1 << ": ";
+        //     for (int j = 0; j < population[i].size(); ++j) {
+        //         std::cout << population[i][j] << "\t";
+        //     }
+        //     std::cout << std::endl;
+        // }
     }
 };
 

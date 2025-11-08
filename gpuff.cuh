@@ -209,7 +209,7 @@ public:
      * Represents a single Gaussian puff for simple dispersion scenarios.
      * Contains position, dispersion parameters, and deposition data.
      */
-    __device__ __host__ struct Puffcenter {
+    struct Puffcenter {
         // Position
         float x, y, z;
 
@@ -287,7 +287,7 @@ public:
      * Enhanced puff structure for RCAP simulations.
      * Supports multiple nuclides and detailed meteorological tracking.
      */
-    __device__ __host__ struct Puffcenter_RCAP {
+    struct Puffcenter_RCAP {
         // Position (Lambert conformal coordinates)
         float x, y, z;
 
@@ -365,7 +365,7 @@ public:
      *
      * Fixed monitoring points for concentration calculations.
      */
-    __device__ __host__ struct receptors_RCAP {
+    struct receptors_RCAP {
         float x, y, z;      // Position (m)
         float conc;         // Calculated concentration
 

@@ -1,0 +1,1002 @@
+=== SHIELDING RELATED SECTIONS ===
+Found in 26 pages
+
+
+
+--- PAGE 8 ---
+
+2.1 Basic Method to Calculate Spent Fuel Source Terms ................................ 2-1
+2.2 Spent Fuel Radionuclide Inventories ............................................. 2-1
+2.3 Fractions of Inventory Available for Release in Spent Fuel Accidents ................... 2-2
+2.3.1 Spent Fuel Pool W ater Drained ............................................ 2-3
+2.3.2 Fuel Dam aged Under W ater ............................................... 2-4
+2.3.3 Release from a Dry Storage Cask ........................................... 2-4
+2.4 Release Pathways and Reduction Factors ......................................... 2-4
+2.5 Leakage F ractions ............................................................ 2-5
+2.6 R eferences ................................................................. 2-5
+3 Fuel Cycle and M aterials Source Term s .. ; ............................................ 3-1
+3.1 Basic M ethod to Calculate the Source Term ....................................... 3-I
+3.2 UF Releases from Cylinders ............. ......... ........................... 3-1
+6
+3.3 UF Releases from Cascade Systems ............................................. 3-3
+6
+3.4 Fires Involving Uranium Oxide ................................................. 3-5
+3.5 Explosions Involving Uranium O xide ............................................ 3-6
+3.6 C riticality A ccidents .......................................................... 3-7
+3.6.1 Prom pt Shine Dose Calculation ............................................ 3-10
+3.7 Sources and M aterial in a Fire ................................................. 3-10
+3.8 Isotopic Release Rates and Concentrations ....................................... 3-13
+3.9 Computing Uranium Specific Activity from Enrichment ............................ 3-13
+3.10 R eferences ............................................................... 3-13
+4 Transport, Diffusion, and Dose Calculations ...................... 4-1
+4.1 Theoretical Bases for Gaussian M odels ........................................... 4-1
+4. 1.1 G aussian Puff M odel .................................................... 4-2
+4.1.2 Straight-Line Gaussian Plume M odels ....................................... 4-3
+4.1.3 Treatment of Calm W inds ................................................. 4-4
+4.1.4 M odel Domains and G rids ................................................ 4-6
+4.2 T ransport .................................................................. 4-6
+4.2.1 Puff M odel Transport .................................................... 4-6
+4.2.2 Plum e M odel Transport .................................................. 4-7
+4.3 D ispersion Param eters ........................................................ 4-8
+4.3.1 N orm al D ispersion ...................................................... 4-8
+4.3.2 Low Wind Speed (Building Wake) Correction .............................. 4-9
+4.3.3 Puff M odel D ispersion Parameters ......................................... 4-1I
+4.3.4 Plume M odel Dispersion Parameters ....................................... 4-12
+4.3.5 Calm Wind Dispersion Parameters for the Puff Model ......................... 4-12
+4.3.6 Calm Wind Dispersion Parameters for the Plume Model ...................... 4-13
+4.4 M ixing Layer T hickness ...................................................... 4-13
+4.5 Stack Plum e R ise ........................................................... 4-13
+4.5.1 F inal Plum e R ise ....................................................... 4-13
+4.5.2 T ransition Plum e R ise ................................................... 4-16
+4.5.3 Effective Release H eight ................................................ 4-17
+4.5.4 Effective Release Height for Fires ......................................... 4-17
+4 .6 De position ................................................................ 4-18
+4.6.1 D ry D eposition ........................................................ 4-18
+4.6.2 W et D eposition ........................................................ 4-19
+vi
+
+--- PAGE 11 ---
+
+List of Figures
+1.1 PW R Containment M onitor Response ................................................ 1-13
+1.2 BWR Mark I and IIDry Well Containment Monitor Response ........................... 1-14
+1.3 BWR Mark I and II Wet Well Containment Monitor Response ........................... 1-15
+1.4 BWR Mark III Dry Well Containment Monitor Response ..... ....................... 1-16
+1.5 BWR Mark III Wet Well Containment Monitor Response ............................ 1-17
+4.1 Ratios of predicted concentrations in wakes by a model without wake correction to observed
+concentrations as a function of wind speed ........................................... 4-10
+5.1 Comparison of UF6Plume model predictions of average uranium concentrations with measured
+concentrations and predictions of other models ....................................... 5-14
+List of Tables
+1. Nuclear Power Plant Core Inventory During Operation for Low Enriched Uranium Fuel ....... 1-2
+1.2 Radionuclide Concentrations in Reactor Coolant ....................................... 1-4
+1.3 BWR Event Timings and Fraction of Core Activity Inventory Released ..................... 1-8
+1 .4 PWR Event Timings and Fraction of Core Activity Inventory Released ..................... 1-9
+1.5 Fraction of Total Noble Gas Activity for each Noble Gas Nuclide at Shutdown ............. 1-20
+1.6 Fraction of Total Radioiodine Activity for each Radioiodine Nuclide at Shutdown ........... 1-20
+1.7 PWR Release Pathways Available for Each Source Term Type .......................... 1-23
+1.8 BWR Release Pathways Available for Each Source Term Type .......................... 1-23
+1.9 Summary of Nuclear Power Plant Reduction Factor Multipliers .......................... 1-24
+1. 10 Methods for Specifying Release Rate for each Release Pathway ........................ 1-28
+1. 11 Short-lived Daughters Assumed to be in Equilibrium with the Parent Activity .............. 1-31
+1.12 Spreadsheets Prepared for Quality Assurance Testing of the RASCAL 3.0.5 Time-dependent
+S o urce T erm ... ... ... .... . ........ ...... . .... .... .... .... ... .... .... ... . ... . .. 1-3 3
+2.1 Fuel Release Fractions Used in Spent Fuel Accidents ................................... 2-2
+3.1 U F C ylinder Inventories ......................................................... 3-2
+6
+3.2 Default Release Fractions and Rates Based on UF Form and Cylinder Damage Type ......... 3-2
+6
+3.3 UF Release Fractions Based on Valve Location ....................................... 3-2
+6
+3.4 Pathways with/without UF6 Conversion Prior to Release to Atmosphere .................... 3-3
+3.5 Paducah GDP Buildings and Default Inventory and Release Rates ......................... 3-4
+3.6 Portsmouth GDP Buildings and Default Inventory and Release Rates ...................... 3-4
+3.7 Fractions Available for Release and Inhalation Fractions Used in Uranium Oxide Fires ........ 3-6
+3.8 Fractions Available for Release and Inhalation Fractions Used in Uranium Oxide Explosions ... 3-7
+3.9 Fission Yields Used in Criticality Calculations ..................................... 3-8
+3.10 Activity (Ci) Released in Criticality of 10"' Fissions ................................... 3-9
+3.11 Fire Release Fractions by Compound Form ......................................... 3-11
+3.12 Fire Release Fractions by Element ................................................ 3-12
+3.13 Uranium Specific Activity for Different Enrichments ................................. 3-13
+4.1 Constant Values for Calculation of Atmospheric Dispersion Parameters .................... 4-9
+4.2 RASCAL 3.0.5 W ashout Coefficients .............................................. 4-19
+6.1 Estimated Pasquill-Gifford Stability Class Based on NRC Delta TM Method ................ 6-4
+6.2 Estimated Atmospheric Stability Class for Missing Stability Classes ....................... 6-4
+ix
+
+--- PAGE 40 ---
+
+1.4.3 Containment Bypass
+Containment bypass is a coolant release from the reactor coolant system to an auxiliary building or
+directly to the environment without passing through the containment atmosphere. The containment
+bypass release model and the reduction mechanisms are the same for PWRs and BWRs. Therefore, this
+section applies equally to both.
+The bypass model was substantially revised in RASCAL 3.0.5 compared to previous versions. In
+previous models, activity escaping the fuel was transported immediately to the environment. Essentially,
+the previous model did not model holdup. Thus, the release rate was unrealistically fast and much too
+large for small leaks. The new RASCAL 3.0.5 model first distributes activity released from the fuel into
+the coolant with uniform concentrations. The flow rate of coolant to the environment then determines
+how quickly radionuclides escape to the environment.
+For the bypass model, RASCAL 3.0.5 first calculates the initial concentration of each radionuclide in the
+coolant. If the user selects the coolant source term type, the initial coolant concentration of each
+radionuclide is entered directly. If the user selects the ultimate core damage state source term type, the
+radionuclide activity by nuclide (calculated as described in Section 1.2.3) is assumed to enter the primary
+coolant system. The initial concentration of each radionuclide is the activity entering the primary coolant
+system divided by the total coolant volume. If the user selects the time core is uncovered source term
+type, the initial coolant concentration is the activity released from the core during the first 15-minute time
+step divided by the total coolant volume.
+The coolant concentrations are then multiplied by a reduction factor for plateout. The plateout multiplier
+for containment bypass is 0.4, which is taken from NUREG-1228. The plateout mechanism is plateout
+within the reactor coolant system.
+The user then enters the coolant escape rate in terms of volume per unit time. Generally, the user can
+estimate the escape rate based on the make-up needed to maintain water levels. RASCAL 3.0.5 then
+calculates the activity escaping the primary coolant system during the time step by multiplying the
+radionuclide concentration in the coolant times the volume that escapes during the first time step.
+For subsequent time steps, the concentration in the coolant is reduced to account for the activity that has
+escaped from the primary system. If the time core is uncovered source term type is being used, new
+activity enters the coolant system during each time step as described in Section 1.2.2. Thus, the coolant
+concentrations are being augmented during each time step by new radioactive material entering the
+coolant.
+Radioactive decay and ingrowth are also calculated during each time step.
+RASCAL 3.0.5 does not calculate any holdup or plateout in any secondary structure such as auxiliary
+building. However, release to the environment can be reducedby filters, if applicable.
+1.4.4 Steam Generator Tube Ruptures in PWRs
+The steam generator tube rupture model in RASCAL 3.0.5 is substantially changed from the model used
+in previous versions of RASCAL. In previous RASCAL versions, the steam generator partitioning factor
+1-26
+
+--- PAGE 55 ---
+
+For spent fuel pool accidents, the release from the spent fuel is assumed to be into a building. If the
+release pathway to the environment passes through filters, a reduction factor of 0.01 is applied to all
+radionuclides except noble gases.
+For spent fuel damaged underwater in a spent fuel pool, a reduction factor of 0.01 is applied to all
+radionuclides except noble gases to account for scrubbing by the water in the pool. This factor is in
+additional to reduction by building filters.
+For dry cask storage accidents, there are no reduction mechanisms to reduce the amount of activity
+released.
+2.5 Leakage Fractions
+For all spent fuel accidents, the user specifies the leak rate to the environment in terms of %/hour with a
+maximum rate of 100%/hour. For fuel casks stored outdoors, the user would normally select 100%/hour
+to indicate a very fast transfer rate to the environment.
+2.6 References
+Travis, R. J., R. E. Davis, E. J. Grove, and M. A. Azarm. 1997. A Safety and Regulatory Assessment of
+Generic BWR and PWR Permanently Shutdown Nuclear Power Plants. NUREG/CR-6451, BNL-
+NUREG-52498, U.S. Nuclear Regulatory Commission.
+2-5
+
+--- PAGE 59 ---
+
+Release pathways
+RASCAL 3.0.5 has three possible release pathways for UF cylinder releases: direct to the atmosphere,
+6
+through a building, or through filters. For some pathways, it is assumed that the UJF will be fully
+6
+converted to HF and U0 2 F 2 before entering the atmosphere. Table 3.4 lists the situations where the UF 6
+is converted before release.
+Table 3.4 Pathways with/without UF6 Conversion Prior to Release to Atmosphere
+Pathway No conversion of Complete
+UF, conversion to HF
+& UO F
+2 2
+Direct
+- liquid X
+- solid X
+- solid in a fire X
+Through building X
+Through filters X
+UF6 is converted as I kg of UF 6 = 0.88 kg UO 2 F 2 + 0.23 kg HF. To determine the uranium activity from
+the uranium mass and enrichment, RASCAL converts the mass of UF to activity using the enrichment
+6
+level and the specific activity. This conversion described in Section 3.9.
+The direct to atmosphere pathway assumes that all material released from the cylinder(s) enters the
+atmosphere without being acted upon by any reduction mechanisms. The leak rate to the atmosphere is
+the leak rate from the cylinder(s). The UF6 available for release is divided by the release rate to determine
+how many time steps are required for the release to complete. The UF is released at a constant rate until
+6
+exhausted.
+Releases through a building or filters both allow the user to specify a release fraction for the HF and the
+U0 2 F 2 , a building air exchange rate (changes per hour), and a start and end time for the release. This
+release fraction is different from that described earlier. These numbers represent a reduction due to the
+building or filters; the previous was a reduction by the cylinder.
+No radiological decay is computed in UF accident scenarios.
+6
+3.3 U F Releases from Cascade Systems
+6
+The UF cascade release accident type is available only for the Portsmouth and Paducah gaseous
+6
+diffusion plants. In addition, the cascade release source term option is available only for certain buildings
+of those facilities. Tables 3.5 and 3.6 list the building names and information about the default
+inventories and release rates.
+3-3
+
+--- PAGE 60 ---
+
+Table 3.5 Paducah GDP Buildings and Default Inventory and Release Rates
+Building name Cells per unit Number of units Avg cell inventory Release rate
+(Ibs) (Ibs/sec)
+C-331 10 4 4,400 130
+C-333 10 6 9,500 130
+C-335 10 4 4,600 130
+C-337 10 6 8,400 130
+C-310 10 1 150 130
+Source: RTM Supplement for Paducah Gaseous Diffusion Plant, 1997.
+Table 3.6 Portsmouth GDP Buildings and Default Inventory and Release Rates
+Building name Cells per unit Number of units Avg cell inventory Release rate
+(Ibs) (Ibs/sec)
+X-326 20 2.5 1,000 130
+X-330 10 11 5,000 130
+X-333 10 8 5,000 130
+Source: RTM Supplement for Portsmouth Gaseous Diffusion Plant, 1997.
+Starting inventory
+This starting UF inventory (I) may be entered: (1) directly as a total mass of UF available for release or,
+6 6
+(2) as the mass of UF per cell and the number of units or cells in the cascade that are involved in the
+6
+release. When the number of cells is entered, the amount of material available is the product of the
+number of cells times their inventory. When the number of units is entered, the amount of material is the
+cell inventory time the cells per unit times the number of units.
+This starting inventory (I) is multiplied by the user entered fraction available for release from the cascade
+to the building. This value has a default of 1.0 and represents material removed by the structure due to
+natural processes. The user also enters the rate at which the material escapes from the cascade into the
+building. Each building has a default release rate that can be changed by the user.
+Release pathway
+The release pathway is based on two building configurations: summer and winter.
+In the summer configuration, it is assumed the building is sufficiently open to the atmosphere (hot inside
+with all doors and windows open) that released UF has essentially an unobstructed path to the outside.
+6
+This UJF is released to the atmosphere at the defined cascade release rate. There is no application of
+6
+fractions available for release or start and end of release. Also, there is no conversion before release to
+HF and U0 F.
+2 2
+In the winter configuration, the UF enters the building at the defined release rate and is converted as:
+6
+3-4
+
+--- PAGE 61 ---
+
+1 kg of UF 6= 0.88 kg U0 2 F 2 + 0.23 kg HF.
+To determine the uranium activity from the uranium mass and enrichment, RASCAL converts the mass
+of UF to activity using the enrichment level and the specific activity. This conversion described in
+6
+Section 3.9.
+Releases through a building or filters both allow the user to specify a release fraction for the HF and the
+U0 F, a building air exchange rate (changes per hour), and a start and end time for the release. This
+2 2
+release fraction is different from that described earlier. These numbers represent a reduction due to the
+building or filters; the previous was a reduction by the cylinder.
+No radiological decay is computed in UF accident scenarios.
+6
+3.4 Fires Involving Uranium Oxide
+Uranium oxide fires may occur in several different types of facilities. In the milling of uranium ore, a fire
+can occur in a drum of milled ore or during the process of extracting solvent. After the ore is milled, the
+production of reactor fuel begins with creating a powder from the U0 .Both wet and dry processes are
+2
+used to produce this powder. Uranium-oxide-contaminated waste can be stored in several forms, and any
+of these can be involved in a fire.
+Inventory and fractions availablef or release
+The user first selects one of five locations for the fire and specifies additional conditions. This defines
+the default fraction available for release (AIFs) and inhalation fractions (IFs).The AFs and IFs are
+considered to be conservative. The IF is the fraction of the material released that is expected to be
+inhaled. The material is defined as all vapors and any particulate material that has a diameter of< 10 gim.
+(Note that the IFs are not used in the source term calculation. They are used in the calculation of
+inhalation dose to reduce the amount of material inhaled.) The default values for the AFs and IFs are
+shown in Table 3.7 (DOE 1994).
+3-5
+
+--- PAGE 62 ---
+
+Table 3.7 Fractions Available for Release and Inhalation Fractions Used in Uranium Oxide
+Fires
+Location of fire Condition AF IF
+Production process Dry process 1x 10-3 1
+Wet process 3x1O.5 1
+HE PA filter At high temperature 1x 104 1
+Failure 1 1
+Incinerator exhaust 4x 101 1
+Waste fire Solid packaged in drums 5x10-4 1
+Solid loosely packed 5x10.2 1
+Combustible liquid 3x10.2 1
+Non-combustible liquid 2x10.3 1
+Uranium mill Drum in a fire 1X 10-3 1
+Solvent extraction 3x10-2 1
+Source. DOE 1994.
+Next, the user specifies the mass of the U0 material at risk and specifies a uranium enrichment level.
+2
+RASCAL calculates the uranium mass by first multiplying the mass of UO by 0.88 (ratio of atomic
+2
+weights U and U0 ). Then, the uranium mass is converted to activity based on enrichment as described in
+2
+Section 3.9. The source term available for release is the product of this activity times the fraction
+available for release.
+Releasep athway
+Releases outside the building have no further reductions. The release rate to the atmosphere is constant at
+a rate set by dividing the available activity for release (Ci) by the release duration specified.
+Releases inside the building are similar but reduce the available activity to release before calculating a
+release rate to the atmosphere. The inventory is multiplied by a reduction factor or 0.5 for unfiltered
+releases and multiplied by 0.01 if filtered.
+3.5 Explosions Involving Uranium Oxide
+Uranium oxide explosions are characterized as (1) those caused by the detonation of high explosives in
+contact with the material, (2) those caused by a fire (deflagration), and (3) those caused by a sudden
+pressure change in the material container (venting). The U0 in the explosion may be in liquid, solid, or
+2
+powder form, or it simply may be surface contamination.
+3-6
+
+--- PAGE 63 ---
+
+Table 3.8 Fractions Available for Release and Inhalation Fractions Used in Uranium
+Oxide Explosions
+Explosion characteristics Material form of the Fraction Inhalation
+uranium oxide available fraction
+for release
+Detonation Liquid 1 1
+Solid 1 2x101
+Powder 1 2x10"1
+Surface contamination 1 x10-3 1
+Deflagration Liquid 1 x106 1
+Solid 0 0
+Powder 5x 10-3 3x101
+Surface contamination 1x 103 1
+Venting Liquid 2x10-3 1
+Solid 0 0
+Powder Ix101 7x101
+Surface contamination 1 X1 0-3 1
+Source: DOE 1994.
+Next, the user specifies the mass of the U0 material at risk and specifies a uranium enrichment level.
+2
+RASCAL calculates the uranium mass by first multiplying the mass of UO by 0.88 (ratio of atomic
+2
+weights U and U0 ). Then the uranium mass is converted to activity based on enrichment as described in
+2
+Section 3.9. The source term available for release is the product of this activity times the release fraction.
+Release pathw ay
+Releases outside the building have no further reductions. The release rate to the atmosphere is constant at
+a rate set by dividing the available activity for release (Ci) by the release duration specified.
+Releases inside the building are similar but reduce the available activity to release before calculating a
+release rate to the atmosphere. The activity is multiplied by 0.5 for unfiltered releases and multiplied by
+0.01 if filtered.
+3.6 Criticality Accidents
+A criticality accident results from the uncontrolled release of energy from an assemblage of fissile
+material. In RASCAL 3.0.5, a criticality accident may be modeled using the physical system scenarios in
+NUREG/CR-64 10 (SAIC 1998) or using criticality data entered directly by the user.
+3-7
+
+--- PAGE 65 ---
+
+The user also defines shielding thicknesses for steel, concrete, and water. Those thicknesses are used to
+calculate the reduction in the neutron and gamma prompt shine dose due to shielding.
+The assumed amounts of each radionuclide released per 10"9 fissions are listed in Table 2.1 (SAIC 1998).
+These values are based on ORIGEN calculations (ORNL 1989).
+To calculate the source term, RASCAL first determines the initial activity of each radionuclide present as
+the product of the yield of the initial burst (FI) (in 10'9 fissions) and the activity per 10i"f issions listed in
+Table 3.10. For each following time step, RASCAL: (1) determines if the criticality is still occurring and
+if enough time has passed for one or more subsequent bursts to have occurred, and if so, adds the
+appropriate activity as the product of the yield from these burst (FB) and the activity per 1019 fissions, (2)
+reduces the amount of activity for the amount released, and (3) applies the release fractions and
+radiological decay to the result. A criticality will end when either the total number of allowed bursts have
+been accounted for or when the "end of criticality" time entered by the user has been reached. If the user
+selects a release duration that is not long enough to include all 48 bursts, the total activity released will
+be less than the amount listed in Table 3.10.
+Table 3.10 Activity (Ci) Released in Criticality of 10"9 Fissions
+Radionuclide Activity (Ci) Radionuclide Activity (Ci)
+Kr-83m 1.5E2 1-131 7.3E0
+Kr-85m 8.9E1 1-132 1.0E3
+Kr-85 1.3E-5 1-133 1.7E2
+Kr-87 1.1E3 1-134 4.2E3
+Kr-88 6.6E2 1-135 5.0E2
+Kr-89 4.6E4 Sr-91 3.2E2
+Xe-133m 1.9E-2 Sr-92 1.2E3
+Xe-133 2.7E-3 Ru-106 2.OE-2
+Xe-135m 3.3E2 Cs-137 1.OE-2
+Xe-135 5.2E0 Ba-139 2.4E3
+Xe-137 2.4E4 Ba-140 1.1E1
+Xe-138 1.0E4 Ce-143 1.0E2
+Source: SAIC 1998.
+Release pathway
+The criticality is assumed to take place inside a building. A leak rate to the atmosphere from this building
+is selected from the following four choices:
+100% /h (represents ordinary building ventilation)
+50%/h
+10%/h
+4% /h (equivalent to 100% per day)
+3-9
+
+--- PAGE 66 ---
+
+This release rate method releases a fixed fraction of the material per unit time. After the criticality stops,
+the release rate to the environment decreases exponentially.
+The user defines a start and end of the release to the atmosphere. This describes when the radionuclide
+material generated by the criticality enters the environment.
+The user may define reduction factors for noble gases, iodines, and other radionuclides. These are
+multiplied times the appropriate nuclide activities to reduce the release.
+3.6.1 Prompt Shine Dose Calculation
+For criticality accidents, the criticality-shine dose is computed with the source term. The shielding
+thicknesses entered by the user are used only in this calculation. The dose in rem, Dcrt, at 10 ft is
+computed as (Hopper and Broadhead 1998)
+Dcrit = Dgamna + Dneutron (3.3)
+Dgamnla = Ix 10-'x FT x e (0.386 x S + 0.147 x C + 0.092 x W) (3.4)
+D,,etron = 1 x 10- 14 x FT x e (0.256 x S + 0.240 x C + 0.277 x W) (3.5)
+where
+FT = the total number of fissions,
+S = the thickness of steel shielding in inches,
+W= the thickness of water shielding in inches,
+C = the thickness of concrete shielding in inches.
+Doses, D, at other distances are computed using the inverse square law as:
+lo0ft ) 2
+D(x) x D(lOft) (3.6)
+where
+x = distance in feet
+3.7 Sources and Material in a Fire
+In a fire release, the user enters the amount of each radionuclide present. No release occurs when the fire
+is not burning and no other types of reduction are allowed. A fire may start and stop burning only once.
+The default values for these fire reduction factors are from NUREG/BR-0 150 (McKenna et al. 1996).
+The user can select fire release fractions by element, by the form of the compound, or by entering them
+directly. The default fire release fractions used are shown in Tables 3.11 and 3.12. Note that the total
+3-10
+
+--- PAGE 68 ---
+
+Table 3.12 Fire Release Fractions by Element"
+Release Release Release Release
+Elementb fractionc Element fraction Element fraction Element fraction
+H (gas) 0.5 Se 0.01 I 0.5 W 0.01
+C 0.01 Kr 1.0 Xe 1.0 Ir 0.001
+Na 0.01 Rb 0.01 Cs 0.01 Au 0.01
+P 0.5 Sr 0.01 Ba 0.01 Hg 0.01
+S 0.5 Y 0.01 La 0.01 TI 0.01
+Cl 0.5 Zr 0.01 Ce 0.01 Pb 0.01
+K 0.01 Nb 0.01 Pr 0.01 Bi 0.01
+Ca 0.01 Mo 0.01 Pm 0.01 Po 0.01
+Sc 0.01 Tc 0.01 Sm 0.01 Ra 0.001
+Ti 0.01 Ru 0.1 Eu 0.01 Ac 0.001
+V 0.01 Rh 0.01 Gd 0.01 Th 0.001
+Cr 0.01 Ag 0.01 Tb 0.01 Pa 0.001
+Mn 0.01 Cd 0.01 Ho 0.01 U 0.001
+Fe 0.01 In 0.01 Tm 0.01 Np 0.001
+Co 0.001 Sn 0.01 Yb 0.01 Pu 0.001
+Zn 0.01 Sb 0.01 Hf 0.01 Am 0.001
+Ge 0.01 Te 0.01 Ta 0.001
+Table F-3 from McKenna et al. 1996. The release fraction for ruthenium was changed from the value of
+a
+0.01 in NUREG- 1140 to a value of 0.1. NUREG- 1140 assumed that ruthenium was nonvolatile (McGuire
+1988). However, research in NUREG/CR-6218 (Power, Kmetyk, and Schmidt 1994) indicates (in Table 5)
+that at high temperatures ruthenium starts to become volatile. The ruthenium release fraction of 0.1 is less
+than the value of 0.5 used in NUREG- 1140 for compounds because ruthenium is less volatile than other
+volatile compounds, becoming highly volatile only at temperatures not normally reached in building fires.
+The carbon release fraction is appropriate for carbon compounds other than CO,. Those compounds deliver
+most of the dose. The dose conversion factors used for carbon are for those carbon compounds.
+b If the specific physical form of the nuclide is known, Table 2.1 may be used.
+c The fire release fraction is the fraction of the isotope released when the material is involved in a fire, and
+equals the total activity released (Ci), users should divide by the activity involved in fire (Ci).
+Fire release fractions are element specific. The fire reduction factors are shown in Tables 3.1 land 3.12
+and are from NUREG- 1140 (McGuire 1988).
+3-12
+
+--- PAGE 71 ---
+
+4 Transport, Diffusion, and Dose Calculations
+RASCAL 3.0.5 uses Gaussian models to describe the atmospheric dispersion of radioactive and chemical
+effluents from nuclear facilities. These models have frequently been used in licensing and emergency
+response calculations made by the NRC staff, [e.g., PAVAN (Bander 1982), XOQDOQ (Sagendorf, Goll,
+and Sandusky 1982), MESORAD (Scherpelz et al.1986; Ramsdell et al. 1988], because they quickly
+provide reasonable estimates of atmospheric concentrations, deposition, and doses given relatively
+limited information on topography and meteorology.
+A straight-line Gaussian plume model is used near the release point where travel times are short and
+plume depletion associated with dry deposition is small. A Lagrangian-trajectory Gaussian puff model is
+used at longer distances where temporal or spatial variations in meteorological conditions and depletion
+of the plume due to dry deposition may be significant.
+This chapter begins with a short theoretical derivation of Gaussian plume and puff models, and then
+describes the implementation of those models. The chapter concludes with a description of the dose
+calculations in the models.
+4.1 Theoretical Bases for Gaussian Models
+The derivation of the Gaussian models used to describe atmospheric dispersion is discussed in many
+texts. Various texts including Slade (1968), Csanady (1973), Randerson (1984), and Seinfeld (1986)
+provide the bases for the following discussion. They may be consulted where additional detail is desired.
+Atmospheric dispersion is governed, in part, by a differential equation called the diffusion equation. With
+a set of assumptions that can reasonably be applied to atmospheric processes, the diffusion equation has a
+specific, closed-form algebraic solution that is Gaussian. In one dimension, the solution is
+X(x)/Q - (21U2 ,exp --( x-x (4.1
+0 21
+where
+x(x) = concentration at a distance x from the center of the concentration distribution, x,
+Q = amount of material released,
+a= dispersion parameter.
+Atmospheric dispersion parameters are functions of either distance from the release point or time since
+release. They may also be functions of atmospheric stability and surface roughness. Numerous
+atmospheric dispersion experiments have been conducted to evaluate dispersion parameters and to
+develop methods to predict dispersion-parameter values from readily available data. A number of these
+experiments are described by Draxler (1984).
+4-1
+
+--- PAGE 79 ---
+
+Table 4.1 gives values for ay a~, b, and cz. Note that 0.903 1, ay, az,, bz and c, are empirical values
+2
+evaluated by fitting curves. Of these constants, 0.903 1 and b, are dimensionless, c, has dimensions of
+meters, and a., and a, have dimensions of m 0 ~ 1 and m(1 , , respectively.
+Table 4.1. Constant Values for Calculation of Atmospheric Dispersion Parameters
+Stability Class
+Distance Range (in) A B C D E F G
+ay all x 0.3658 0.2751I 0.2089 0.147 1 0.1046 0.0722 0.0481
+a, x<loom 0.192 0.156 0.116 0.079 0.063 0.053 0.032
+100 m < X< 1000 M 0.00066 0.0382 10.113 0.222 0.211 0.086 0.052
+1000 m <x 0.00024 0.055 0.113 1.26 6.73 18.05 10.83
+b,, x < 100 mn 0.936 0.922 0.905 0.881 0.871 0.8 14 0.814
+100 m< X< 000M 1.941 1.149 10.911 0.725 0.678 0.74 0.74
+1000 M< X 2.094 1.098 0.911 0.516 0.305 0.18 0.18
+CZ x < 100 m 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+00 m <X <1000m 9.27 3.3 0.0 -1.7 -1.3 -0.35 -0.21
+1000 M< X -9.6 2.0 0.0 -13.0 -34.0 -48.6 -29.2
+4.3.2 Low Wind Speed (Building Wake) Correction
+Atmospheric dispersion experiments did not stop after development of the PasquilIlI-Gifford curves.
+However, the emphasis of the experiments did shift. For example, there have been experiments that
+examined dispersion in the vicinity of buildings and other experiments that examined dispersion under
+low wind-speed conditions. Ramsdell (1990) describes corrections to the basic dispersion parameter
+relationships in Eq. (4.11) and (4.13) that improve the dispersion parameter estimates in the vicinity of
+building wakes.
+More recent analysis of dispersion and turbulence data (Ramsdell and Fosmire 1998) suggests that the
+apparent enhanced dispersion noted in the vicinity of buildings at low wind speeds in wake dispersion
+experiments is caused by underestimation of dispersion by the basic dispersion algorithms rather than by
+increased turbulence in the vicinity of buildings.
+This point is illustrated in Figure 4.1 which shows the ratios of normalized concentrations (X/Q)
+predicted in building wakes to observed concentration normalized to actual release rate as a function of
+wind speed. If the errors in the predicted values were associated with the wake, they should increase with
+wind speed. The fact that the errors are greatest at very low speeds and decrease with increasing wind
+4-9
+
+--- PAGE 80 ---
+
+speed indicates that the problem is underestimation of dispersion in low wind speeds. The original
+conclusion that the enhanced dispersion was due to building wakes appears to be incorrect.
+Ai F- +mt jr)
+......
+1E+04 A A
+A A ... . .. .: .... . ....;.. ... .:: .:. : . .F. :.: .:..
+0 AC
+-A
+0 1E+03 A a - A -f ....... ....
+A:
+(I,
+-0 A i ..... A• - A
+• i .. ... ....: . ... ..
+0 1E+02 ýA .., . ......... .. ..... ............. .. .(cid:127) . .
+..i. .i.. ......(cid:127) .... .::.. ..........! . .
+0~ 7 AA
+1E+01 [ :: -
+A A:A .Ai .. .. . .(cid:127). .. . 5 ..: 2 ! ! ! : -- - - - -- - - -
+.!(cid:127) :..A!.. ::. ..A : ... .: k {:
+A:
+1 E+00 I .A A 4A ! A .. ! . (cid:127) .. -i . .... ... . .. . " .. . .! . .. A(cid:127) . : ! . . . .. . . .. ..
+•I (cid:127)A: .::. .. A -&A
+. . A .. ... .: . . !..
+1E-01 A
+0 2 4 6 8 10 12
+Wind Speed (m/s)
+Figure 4.1 Ratios of predicted concentrations in wakes by a model without wake correction to
+observed concentrations as a function of wind speed.
+To account for the underestimation of dispersion at low wind speeds, enhanced dispersion parameters
+were developed. The enhanced dispersion parameters, E, and E, are defined as
+I(U2 +A
+C21/ (4.13)
++ A U-2)/2 (4.14)
+=(C-2
+4-10
+
+--- PAGE 81 ---
+
+and where the enhancement terms, Aoy2 and Ac 2, have the form
+1
+A o2(t) = A( 1 - (1 + t/T)exp( - t/T). (4.15)
+where
+t= transport time (distance divided by the wind speed in the plume model and time since release
+in the puff model),
+A,= 0.5T2 (T is the horizontal time scale for wake turbulence),
+A = 0.5T2/(2+z/L),
+T= B "2/u*,
+B = projected building area,
+u*= scaling wind speed (friction velocity) calculated from the wind speed, stability, and surface
+roughness using the wind profile relationships discussed in Section 6.4.2,
+z = release height (all releases are assumed to be 2!1 0 m), and
+L = Monin-Obukov length which is a function of stability. Evaluation of L is described in
+Section 6.4.1
+Near the release point, the enhancement terms are primarily functions of wind speed and distance, they
+are weakly dependent on stability, and they are independent of building dimensions. The enhancement
+terms increase with increasing distance from the release point until they reach an asymptotic limit that is
+a function of the building area. The terms are large for low wind speeds and decrease as the wind speed
+increases. They are negligible for wind speeds above about 4 m/s.
+This behavior is supported by a more recent analysis of dispersion and turbulence data (Ramsdell and
+Fosmire 1998). The results of that analysis also suggests that the enhanced dispersion noted in the
+vicinity of buildings at low wind speeds in wake dispersion experiments may be as much an artifact
+caused by underestimation of dispersion by the basic dispersion algorithms (Eqs. 4. 11 and 4.12) as it is
+due to increased turbulence in the vicinity of buildings. Consequently, use of the building wake
+correction option is recommended for all releases other than isolated stacks.
+4.3.3 Puff Model Dispersion Parameters
+In the puff model, the wind direction, wind speed, and stability are permitted to change as a function of
+time and position. As a result, puffs may follow curved trajectories and even return to the release point,
+and stability may change along the puff's trajectory. If dispersion parameters were calculated directly, as
+in the plume model, there could be discontinuities in the dispersion parameters and possible reduction in
+plume dimensions with increasing time. Neither is consistent with the known characteristics of
+atmospheric dispersion. Consequently, dispersion parameters for the puff model can not be directly
+calculated from Eqs. (4.11) through (4.15) as is done in the plume model.
+In the puff model, dispersion parameters are calculated in a four step process as the puffs move through
+the model domain:
+I ) Calculate virtual distances from the puff center to the release point based on the current puff
+dimensions and the meteorological conditions at the position of the puff. The virtual distances are
+imaginary distance which, if used in Eq. (4.11) (xvy) and Eq. (4.12) (x,,) with the meteorological
+conditions at the puff position, would give the current dispersion parameters;
+4-11
+
+--- PAGE 82 ---
+
+2) Add the distance to be moved during the next time step to the virtual distances;
+3) Calculate the new dispersion parameters using the sums calculated in step 2; and
+4) Add the enhancement term, if appropriate.
+Separate virtual distances are required for the horizontal and vertical dispersion parameters because the
+dispersion parameters increase at different rates. The equations for the virtual distances are
+x-/- (4.16)
+and
+[
+x,= "
+])J. (4.17)
+These equations are just Eqs. (4.11) and (4.12) solved for x rather than U.
+4.3.4 Plume Model Dispersion Parameters
+The computational algorithms used in the plume model calculate dispersion parameters directly from
+Eqs. (4.11) through (4.15) as the parameters are needed. Equations (4.11) and (4.12) are used for plumes
+released from isolated stacks and for other releases if the building wake correction is not selected. If the
+building wake options is selected, all five equations are used.
+4.3.5 Calm Wind Dispersion Parameters for the Puff Model
+The dispersion parameters used during windy conditions increase as the distance traveled increases.
+During calm or near calm conditions, the distance traveled stops increasing, or increases very slowly. In
+reality, atmospheric dispersion does not stop when the wind is calm.
+The RASCAL 3.0.5 puff model switches from distance-based dispersion parameters to time- based
+parameters during low wind speed (below 0.5 m/s ) conditions to account for continued dispersion. The
+horizontal dispersion parameter is calculated for each time step is calculated as the parameter for the
+previous step plus an increment that is only a function of the time step. It is
+700
+o-.(t+At)= .(t)+ 3600At (4.18)
+where
+u, = dispersion parameters (m) and,
+At = time step (s).
+4-12
+
+--- PAGE 83 ---
+
+Clearly then, the 700/3600 (-0.2) is the horizontal rate of growth of the plume (m/s). The horizontal rate
+of growth of the plume is independent of stability at low wind speeds, just as the exponent of x in Eq.
+4.12 is independent of stability.
+The growth of the vertical dispersion parameter should be, and is, a function of stability even in low wind
+speed conditions. Vertical dispersion parameters during low wind speed conditions are calculated by first
+estimating a fictitious puff movement, Ax, from
+Ax = O.4At (4.19)
+This fictitious distance is then used, along with the current parameter value, in calculating the dispersion
+parameter for the next step from Eqs 4.12 and 4.17.
+4.3.6 Calm Wind Dispersion Parameters for the Plume Model
+Unlike the Gaussian puff model in RASCAL 3.0.5, the straight-line Gaussian plume model does not do
+well in low wind speeds, and becomes undefined if the wind speed becomes zero. Consequently,
+RASCAL 3.0.5 changes models when the wind speed falls below 0.5 m/s. The low wind speed model is
+given in Eq. 4.10. That model requires estimates of horizontal and vertical turbulence velocities (m/s)
+rather than normal dispersion parameters (m). For the wind speeds of interest, the plume model uses
+default turbulence velocities au = cv = a,, = 0.13 m/s, which are reasonable values for a wind speed less
+than I m/s.
+4.4 Mixing Layer Thickness
+The mixing layer thickness is included in all dispersion calculations. The thickness is passed to the
+atmospheric dispersion programs in the meteorological data files that are created by the meteorological
+data processing program. The meteorological data processing program has three options for determining
+the mixing layer thickness for each station. The thickness may be estimated from meteorological data and
+surface roughness; it may be estimated from climatological data; or it may be entered directly. See
+Section 6.4.3 for details related to estimation of mixing layer thickness.
+4.5 Stack Plume Rise
+RASCAL 3.0.5 estimates both transition and final plume rise for stacks using Briggs' equations (1969,
+1975, and 1984). The transition rise equations are used near the stack until the plume rise exceeds the
+final plume rise. In general, the numerical constants in the equations are dimensional, and the appropriate
+metric (SI) units should be assumed.
+4.5.1 Final Plume Rise
+Plume rise is caused by vertical momentum of the exhaust gases in a stack and buoyancy due to
+differences in density between the exhaust gases and the atmosphere. Equations for final plume rise for
+both momentum- and buoyancy-dominated plumes are included in the models. In general, one factor or
+the other will dominate. For a given set of stack and atmospheric conditions, the temperature difference
+between the stack effluent and the atmosphere determines which factor is dominant. The initial step in
+4-13
+
+--- PAGE 87 ---
+
+If buoyancy is determined to important based on the temperature difference using the tests described
+.a.bove, the transition rise is calculated by
+I .(cid:127) " 1/3
+3F ,,x 3FX
+Ah, = {[[ h)]2 + [2,,u(h ) } (4.33)
+where
+flhba s a value of 0.6.
+4.5.3 Effective Release Height
+If the isolated stack option is selected in RASCAL 3.0.5, the plume height is an effective release height.
+The effective release height has three components: stack height, plume rise, and stack down wash. It is
+calculated as
+he = h, + Ah+ Ahd (4.34)
+where
+h, = stack height,
+Ah = smaller of the transitional and final plume rise, and
+Ahd = stack down wash.
+The stack height is entered by the user, and the calculation of plume rise is previously described. Stack
+down wash occurs when the stack exit velocity is less than or approximately the same magnitude as the
+stack-height wind speed. It is an aerodynamic effect that reduces the stack height by up to three stack
+diameters. Down wash is calculated in Petersen and Lavdas' Eq. A-I as
+Ahd = 4rL u(hp) 1.5] (4.35)
+when the ratio between the exit velocity and stack-height wind speed is less than 1.5. Otherwise, the
+down wash is set to 0.0.
+If the isolated stack .option is not selected, the release is treated as if it occurs from the surface of the
+building. A default release height of 10 meters is assumed unless another, greater release height is
+entered.
+4.5.4 Effective Release Height for Fires
+.If radioactive material becomes involved in a fire, it may be reasonable to consider the release as if it
+were from an elevated source. In that case, the isolated stack option should be selected and an effective
+release height should be entered in the form.
+4-17
+
+--- PAGE 92 ---
+
+activity distribution. The use of the semi-infinite cloud model is usually inappropriate in the immediate
+vicinity of the release point, and application of the MESORAD finite-plume model to cloudshine dose
+estimates near the release point did not prove satisfactory. Consequently, two additional cloudshine dose
+model have been developed and are used in RASCAL 3.0.5.
+The new cloudshine models are based on line sources and plane sources and are analogous to the point-
+source model. These models are used, along with the point-source model, until plumes and puffs grow to
+sufficient size that the assumptions associated with the semi-infinite cloud model are met. The finite-
+plume, cloudshine models in RASCAL 3.0.5 make use of precalculated dose rate vs distance curves.
+These curves are provided in the radionuclide database for each radionuclide for a I Ci (0.01 Sv) point
+source, and a I Ci/m (0.01 Sv/m) infinite-line source. The remainder of this section describes the
+cloudshine models.
+4.9.3.1 Puff Model Cloudshine Dose Calculations
+There are three stages in the cloudshine dose calculations. Near the source where puff dimensions are
+small compared to the mean path length of photons, RASCAL uses a point-kernel dose model. When the
+puff radius becomes sufficient (oy=400 m), cloud-shine dose rates beneath the centerline of the plume are
+calculated using an infinite-slab model. The dose rate at ground level is calculated assuming that the
+activity in the plume is equally divided among ten horizontal slabs with slab heights determined by the
+release height and vertical dispersion coefficients. The change in dose rate with distance from slabs is due
+only to buildup and absorption of photons; the change in dose rate across the plume is proportional to the
+crosswind variation of activity concentration in the slab. This model will be discussed further. Finally,
+when the vertical dimensions of the plume become sufficient (a,=400 m), cloudshine is calculated using a
+semi-infinite cloud model.
+The initial versions of RASCAL used the MESORAD finite-puff, cloudshine model (Scherpelz et al.
+1986, Ramsdell et al. 1988). This model first calculates composite characteristics (photon energies,
+photons per disintegration, etc.) of the gamma radiation from the radionuclide mix in a puff. Next, the
+model calculates the dose rate vs distance from a point source having the composite characteristics using
+Up (p) 2.13x 106 1,[f, B,(JP)e-,o"PE TW] (4.40)
+44 n( p 2
+where
+Dp '(p) = dose rate in (rem/h)/Ci,
+p = distance from point source,
+fy = fraction of disintegrations producing ys of energy, E,,
+By(u.,p) = buildup factor for air,
+/Iay = linear attenuation factor for air,
+EY= gamma energy,
+T= mass energy absorption coefficient for tissue (n,1p,),
+t
+WY= ratio of whole body dose to surface dose.
+The constant 2.13 x 106 is a collection of unit conversion constants to give dose rate in (rem/h)/Ci. The
+components of the constant are described following Eq. 19 in Scherpelz, et al. (1986).
+4-22
+
+--- PAGE 98 ---
+
+doses to the body, with dose factors for air in place of dose factors for tissue. Dose factors used in these
+calculations were extracted from the original data used in producing Federal Guidance Report No. 12 by
+its authors, and are included in the RASCAL 3.0.5 radionuclide database.
+The gamma dose rates for airborne activity in finite plumes are calculated using the same algorithms used
+in the puff model and the plume model for finite-plume, cloudshine doses with adjustment for the
+difference in energy absorption coefficients of tissue and air. The adjustment is made to the dose rates for
+each isotope by multiplying the dose rate for tissue by the ratio of the semi-infinite cloud dose factor for
+air and the semi-infinite cloud dose factor for tissue. Thus, the gamma dose rate for an isotope is
+DF. .i,.
+OD DFSici (4.54)
+where D 'is the cloudshine dose rate calculated for tissue. Semi-infinite cloud-dose factors for.tissue from
+Federal Guidance Report No. 12 (Eckerman and Ryman 1993) are used in this calculation along with
+semi-infinite cloud-dose factors for air calculated by A. L. Sjoreen using the methods listed in (Scherpelz
+1986). The semi-infinite dose factors for air are included in the RASCAL 3.0.5 radionuclide database.
+The open- and closed-window dose rates are larger than the sum of the cloudshine and groundshine doses
+because the dose factors for air are larger than those for tissue. Typically, the cloudshine gamma dose rate
+for air is about a factor 1.4 larger than the dose rate for tissue, and the groundshine gamma dose rate for
+air is about a factor 1.3 larger than the dose rate for tissue. These ratios may be significantly larger greater
+than 2) if radionuclides with low energy gamma emissions (<0. I MeV) contribute significantly to the dose
+rates.
+4.9.5 Total Effective Dose Equivalent
+The early phase (plume phase) total effective dose equivalent (TEDE) that RASCAL 3.0.5 calculates is
+the sum of the external gamma dose (cloudshine) from the plume, the committed effective dose equivalent
+(CEDE), and the external dose over a four-day period from radionuclides deposited on the ground (4-day
+groundshine dose). This TEDE is calculated assuming that no protective actions such as evacuation or
+sheltering are taken. Thus, the calculations assume that people are outdoors during plume passage and will
+remain outdoors exposed to ground shine from deposited radionuclides for four days after the
+radionuclides have been deposited.
+Thus, the early phase TEDE that RASCAL 3.0.5 calculates is larger than the TEDE that would be
+expected for people who took protective actions or who continued their normal activities (spending much
+time indoors).
+The reason that RASCAL 3.0.5 calculates dose assuming that no actions to reduce dose are taken is to
+determine if doses without any protective actions would exceed the EPA protective action guides. The
+need for protective actions is based on the TEDE that would be received if no protective actions of any
+type were taken, even actions such as simply spending some time indoors.
+The RASCAL 3.0.5 dose estimates should not be used as an estimate of the TEDE that would be received
+by people who did not intentionally take protective actions because even performing normal everyday
+activities will reduce doses to below those estimated by RASCAL 3.0.5.
+4-28
+
+--- PAGE 100 ---
+
+Frenkiel, F. N. 1953. "Turbulent Diffusion: Mean Concentration in a Flow Field of Homogeneous
+Turbulence." Advances in Applied Mechanics, 3:61-107.
+Gifford, F. A. 1976. "Turbulent Diffusion-Typing Schemes: A Review." Nuclear Safety, 17 No. 1: 68-86.
+Hanna, S. R., G. A. Briggs, and R. P. Hosker. 1982. Handbook on Atmospheric Diffusion. DOE/TIC-
+I1 223, U.S. Department of Energy. Washington, D.C.
+Healy, J. W., and R. E. Baker. 1968. "Radioactive Cloud-Dose Calculations." Meteorology and Atomic
+Energy 1968. Ed. D. Slade, TID-24190, U.S. Atomic Energy Agency. Washington, D.C.
+Healy, J. W. 1984. "Radioactive Cloud-Dose Calculations." Atmospheric Science and Power Production.
+Ed. D. Randerson, DOE/TIC-27601, U. S. Department of Energy. Washington, D.C.
+Kao, S. K. 1984. "Theories of Atmospheric Transport and Diffusion." Atmospheric Science and Power
+Production. Ed. D. Randerson, DOE/TIC-27601, U.S. Department of Energy.
+Martin, D. 0., and J. A. Tikvart. 1968. "A General Atmospheric Diffusion Model for Estimating the
+Effects on Air Quality of One or More Source." 61S" Annual Meeting of the Air Pollution Control
+Associationf or NAPCA, St. Paul, Minnesota.
+Panofsky, H. A., and J. A. Dutton. 1984. Atmospheric Turbulence. J. Wiley & Sons, New York.
+Petersen, W. B., and L. G. Lavdas. 1986. INPUFF2 .0 -A Multiple Source Gaussian Puff Dispersion
+Algorithm User's Guide. EPA/600/8-86/024, Atmospheric Sciences Research Laboratory, U.S.
+Environmental Protection Agency, Research Triangle Park, N.C.
+Press, W. H., et al. 1986. Numerical Recipes: the Art of Scientific Computing. Cambridge University
+Press, Cambridge, United Kingdom.
+Ramsdell, Jr., J. V., et al. 1988. The MESORAD Dose Assessment Model, Volume 2: Computer Code.
+Vol. 2., NUREG/CR-4000, U.S. Nuclear Regulatory Commission. Washington, D.C.
+Ramsdell, Jr., J. V. 1990. "Diffusion in Building Wakes for Ground-Level Releases." Atmospheric
+Environment, 24B:377-88.
+Ramsdell, Jr, J. V., C. A. Simonen, and K. W. Burk. 1994. Regional Atmospheric Transport Codef or
+Hanford Emission Tracking (RATCHET). PNWD-2224 HEDR, Battelle, Pacific Northwest Laboratories,
+Richland, Wash.
+Ramsdell, Jr., J. V., and C. J. Fosmire. 1998. "Estimating Concentrations in Plumes Released in the
+Vicinity of Buildings: Model Development." Atmospheric Environment, 32:1663-17.
+Randerson, D. 1984. Atmospheric Science and Power Production. DOE/TIC-2760 1, U. S. Department of
+Energy.
+4-30
+
+--- PAGE 120 ---
+
+The following information is needed for each meteorological station:
+" A station identification. The station identification can be any 10 letter character; the release site ID is
+appropriate for the first station in the station list; FAA or ICAO location indicators are appropriate for
+national weather service or other stations that have them. A longer station name may be included for
+each station for better identification.
+* The latitude (positive north of the equator and negative south of the equator) and longitude (positive
+east of the prime meridian and negative west of the prime meridian) of the station in decimal degrees.
+* The elevation of the station in meters above mean sea level.
+* The surface roughness for the station (in). Meteorological texts such as Panofsky and Dutton (1984)
+and Stull (1988) provide guidance on estimating surface roughness. If no other information is
+available, a default surface roughness of 0.2 m may be used.
+* The height at which the wind measurements are made (in). The instrument height should be height
+above ground level.
+The meteorological data processor uses the station position to place station data at the proper location in
+the modeling domain; station elevations are used in the potential flow model that adjusts wind fields for
+topographic effects (Section 6.5.1), and the surface roughness and height of wind measurement are used in
+calculating wind speed variation with height (Section 6.4.2).
+The first station in the station file is the release point (the site). The latitude and longitude of the first
+station will define the coordinates of the center of the model domain grid. Distances from the center of the
+grid to the other stations are calculated using
+Xrs =rA Ars COSts (6.1)
+and
+Yrs = reA Ors (6.2)
+where
+xrs = distance of the station east (+) or west (-) of the source (center of the grid) (km),
+Yrs = distance of the station north (+) or south (-) of the source (center of the grid) (km),
+re = radius of the earth (= 6370 km),
+(p,= latitude of the center of the grid (release point),
+Airs = longitude difference between the station and the source (center of the grid) (radians),
+Apq, = latitude difference between the station and the source (center of the grid) (radians).
+6-2
+
+--- PAGE 126 ---
+
+* For each station, data for all times before the first date and time with an entered value are assumed to
+be missing. Likewise, data for all dates and times past the entered value are assumed to be missing.
+6.4 Other Meteorological Parameters
+Meteorological data entered for a station are used to evaluate additional parameters. The following
+subsections describe these additional parameters.
+6.4.1 Monin-Obukhov Length
+The Monin-Obukhov length (L) is a scaling length for vertical motions in atmospheric boundary layer
+studies that is used as a measure of atmospheric stability. It is used in wind profile, turbulence, and
+mixing-layer depth calculations. Golder (1972) provides a graphical means for converting from Pasquill-
+Gifford stability classes to Monin-Obukhov lengths using the surface roughness length (Section 6.4.2).
+The meteorological data processor uses a procedure that was developed by Ramsdell, Simonen, and Burk
+(1994) based on Golder's work to convert stability classes to Monin-Obukhov lengths.
+6.4.2 Wind Speed vs. Height
+The RASCAL 3.0.5 atmospheric dispersion models use winds that are representative of 10 meters above
+ground level for ground-level release calculations and winds representative of the release height for
+elevated release calculations. Wind measurements are not always made at these heights. Therefore, the
+meteorological data processor adjusts wind speeds for the difference between the measurement height and
+the height required for model calculations. A diabatic wind-profile model, which accounts for the effects
+of surface roughness and atmospheric stability on variation of wind speed with height, is used for this
+adjustment. No attempt is made to model the variation of wind direction with height.
+The diabatic profile model is derived from atmospheric boundary layer similarity theory proposed by
+Monin and Obukhov (1954). The basic hypothesis of similarity theory is that a number of parameters in
+the atmospheric layer near the ground, including wind profiles, should be universal functions of the
+friction velocity, a length scale, and the height above the ground. The length scale is referred to as the
+Monin-Obukhov length and the ratio zIL is related to atmospheric stability.
+The diabatic wind profile is
+u(z) = k In( - , (6.3)
+where
+u(z) = wind speed at height z (m/s),
+u. = friction velocity (boundary-layer scaling velocity) (m/s),
+k =von Karman constant (=0.4),
+zo = surface roughness length (m),
+yi(z/L) = stability correction factor,
+L = Monin-Obukhov length (m).
+6-8
+
+--- PAGE 127 ---
+
+The surface roughness length is associated with small-scale topographic features. It arises as a constant of
+integration in the derivation of the wind profile equations and is used in several boundary-layer
+relationships. Texts on atmospheric diffusion, air pollution and boundary-layer meteorology (Panofsky
+and Dutton 1984, Stull 1988) contain tables that give approximate relationships between surface
+roughness and land use, vegetation type, and topographic roughness.
+The term Vf(z/L) accounts for the effects of stability on the wind profile. In stable atmospheric conditions,
+V1(z/L) has the form -az/L where cc has a value of 5. In neutral conditions V'(z/L) is equal to zero, and the
+diabatic profile simplifies to a logarithmic profile.
+In unstable air, W(z/L) is more complicated. According to Panofsky and Dutton (1984), the most common
+form of V'(z/L) for unstable conditions, based on the work of Businger et al. (Paulson 1970) is
+y( L= nIn ( [( ] [ 2 2x)-]2tan-'(x) + (6.4)
+where
+x = (1-16z/L)"4.
+Equation (6.4) is used to estimate the friction velocity (u.) from the wind speed, surface roughness, and
+Monin-Obukhov length. In unstable and neutral conditions, the use of Eq. (6.4) is limited to the lowest
+100 meters of the atmosphere. In stable conditions, the upper limit for application of Eq. (6.4) is the
+smaller of 100 meters or three times the Monin-Obukhov length.
+6.4.3 Mixing Height
+Heating of the surface and surface friction combine to generate turbulence that mixes material released at
+or near ground level through a layer that varies in thickness from a few meters to a few kilometers. This
+layer is referred to as the mixing layer. The atmospheric models in RASCAL 3.0.5 use the mixing height
+(also referred to as the mixing-layer depth and mixing-layer thickness) to limit vertical diffusion.
+The meteorological data processor has three methods for obtaining estimates of the mixing height at
+meteorological stations. The mixing height may be entered directly, or it may be estimated by the program
+from either current meteorological data or climatological information. Of the latter two options, estimation
+of mixing height from current meteorological data is preferable to estimating the mixing height from
+climatological data, if sufficient data are available.
+The meteorological data processor uses algorithms developed by Ramsdell, Simonen, and Burk (1994 ) for
+estimating mixing height from current meteorological data. The algorithms are based relationships derived
+by Zilitinkevich (1972) for stable and neutral conditions.
+For stable atmospheric conditions, the relationship is
+H = k( . (6.5)
+6-9
+
+--- PAGE 138 ---
+
+where
+Dg/(T) = groundshine dose (rem) for occupancy time interval T,
+GRF = ground roughness factor with a default value of 0.82 (dimensionless),
+Cgi = initial (t = 0) ground surface concentration (Ci/m2) of radionuclide i,
+DCPgsi(T)= intermediate phase groundshine dose conversion parameter [rem/(Ci/m 2)] for
+radionuclide i and occupancy time interval T.
+The occupancy time intervals T over which groundshine dose Dg,(T) is calculated correspond to the time
+intervals for the intermediate phase in the EPA Protective Action Guide manual, specifically, for the case
+of no reentry delay: zero to one year, one year to two years, and zero to 50 years. If the RASCAL user
+specifies a reentry delay, the occupancy time interval then starts at the specified time of reentry.
+In previous versions of RASCAL, the ground roughness factor GRF was 0.7. However, more recent
+measurements (Anspaugh et al. 2002), based in large part on Chernobyl data, suggest that 0.82 is a more
+realistic value. FRMAC has also recently adopted a GRF of 0.82.
+The intermediate phase groundshine dose conversion parameters DCPgSi(T) are calculated as:
+N
+n=O
+where
+Eegn(T) = effective time of exposure to the parent nuclide (n = 0) or daughter (n 2!1 ) for occupancy
+time interval T accounting for decay, ingrowth, and weathering [s]
+EDCý = effective dose rate coefficient for exposure to contaminated ground surface based on Table
+111.3 of FGR 12 [Rem / (Ci s M2)]
+The summation from n = 0 to n = N is over the parent and all daughters.
+The effective dose rate coefficient for exposure to contaminated ground surface EDCn is equal to the
+effective dose rate coefficient in Federal Guidance Report (FGR) No. 12 (Eckerman and Ryman 1993)
+except when a nuclide has a short-lived daughter. For about 40 radionuclides with short-lived daughters,
+the parent-daughter combination is treated as a single nuclide with the parent's half-life. The effective
+dose rate coefficients EDC, assigned to the combination of the parent and implicit daughter is the sum of
+the parent's effective dose rate coefficient from FGR 12 plus the daughter's effective dose rate coefficient
+(corrected for branching ratio). The treatment of these combinations of parent plus implicit daughter is
+discussed in more detail in Section 7.2.
+The intermediate phase effective exposure duration Eegn(T) is for a specific exposure interval T and
+accounts for the radiological decay of the parent radionuclide and the ingrowth and decay of daughter
+radionuclides on the ground during the interval. It also accounts for weathering during the exposure
+interval.
+7-2

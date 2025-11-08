@@ -1,0 +1,364 @@
+=== COEFFICIENTS RELATED SECTIONS ===
+Found in 10 pages
+
+
+
+--- PAGE 68 ---
+
+Table 3.12 Fire Release Fractions by Element"
+Release Release Release Release
+Elementb fractionc Element fraction Element fraction Element fraction
+H (gas) 0.5 Se 0.01 I 0.5 W 0.01
+C 0.01 Kr 1.0 Xe 1.0 Ir 0.001
+Na 0.01 Rb 0.01 Cs 0.01 Au 0.01
+P 0.5 Sr 0.01 Ba 0.01 Hg 0.01
+S 0.5 Y 0.01 La 0.01 TI 0.01
+Cl 0.5 Zr 0.01 Ce 0.01 Pb 0.01
+K 0.01 Nb 0.01 Pr 0.01 Bi 0.01
+Ca 0.01 Mo 0.01 Pm 0.01 Po 0.01
+Sc 0.01 Tc 0.01 Sm 0.01 Ra 0.001
+Ti 0.01 Ru 0.1 Eu 0.01 Ac 0.001
+V 0.01 Rh 0.01 Gd 0.01 Th 0.001
+Cr 0.01 Ag 0.01 Tb 0.01 Pa 0.001
+Mn 0.01 Cd 0.01 Ho 0.01 U 0.001
+Fe 0.01 In 0.01 Tm 0.01 Np 0.001
+Co 0.001 Sn 0.01 Yb 0.01 Pu 0.001
+Zn 0.01 Sb 0.01 Hf 0.01 Am 0.001
+Ge 0.01 Te 0.01 Ta 0.001
+Table F-3 from McKenna et al. 1996. The release fraction for ruthenium was changed from the value of
+a
+0.01 in NUREG- 1140 to a value of 0.1. NUREG- 1140 assumed that ruthenium was nonvolatile (McGuire
+1988). However, research in NUREG/CR-6218 (Power, Kmetyk, and Schmidt 1994) indicates (in Table 5)
+that at high temperatures ruthenium starts to become volatile. The ruthenium release fraction of 0.1 is less
+than the value of 0.5 used in NUREG- 1140 for compounds because ruthenium is less volatile than other
+volatile compounds, becoming highly volatile only at temperatures not normally reached in building fires.
+The carbon release fraction is appropriate for carbon compounds other than CO,. Those compounds deliver
+most of the dose. The dose conversion factors used for carbon are for those carbon compounds.
+b If the specific physical form of the nuclide is known, Table 2.1 may be used.
+c The fire release fraction is the fraction of the isotope released when the material is involved in a fire, and
+equals the total activity released (Ci), users should divide by the activity involved in fire (Ci).
+Fire release fractions are element specific. The fire reduction factors are shown in Tables 3.1 land 3.12
+and are from NUREG- 1140 (McGuire 1988).
+3-12
+
+--- PAGE 92 ---
+
+activity distribution. The use of the semi-infinite cloud model is usually inappropriate in the immediate
+vicinity of the release point, and application of the MESORAD finite-plume model to cloudshine dose
+estimates near the release point did not prove satisfactory. Consequently, two additional cloudshine dose
+model have been developed and are used in RASCAL 3.0.5.
+The new cloudshine models are based on line sources and plane sources and are analogous to the point-
+source model. These models are used, along with the point-source model, until plumes and puffs grow to
+sufficient size that the assumptions associated with the semi-infinite cloud model are met. The finite-
+plume, cloudshine models in RASCAL 3.0.5 make use of precalculated dose rate vs distance curves.
+These curves are provided in the radionuclide database for each radionuclide for a I Ci (0.01 Sv) point
+source, and a I Ci/m (0.01 Sv/m) infinite-line source. The remainder of this section describes the
+cloudshine models.
+4.9.3.1 Puff Model Cloudshine Dose Calculations
+There are three stages in the cloudshine dose calculations. Near the source where puff dimensions are
+small compared to the mean path length of photons, RASCAL uses a point-kernel dose model. When the
+puff radius becomes sufficient (oy=400 m), cloud-shine dose rates beneath the centerline of the plume are
+calculated using an infinite-slab model. The dose rate at ground level is calculated assuming that the
+activity in the plume is equally divided among ten horizontal slabs with slab heights determined by the
+release height and vertical dispersion coefficients. The change in dose rate with distance from slabs is due
+only to buildup and absorption of photons; the change in dose rate across the plume is proportional to the
+crosswind variation of activity concentration in the slab. This model will be discussed further. Finally,
+when the vertical dimensions of the plume become sufficient (a,=400 m), cloudshine is calculated using a
+semi-infinite cloud model.
+The initial versions of RASCAL used the MESORAD finite-puff, cloudshine model (Scherpelz et al.
+1986, Ramsdell et al. 1988). This model first calculates composite characteristics (photon energies,
+photons per disintegration, etc.) of the gamma radiation from the radionuclide mix in a puff. Next, the
+model calculates the dose rate vs distance from a point source having the composite characteristics using
+Up (p) 2.13x 106 1,[f, B,(JP)e-,o"PE TW] (4.40)
+44 n( p 2
+where
+Dp '(p) = dose rate in (rem/h)/Ci,
+p = distance from point source,
+fy = fraction of disintegrations producing ys of energy, E,,
+By(u.,p) = buildup factor for air,
+/Iay = linear attenuation factor for air,
+EY= gamma energy,
+T= mass energy absorption coefficient for tissue (n,1p,),
+t
+WY= ratio of whole body dose to surface dose.
+The constant 2.13 x 106 is a collection of unit conversion constants to give dose rate in (rem/h)/Ci. The
+components of the constant are described following Eq. 19 in Scherpelz, et al. (1986).
+4-22
+
+--- PAGE 99 ---
+
+RASCAL 3.0.5 can provide a more realistic estimate of the doses that people would actually receive, but
+that requires some effort. To account for evacuation, the end of calculation time can be set to the time at
+which people evacuate. The TEDE then is the sum of the inhalation dose, cloudshine dose, and period
+ground shine dose. If sheltering prior to evacuation is to be taken into account, each dose component must
+be reduced by an appropriate reduction factor for sheltering before the three dose components are
+summed.
+4.9.6 Total Acute Bone Dose Equivalent
+Total acute bone dose equivalent is another multiple pathway dose calculated in RASCAL 3.0.5. The total
+acute bone dose equivalent is the sum of the cloudshine dose, the ground shine dose, and a 4-day
+inhalation dose to bone red marrow.
+4.10 References
+Athey, G. F., et al. 1993. RASCAL Version 2.0 User's Guide. Vol. I., Rev. I., NUREG/CR-5247, U.S.
+Nuclear Regulatory Commission. Washington, D.C.
+Bander, T.J. 1982. PA VAN: An Atmospheric Dispersion Programf or Evaluating Design Basis
+Accidental Releases for Radioactive Materialsf rom Nuclear Power Stations. NUREG/CR-2858, U.S.
+Nuclear Regulatory Commission. Washington, D.C.
+Briggs, G. A. 1969. Plume Rise, TID-25075, U.S. Atomic Energy Commission. Washington, D.C.
+Briggs, G. A. 1975. "Plume Rise Predictions," Lectures on Air Pollution and Environmental Impact
+Analyses. American Meteorological Society, Boston, Mass.
+Briggs, G. A. 1984. "Plume Rise and Buoyancy Effects." Atmospheric Science and Power Production.
+Ed. D. Randerson, DOE/TIC-27601, U. S. Department of Energy.
+Csanady, G. T. 1973. Turbulent Diffusion in the Environment. D. Reidel, Boston, Mass.
+Draxler, R. R. 1984. "Diffusion and Transport Experiments." Atmospheric Science and Power
+Production. Ed. D. Randerson, DOE/TIC-27601, U. S. Department of Energy. Washington, D.C.
+Eckerman, K. F., A. B. Wolbarst, and A. B. C. Richardson. 1988. Federal Guidance Report No. 11.
+Limiting Values of Radionuclide Intake and Air Concentrationa nd Dose Conversion Factorsf or
+Inhalation,S ubmersion, and Ingestion. U. S. Environmental Protection Agency. Washington, D.C.
+Eckerman, K. F., and J. C. Ryman. 1993. Federal Guidance Report No. 12. External Exposure to
+Radionuclides in Air, Water, and Soil. U. S. Environmental Protection Agency. Washington, D.C.
+Eimutis, E. C., and M. G. Konicek. 1972. "Derivations of Continuous Functions for the Lateral and
+Vertical Atmospheric Dispersion Coefficients." Atmospheric Environment, 6:859-63.
+Englemann, R. J. 1968. "Calculation of Precipitation Scavenging." Meteorology and Atomic Energy
+1968. Ed. D. Slade, TID-24190, U.S. Atomic Energy Agency.
+4-29
+
+--- PAGE 104 ---
+
+AuF6 = cross-sectional area (m2),
+Q UF6 = UF 6 release rate (g/s),
+PUF6 = UF6 density (g/m
+3),
+u = wind speed at 1 m (m/s),
+If the release includes HF and U0 F in addition to UF ,. the area of the initial control volume is given
+2 2 6
+by V" + + v+'i.
+ACV F (5.3)
+6
+U
+where
+V "F6 = the release rate of UF 6 (m3/s)
+V HF = the release rate of HF (m3/s)
+Vir = the volume flow of air that would be needed to generate the HF flow from a reaction of
+the air with UF (m3/s)
+6
+u = wind speed at 1 m. (m/s).
+4. There is no diffusion of the UF6 plume.
+5. Deformation of the UF 6 control volume is determined by gravitational slumping of the UF 6 .
+6. The rate of change of the UF 6 control volume width is given J by
+dwtF 6 k g HUF6 (5.4)
+where
+= UF control volume width (in),
+WUF6 6
+t = time (s),
+k = a slumping constant (dimensionless),
+g = gravitational constant (m/s2),
+Pair = density of air (g/m3),
+HUF = thickness of the control volume (in).
+6
+7. The slumping constant has a theoretical value of 1.4 (2 /2)( Eidsvik 1980) but may be given a lower
+value to account for surface resistance or to tune the model. A value of 1.3 is used as default in the
+current version of the UF model in RASCAL.
+6
+8. Air is entrained into the UF control volume only through the top. Entrainment through the sides is
+6
+negligible because after only a few seconds the area of the top of the volume is much larger than the
+area of the sides.
+9. The rate of entrainment of air into the UF6 is given by
+5-2
+
+--- PAGE 117 ---
+
+5.6 References
+Beckerdrite, J. M., D. R. Powell, and E. T. Adams. 1983. "Self-Association of Gases, 2: The Association
+of Hydrogen Fluoride." J. Chem. Eng. Data, 28:287-93.
+Briggs, G.A. 1984. "Plume Rise and Buoyancy Effects." Atmospheric Science and Power Production.
+Ed. D. Randerson, DOE/TIC-27601, U. S. Department of Energy.
+Dewitt, R. 1960. Uranium Hexafluoride: A Survey of the Physico-Chemical Properties.G AT-280,
+Goodyear Atomic Corporation, Portsmouth, Ohio.
+Eidsvik, K.J. 1980. "A Model for Heavy Gas Dispersion in the Atmosphere." Atmos. Environ.14:769-
+777.
+Nair, S.K., D.B. Chambers, S.H. Park, ZR. Radonjic, P.T. Coutts, C.J. Lewis, J.S. Hammond, and F. 0.
+Hoffman. 1997. Review of Models Usedf or Determining Consequences of UF Release - Model
+6
+Evaluation Report. NUREG/CR-6481 Vol, U. S. Nuclear Regulatory Commission
+Williams, W. R. 1985. CalculationalM ethods for Analysis of Postulated UF6 Releases. 2 Vols.,
+NUREG/CR-4360, U. S. Nuclear Regulatory Commission.
+5-15
+
+--- PAGE 138 ---
+
+where
+Dg/(T) = groundshine dose (rem) for occupancy time interval T,
+GRF = ground roughness factor with a default value of 0.82 (dimensionless),
+Cgi = initial (t = 0) ground surface concentration (Ci/m2) of radionuclide i,
+DCPgsi(T)= intermediate phase groundshine dose conversion parameter [rem/(Ci/m 2)] for
+radionuclide i and occupancy time interval T.
+The occupancy time intervals T over which groundshine dose Dg,(T) is calculated correspond to the time
+intervals for the intermediate phase in the EPA Protective Action Guide manual, specifically, for the case
+of no reentry delay: zero to one year, one year to two years, and zero to 50 years. If the RASCAL user
+specifies a reentry delay, the occupancy time interval then starts at the specified time of reentry.
+In previous versions of RASCAL, the ground roughness factor GRF was 0.7. However, more recent
+measurements (Anspaugh et al. 2002), based in large part on Chernobyl data, suggest that 0.82 is a more
+realistic value. FRMAC has also recently adopted a GRF of 0.82.
+The intermediate phase groundshine dose conversion parameters DCPgSi(T) are calculated as:
+N
+n=O
+where
+Eegn(T) = effective time of exposure to the parent nuclide (n = 0) or daughter (n 2!1 ) for occupancy
+time interval T accounting for decay, ingrowth, and weathering [s]
+EDCý = effective dose rate coefficient for exposure to contaminated ground surface based on Table
+111.3 of FGR 12 [Rem / (Ci s M2)]
+The summation from n = 0 to n = N is over the parent and all daughters.
+The effective dose rate coefficient for exposure to contaminated ground surface EDCn is equal to the
+effective dose rate coefficient in Federal Guidance Report (FGR) No. 12 (Eckerman and Ryman 1993)
+except when a nuclide has a short-lived daughter. For about 40 radionuclides with short-lived daughters,
+the parent-daughter combination is treated as a single nuclide with the parent's half-life. The effective
+dose rate coefficients EDC, assigned to the combination of the parent and implicit daughter is the sum of
+the parent's effective dose rate coefficient from FGR 12 plus the daughter's effective dose rate coefficient
+(corrected for branching ratio). The treatment of these combinations of parent plus implicit daughter is
+discussed in more detail in Section 7.2.
+The intermediate phase effective exposure duration Eegn(T) is for a specific exposure interval T and
+accounts for the radiological decay of the parent radionuclide and the ingrowth and decay of daughter
+radionuclides on the ground during the interval. It also accounts for weathering during the exposure
+interval.
+7-2
+
+--- PAGE 139 ---
+
+The groundshine effective exposure duration Eegn(T) for each radionuclide n is
+Eeg,(T) = Ao-' JoA(t)W,(t)dt (7.3)
+where
+Ao = initial activity of the parent (Ci)
+An(t) activity of the radionuclide n (Ci)
+=
+W,(t) = groundshine weathering function (dimensionless)
+The activity of the parent radionuclide as a function of time is given by the usual exponential relationship
+A(t) = Ao exp(- b) (7.4)
+where
+Ao = initial activity, and
+, = decay constant (s').
+Activities for daughters are given by the Bateman equations (Benedict et al. 1987) modified to be
+appropriate for activity rather than atoms (Strenge 1997) and to include branching fractions. These
+equations are described in Section 7.2.
+The groundshine weathering function W,(t) (Anspaugh et al. 2002), based in large part on Chernobyl data,
+is a sum of two exponential terms
+WsV(t)= Cle-a + C e-Pt (7.5)
+2
+where
+t = the time after deposition in days.
+The first term describes the weathering during the first few years after deposition and the second term
+describes long term weathering. The values of C, and C2 are 0.4 and 0.6, respectively, and the values of a
+andf are 1.26x 10- d', and 3.8x 10-5 d', respectively. FRMAC has also recently adopted this weathering
+function.
+When Equations (7.4) and (7.5) are substituted into Equation (7.3), the resulting integral can be solved in
+closed form. Equation (7.3) can also be integrated for daughters. These solutions, which are not shown
+here, are used in intermediate phase groundshine dose calculations.
+7-3
+
+--- PAGE 141 ---
+
+Vb = breathing rate (m3/s),
+R= initial resuspension factor (rn')
+Cgj= ground surface concentration (Ci/m2) of radionuclide i
+DCPinh A(T) = inhalation intermediate phase dose conversion parameter [rem-s/Ci].
+The default breathing rate Vb is 2.67x 10.4 m3/s, which represents a long term breathing rate that includes
+both waking and sleeping breathing rates.
+The inhalation intermediate phase dose conversion parameter DCFihi(T)i ncludes decay and ingrowth and
+the time-dependent (Weathering) portion of the resuspension function.
+For inhalation, the intermediate phase dose conversion parameters include decay, ingrowth, and
+resuspension. These dose conversion parameters are calculated as
+where
+N
+DCPfhi (T) = -[Eea.(T) x ECF] (7.9)
+n=O
+DCPifh,(T)= intermediate phase dose conversion parameter for the parent radionuclide
+Eean(T) = effective exposure duration to airborne activity of the parent nuclide (n = 0) or daughters
+(nŽ 1) during T accounting for decay, ingrowth, and resuspension
+ECF. = effective dose factor based on Table 2.1 in FGR 11 including implicit daughters as previously
+described.
+The summation is over the parent and all daughters.
+The effective exposure duration to airborne activity, Eea/(T) for each radionuclide (parent and daughters)
+is
+Eean(T) = A,, IoA (t)R,(t)dt (7.10)
+where
+A/(t) = activity of the radionuclide
+R,(t) = time-dependent resuspension factor
+RASCAL implements the resuspension factor model in NCRP Report No. 129 (NCRP 1999). For the first
+day, the initial resuspension factor is constant with a default value of 106 m'. Beyond 1,000 days, the
+resuspension factor is also constant with a value of 10' m'. For days I through 1,000, the resuspension
+factor R,(t) is modeled as
+7-5
+
+--- PAGE 147 ---
+
+fraction of first-generation daughter disintegrations that yield the second generation daughter,
+fd2 =
+and
+2 decay constant for the second-generation daughter.
+d2 =
+In the above equations, the time-dependent activities of the parent and daughters are functions of the
+initial (measured) activity of the parent.
+7.3 Derived Response Levels (DRLs)
+A derived response level is a measurable quantity that indicates that the deposited activity could result in
+an intermediate phase dose equal to one of the intermediate phase protective action guides. One type of
+DRL is the closed window (gamma) dose rate in mR/hour equal to the first, second, or 50 year
+intermediate phase PAG. The other DRL is the ground concentration of a marker radionuclide equivalent
+to a PAG.
+RASCAL computes two sets of DRLs - one set for use with measured exposure rates (meter readings), and
+the other for use with measurement of the surface contamination of a marker radionuclide. In either case,
+the DRLs are based on an assumed mixture of radionuclides on the surface. In RASCAL, DRLs are
+computed for first year, second year, and 50 years for a range of times from 0 to 100 days since the initial
+measurement.
+7.3.1 Exposure Rate Derived Response Levels
+The exposure rate derived response level (DRL) is the exposure rate that will occur when the ground
+concentration present will cause a dose to an inhabitant that is equal to the intermediate phase protective
+action guide. Thus, an exposure rate measurement survey instrument can be used to identify areas where
+doses might exceed the intermediate phase protective action guides.
+Exposure rate DRLs are calculated using equations developed from methods described in the FRMAC
+Manual (SNL 2003). However, the RASCAL DRLs include an inadvertent ingestion component that is not
+included in the FRMAC computational method. The basic equation used in RASCAL for exposure rate
+DRLs is
+1.429 x (C x GRFox ECFoj x 3600.)
+DRLexp =PAGx (7.16)
+n
+(fi ýf x DCP~) + (uING x DC~i~gi) + (R,,x Vb x DCJpflhi]
+where
+DRLe,p derived response level for exposure. (mR/hr)
+=
+PAG = EPA protective action guide. (mrem)
+1.429 = conversion factor from mrem to mR from EPA 1992, page 7-11
+7-11
+
+--- PAGE 148 ---
+
+ECFegi = exposure rate dose coefficient for contaminated soil from Table 111.3 of FGR No. 12
+(Eckerman and Ryman 1993)
+3600 s/hr converts the exposure rate to an hourly rate.
+The occupancy time interval for the intermediate phase dose conversion parameters are usually for the
+occupancy time intervals established for the EPA protective action guides for the intermediate phase.
+7.3.2 Marker Nuclide Derived Response Levels
+In some instances it may be difficult to use the exposure rate DRIL to identify areas where doses might
+exceed the protective action guides. Examples are when the exposure rate is near background levels or
+when there are no gamma-emitting radionuclides in the mix. In those instances, it may be easier to
+measure the surface concentration of a particular marker radionuclide rather than the exposure rate.
+The marker nuclide DRL is the concentration of that nuclide expected to cause doses to inhabitants equal
+to the protective action guides. Following the method in the FRMAC Manual (SNL 2003), RASCAL
+calculates marker DRLs as follows
+DRLiark = PAG x Cgk
+SCýj [(GRF x DCP ~+ (ING x DCFPng) + (R,,, x VXx (7.17),
+where
+Cgk ý ground concentration of the marker radionuclide (mCi/rn2)
+As with the exposure rate DRLs, the RASCAL calculation includes an optional inadvertent ingestion
+component not included in the FRMAC DRL calculation.
+7.4 References
+Anspaugh, L. R., S. L. Simon, K. I. Gordeev, I. A. Likhtarev, R. M. Maxwell, and S. M. Shinkarev. 2002.
+"Movement of Radionuclides in Terrestrial Ecosystems by Physical Processes. Health Physics 82(5):669-
+679.
+Benedict, M., T. H. Pigford, and H. W. Levi. 1987. Nuclear Chemical Engineering, 2 nd Ed. McGraw-
+Hill, New York.
+Eckerman, K.F., A. B. Wobarst, and A.C. B.Richardson. 1988. Limiting Values of Radionuclide Intake
+and Air Concentration and Dose Conversion Factorsf or Inhalation,S ubmersion, and Ingestion. Federal
+Guidance Report No. 11. EPA-520/11-88-020, U.S. Environmental Protection Agency.
+Eckerman, K. F. and J. C. Ryman. 1993. External Exposure to Radionuclides in Air Water, and Soil.
+Federal Guidance Report No. 12. EPA-402-R-93-081, U.S. Environmental Protection Agency.
+7-12

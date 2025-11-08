@@ -1,0 +1,842 @@
+=== INTEGRATION RELATED SECTIONS ===
+Found in 22 pages
+
+
+
+--- PAGE 21 ---
+
+The second compartment is the containment atmosphere. The activity entering the containment
+atmosphere during a time step is the activity released from the fuel during that time step. Activity is
+removed from containment atmosphere during the time step by radiological decay, removal processes
+(for example, removal by containment sprays), and leakage to the environment.
+Time steps may be of varying length. A source term time step starts whenever the user changes any of the
+time-dependent data or every 15 minutes, whichever occurs first. Time steps may be no less than 1
+minute and must be an integral number of minutes. Before passing the source term to the atmospheric
+transport model, RASCAL 3.0.5 converts the source term time steps into 15-minute time steps that start
+on the hour because the atmospheric transport models require that regularity.
+The remainder of this chapter describes in detail how RASCAL 3.0.5 calculates the time-dependent
+source term for various accident types.
+1.2.2 Time Core Is Uncovered Source Term
+Perhaps the most powerful and important source term type that RASCAL 3.0.5 calculates is based on the
+time that the core is uncovered. Almost all of the radioactivity at a nuclear power plant is contained in
+fuel rods. A large release is not possible unless many fuel rods are substantially damaged. The only way
+this can reasonably occur is by loss of water from the primary coolant system so that the reactor core is
+left uncovered by water. If a user estimates how long a reactor core will not be covered with water,
+RASCAL 3.0.5 can estimate the amount of core damage that will occur and from that estimate the
+activity of each fission product nuclide that will be released from the core.
+When a RASCAL 3.0.5 user specifies how long the core is uncovered, RASCAL 3.0.5 will estimate how
+much core damage will occur based on the damage timings in Tables 1.3 for BWRs and 1.4 for PWRs.
+(Tables 1.3 and 1.4 are taken from Tables 3-12 and 3- 13 in NUREG-1465, Soffer et al. 1995.) For
+example, if a BWR or PWR core is uncovered for 15 or 30 minutes, the estimated damage is 50% or
+100% cladding failure, respectively. If a BWR core is uncovered for 1 hour, the estimated damage will be
+100% cladding failure plus 33% core melt.
+1-7
+
+--- PAGE 52 ---
+
+RASCAL 3.0.5 then calculates the radionuclide inventories in a single fuel assembly by dividing the
+bumup corrected core inventory by the number of assemblies in the core (from the reactor database).
+These are the inventories present in a fuel assembly at the time of reactor shutdown. If the spent fuel
+involved in the accident is specified in terms of "batches," the batch inventories are calculated by
+dividing the core inventories by 3. (A batch is assumed to be one-third of a core.)
+The inventories at the time of the accident are then calculated by correcting for radiological decay and
+ingrowth since their last irradiation.
+For spent fuel assemblies damaged underwater or stored in dry casks, the user defines how long ago the
+fuel was removed from the reactor. A radiological decay correction using that duration is applied to all
+the damaged fuel. Decay and ingrowth are calculated using the methods described in Section 1.7.
+A different scheme is used with the pool drained scenario. The user defines fuel amounts as either
+assemblies or batches in 3 age classes: less than 1 year, I to 2 years, and longer than 2 years. All fuel in
+each age category is decayed for a set time. For fuel that has been out of the reactor for 0 to 1 year, the
+decay time is set to one week. This simple approximation can greatly overestimate the size of the release
+if the fuel has been in storage much longer than one week. For fuel that has been in storage for 1 to 2
+years, the decay time is set equal to 1 year. For fuel that has been out of the reactor for more than 2 years,
+the decay time is set equal to 2 years.
+2.3 Fractions of Inventory Available for Release in Spent Fuel Accidents
+The fractions of the radionuclide inventories that are available for release during an accident AF. are
+shown in Table 2. 1.
+Table 2.1 Fuel Release Fractions Used in Spent Fuel Accidents
+Release fraction by release type
+Nuclide group Cold gap Hot gap Cladding
+fire
+Noble gases (Xe, Kr) 0.4 0.4 1
+Halogens (I, Br) 3x10-3 3x10-2 0.7
+Alkali metals (Cs, Rb) 3x103 3x102 0.3
+Tellurium group (Te, Sb, Se) 1x104 1x10"3 6x10-3
+Barium, strontium (Ba, Sr) 6x10-7 6x106 x10"4
+6
+Noble metals (Ru, Rh, Pd, Mo, Tc, Co) 6x10-7 6x10-6 6x10-6
+Cerium group (Ce, Pu, Np) and Lanthan ides 6x 10-7 6x 10-6 2x 10-6
+(La, Zr, Nd, Eu, Nb, Pm, Pr, Sm, Y, Cm, Am)
+Source: Table 3.2 in NUREG/CR-6451 (Travis, Davis, Grove, and Azarm 1997) rounded to I significant figure. The
+cladding fire release fractions are the geometric mean of the high and low fractions.
+2-2
+
+--- PAGE 57 ---
+
+3 Fuel Cycle and Materials Source Terms
+The source term calculations in RASCAL estimate the amount of radioactive (or hazardous) material
+released based on a wide variety of potential radiological accident scenarios. The source term
+calculations performed that pertain to fuel-cycle facility and materials accidents can be generally
+categorized as (1) fuel-cycle facility/UF accidents, (2) uranium fires and explosions, (3) criticality
+6
+accidents, and (4) isotopic releases (e.g., transportation, materials).
+3.1 Basic Method to Calculate the Source Term
+RASCAL 3.0.5 calculates source terms by time steps. For each time step, RASCAL 3.0.5 first calculates
+the activity that is present (the "inventory T"). Second, RASCAL 3.0.5 calculates the fraction of the
+inventory that is released from the reactor fuel FRF.T hird, the product of those two terms is multiplied
+by a reduction factor RF (for example, for reduction by filters or containment sprays). Reduction factors
+can include several factors working simultaneously. Last, RASCAL 3.0.5 calculates the source term S
+released to the atmosphere .bym ultiplying by the leakage fraction LF. These calculations are described by
+the equation:
+Si(k) = L(k) x AFi(k) x RF(k) x LF(k) , (3.1)
+where
+S,(k) = activity of radionuclide i released to the environment during time step k,
+I,(k) = inventory of radionuclide i at time step k,
+AF,(k) = available fraction for release for radionuclide i during time step k,
+RFi(k) = reduction factor for radionuclide i during time step k,
+LF(k) = leakage fraction to the environment during time step k.
+The time steps may be of varying length. A source term time step starts whenever the user changes any of
+the time-dependent data or every 15 minutes, whichever is less. Time steps may be no less than 1 minute
+and must be an integral number of minutes. Before passing the source term to the atmospheric transport
+model, RASCAL 3.0.5 converts the source term time steps into 15-minute time steps that start on the
+hour because the atmospheric transport model requires that regularity.
+3.2 UF Releases from Cylinders
+6
+Starting Inventory
+The inventory (I) of UF available for release from cylinders can be described by the user in two ways:
+6
+1. The user specifies the number and types of cylinders releasing their contents. Table 3.1 lists the
+cylinder types available and the mass of UF each contains. Each cylinder is assumed to be filled to
+6
+its capacity. The total starting inventory is the sum of the number of each type of cylinder times the
+amount of UF in that type of cylinder.
+6
+2. The user specifies a total mass of UF in cylinders that can be released.
+6
+3-1
+
+--- PAGE 73 ---
+
+At long down-wind distances where the vertical dispersion parameter is the same magnitude as the
+mixing layer thickness, the puff model can be further simplified by assuming that material is uniformly
+distributed in the vertical. With this last assumption, the puff model becomes
+1 [FIIr_(cid:127)121
+,z(r)/Q - 2,Hexp 2 - , (4.3)
+where
+H = mixing layer thickness.
+RASCAL 3.0.5 switches to the uniformly mixed model when u, > 1.05H.
+4.1.2 Straight-Line Gaussian Plume Models
+Puff models represent plumes as a series of puffs. Concentrations at a point in the plume are calculated
+by adding the concentrations at the point associated with all puffs in the vicinity of the point. In effect,
+the puff models perform a numerical time integration of concentration as puffs pass by the point. Near a
+release point, the meteorological conditions may be assumed to be constant as the puff moves from the
+source to the receptor. If the wind speed is assumed to be much greater than zero and the point for which
+the concentration is to be calculated is sufficiently far down wind that the change in dispersion
+parameters with distance as puffs pass the point can be neglected, then the puff model can be integrated
+analytically to give a plume model.
+Assuming that the x-axis is aligned with the mean transport direction and that the mean wind speed is u,
+then the average concentration during plume passage is given by
+p (x-ut 2]
+Q'FyF.
+2"(x,yz)= (2) 3xp a.(x)ay(x)az(x) - -2p o/x) ] Idt (4.4)
+where
+X = average concentration,
+Q' = release rate,
+F,, F, = lateral and vertical exponential terms, shown above,
+x.= downwind distance at which X, a,, ay and a,a re evaluated,
+u = wind speed,
+t = time.
+On integration, the plume model becomes
+(x,y , z)/Q': F, (4.5)
+2mnu ao, -. ,
+which is a simplified version of the straight-line Gaussian model used in RASCAL 3.0.5.
+The straight-line Gaussian plume model for ground-level releases is frequently given as
+4-3
+
+--- PAGE 76 ---
+
+4.1.4 Model Domains and Grids
+The plume model and the puff model use different model domains. The plume model domain consists of
+a polar grid with receptor nodes on circles at 10' intervals at eight radial distances that may be adjusted
+to suit the problem at hand. The puff model domain consists of a square Cartesian grid with receptor
+nodes uniformly spaced throughout the domain. The polar grid has a higher node density near the release
+point than the Cartesian grid, and conversely, the Cartesian grid has a higher node density in the far field
+than the polar grid.
+The sizes of the model domains are linked. If the 10-mile Cartesian grid is selected, the polar grid will
+have a default maximum radius of 2 miles. Similarly, the 25- and 50-mile Cartesian grids have
+corresponding default polar grids of 5 and 10 miles, respectively. The default radial distances for the
+polar grids should be satisfactory for most applications. However, the RASCAL 3.0.5 user can change
+the radii values if other calculational distances are more appropriate.
+In general, the receptor nodes for the two grids do not coincide. This fact leads to computational
+differences in the doses reported in the maximum value tables in the model output for the two models for
+wind directions other than north, east, south, or west. The doses reported for the close-in plume model
+are for the plume centerline at each distance. The doses reported for puff model are the highest doses
+calculated at nodes at about the nominal distance -- for example, 5 miles. The node with the highest dose
+may or may not be on plume centerline, and may be nearer to or farther from the release point than the
+nominal distance. When a direct comparison of doses calculated by the two models is desired, the wind
+direction for the period of calculations should be north, east, south, or west. For these wind directions,
+both the plume model and the puff model calculate plume centerline concentrations and doses.
+4.2 Transport
+Atmospheric transport refers to the movement of material with the wind from the source to downwind
+receptors. The following two sections describe the treatment of atmospheric transport in RASCAL 3.0.5.
+4.2.1 Puff Model Transport
+Unlike the plume model, the puff model explicitly accounts for transit time in all calculations because the
+model tracks the movement of individual puffs and calculates concentrations and doses based on puff
+positions. As a result, dose rates calculated by the puff model may be used to estimate the time of arrival
+of a plume and may be compared with dose rates measured in the field. Decay and ingrowth of
+radionuclides and depletion of the puffs as a result of wet and dry deposition are calculated at 5-minute
+intervals.
+The puff model differs significantly from the plume model in that neither the wind data nor the wind
+fields are modified to force the centers of puffs to pass directly over the receptor nodes. As a result, when
+the wind direction is constant, the puff model may not calculate centerline concentrations and doses.
+However, as time goes by and atmospheric conditions (wind direction, wind speed, stability, mixing layer
+thickness, and precipitation) change, the puff model will give more realistic concentration and dose
+patterns than the plume model. In addition, the puff model will give more realistic concentration and dose
+patterns than the plume model when topography modifies the winds because the wind fields used by the
+4-6
+
+--- PAGE 77 ---
+
+puff model may be modified to account for topography. The wind data used by the plume model are not
+modified to account for topography.
+The movement of puffs is controlled by the wind at the center of the puff as it moves through the model
+domain. The spatial variation of winds is represented in the plume model by two-dimensional fields of
+vectors that give the direction and speed of puff movement. These fields are prepared by the
+meteorological model discussed in Section 6 and are updated at 15-minute intervals based on the
+available wind data.
+Calculation of puff movement is a six-step process. In sequence, the steps are
+I. Make an initial estimate of the direction and speed of the puff movement given the current puff
+position and height above ground using bilinear interpolation (Press, et al. 1986) of the vectors at the
+nearest nodes of the field;
+2. Make an initial estimate of the puff position at the end of the period using the initial estimates of
+direction and speed;
+3. Make a second estimate of the direction and speed of puff movement using the estimated puff
+position at the end of the period;
+4. Make a second estimate of the puff position at the end of the period using the estimate of direction
+and speed from step 3;
+5. Average the.end points calculated in steps 2 and 4;
+6. Calculate the final estimate of direction and speed of puff movement using the puff's initial position
+and the average end point calculated in step 5.
+The actual puff movement for the period may take place in one or several steps. The step size is adjusted
+to ensure adequate accuracy in the integration of concentrations that takes place at receptors. Errors in
+the integration should be less than 5% at typical wind speeds. Larger errors may occur near the release
+point in high wind speed conditions,, because the minimum step size is 30 seconds. These larger errors
+should not be a problem because plume model output should be used for receptors near the release point.
+The vector fields prepared by the meteorological program are for a height of 10 meters aboveground.
+These vectors are used for puffs that represent ground-level releases. If the actual release height is greater
+than 12 meters, a wind-speed profile is used to adjust the transport speed from 10 meters to the puff
+transport height. The profile used to adjust the wind speed considers both surface friction and
+atmospheric stability (see Panofsky and Dutton 1984, Sections 6.4-6.6).
+4.2.2 Plume Model Transport
+The RASCAL 3.0.5 plume model is a straight-line Gaussian model. As this name implies, the model
+assumes straight-line transport based on the wind direction at the time and place of release. The plume
+model rounds the wind direction to the closest 100 as it calculates the transport direction to ensure that
+the axis of the plume passes directly over receptors.
+4-7
+
+--- PAGE 78 ---
+
+As is common in straight-line Gaussian models, transit time is not considered in determining when
+material arrives at receptors; material arrives at receptors at the time of release. As a result, dose rates
+calculated by the RASCAL 3.0.5 plume model cannot be used to estimate the time of arrival of a plume
+at a receptor and are not likely to correspond with dose rates measured in the field.
+Transit time, calculated using the wind speed at the release height, is used to calculate the decay of
+radionuclides between the source and the receptors. It is also used to calculate depletion of material in
+the plume due to dry and wet deposition. Decay calculations are performed at 5-minute intervals;
+depletion is calculated for the full transit time.
+4.3 Dispersion Parameters
+In RASCAL 3.0.5, the horizontal dispersion parameters (ay and cr) are calculated using empirical curves
+derived from the results of a large number of dispersion experiments conducted in the 1950s and 1960s.
+The experiments, which were conducted over relatively flat terrain, typically involved tracer releases
+ranging from about 10 minutes to 1 hour in duration with ground-level concentration measurements at
+distances ranging from 100 meters to several kilometers. Only a few direct measurements of vertical
+dispersion parameters ((Y) were made. Consequently, vertical dispersion parameters were estimated with
+dispersion models using measured values of the horizontal dispersion parameter and measured
+concentrations. Dispersion parameters have been summarized in many forms. Perhaps the best known
+summary is the set of dispersion parameter curves called the Pasquill-Gifford curves (Gifford 1976).
+4.3.1 Normal Dispersion
+Regulatory guidance published by the NRC includes graphic depiction of these curves, and numerical
+approximations to the curves are included in many computer codes used by the NRC. In RASCAL 3.0.5,
+dispersion parameters are estimated using the same basic algorithms that were used in earlier RASCAL
+versions (Athey et al. 1993) and are used in other NRC codes including PAVAN (Bander, 1982) and
+XOQDOQ (Sagendorf, et al., 1982). These parameterizations have generally been attributed to Eimutis
+and Konicek (1972). However, the ay parameterization is properly attributed to Tadmor and Gur (1969),
+and the az parameterization is properly attributed to Martin and Tikvart (1968).
+The basic dispersion parameter relationships used in the NRC codes are
+=-- a .YX0.9031
+and
+O0, = az(x)•x b; ) + c'(x) (4.12)
+where
+x = distance from the release point (in meters),
+a,. is a function of stability class, and
+a., b:, and cz are empirical values that are functions of stability class and distance.
+4-8
+
+--- PAGE 91 ---
+
+of the exposure to the radionuclide during the 15-minute period, a radionuclide and organ specific dose
+factor, and the breathing rate. The general expression for the dose equivalents is
+D1 5 = vv DF JZf(t)dtI , (4.38)
+h 0
+where
+D,5 = effective or organ committed dose equivalent due to inhalation during a 15-minute period,
+v, = breathing rate,
+DF, = committed or organ specific dose factor for radionuclide n,
+X,, = radionuclide n concentration,
+t = time.
+Inhalation dose factors used in RASCAL 3.0.5 are from FederalG uidance Report No. 11 (Eckerman,
+Wolbarst, and Richardson 1988). RASCAL 3.0.5 uses a breathing rate of 3.33x10 4 m3/s (20 I/min).
+At the end of each 15-minute period, the committed dose equivalents at each receptor node are written to
+*p uff and plume model output files. They are then set to zero prior to beginning model calculations for the
+next 15-minute period.
+4.9.2 Groundshine Doses
+The puff and plume models calculate groundshine dose equivalents as the sum over all radionuclides of
+product of the surface contamination by the radionuclide and a radionuclide-specific dose factor. The
+general expression for the groundshine dose equivalent is
+where
+D. DF o. t)dt (4.39)
+D,, = dose equivalent from groundshine during the period,
+DFn = radionuclide n specific ground-shine dose factor,
+o,, = radionuclide n surface concentration, and
+t = time.
+The integration in Eq. (4.39) is from t to t+15 minutes. These integration times are used because the
+surface concentration at any time is cumulative from the beginning of the event and is not set to zero at the
+beginning of the period. After the surface is contaminated, groundshine doses can be incurred, even if
+airborne material is not present.
+4.9.3 Cloudshine Doses
+RASCAL calculates cloudshine doses using four models. The models include a semi-infinite cloud model
+and a finite-puff model originally developed for MESORAD (Scherpelz, et al. 1986). The first of these
+models assumes that activity is uniformly distributed through a large volume, and the second assumes that
+activity is concentrated in a finite number of points distributed through a volume to represent the actual
+4-21
+
+--- PAGE 92 ---
+
+activity distribution. The use of the semi-infinite cloud model is usually inappropriate in the immediate
+vicinity of the release point, and application of the MESORAD finite-plume model to cloudshine dose
+estimates near the release point did not prove satisfactory. Consequently, two additional cloudshine dose
+model have been developed and are used in RASCAL 3.0.5.
+The new cloudshine models are based on line sources and plane sources and are analogous to the point-
+source model. These models are used, along with the point-source model, until plumes and puffs grow to
+sufficient size that the assumptions associated with the semi-infinite cloud model are met. The finite-
+plume, cloudshine models in RASCAL 3.0.5 make use of precalculated dose rate vs distance curves.
+These curves are provided in the radionuclide database for each radionuclide for a I Ci (0.01 Sv) point
+source, and a I Ci/m (0.01 Sv/m) infinite-line source. The remainder of this section describes the
+cloudshine models.
+4.9.3.1 Puff Model Cloudshine Dose Calculations
+There are three stages in the cloudshine dose calculations. Near the source where puff dimensions are
+small compared to the mean path length of photons, RASCAL uses a point-kernel dose model. When the
+puff radius becomes sufficient (oy=400 m), cloud-shine dose rates beneath the centerline of the plume are
+calculated using an infinite-slab model. The dose rate at ground level is calculated assuming that the
+activity in the plume is equally divided among ten horizontal slabs with slab heights determined by the
+release height and vertical dispersion coefficients. The change in dose rate with distance from slabs is due
+only to buildup and absorption of photons; the change in dose rate across the plume is proportional to the
+crosswind variation of activity concentration in the slab. This model will be discussed further. Finally,
+when the vertical dimensions of the plume become sufficient (a,=400 m), cloudshine is calculated using a
+semi-infinite cloud model.
+The initial versions of RASCAL used the MESORAD finite-puff, cloudshine model (Scherpelz et al.
+1986, Ramsdell et al. 1988). This model first calculates composite characteristics (photon energies,
+photons per disintegration, etc.) of the gamma radiation from the radionuclide mix in a puff. Next, the
+model calculates the dose rate vs distance from a point source having the composite characteristics using
+Up (p) 2.13x 106 1,[f, B,(JP)e-,o"PE TW] (4.40)
+44 n( p 2
+where
+Dp '(p) = dose rate in (rem/h)/Ci,
+p = distance from point source,
+fy = fraction of disintegrations producing ys of energy, E,,
+By(u.,p) = buildup factor for air,
+/Iay = linear attenuation factor for air,
+EY= gamma energy,
+T= mass energy absorption coefficient for tissue (n,1p,),
+t
+WY= ratio of whole body dose to surface dose.
+The constant 2.13 x 106 is a collection of unit conversion constants to give dose rate in (rem/h)/Ci. The
+components of the constant are described following Eq. 19 in Scherpelz, et al. (1986).
+4-22
+
+--- PAGE 94 ---
+
+When the horizontal dispersion parameter reaches 400 m, the puff radius is large enough that the
+horizontal variations in the cloud-shine dose rate are directly proportional to the horizontal variation in
+concentration in the puff. At this point, MESORAD changed to a semi-infinite cloud model, and previous
+versions of RASCAL changed to calculating dose rates beneath the center of the puff using the finite-puff
+model and dose rates elsewhere using the horizontal variation in concentration. The puff model changes
+from the point-source based cloud-shine model used in earlier versions of RASCAL to a new plane-source
+based model. The plane-source model assumes that the puff is a vertical cylinder as is assumed in the
+point-source model. However, rather than assuming that activity is distributed among volume elements,
+the activity is assumed to be concentrated on ten horizontal slabs (planes).
+To calculate the activity in each slab, the concentration at the center of the puff (y--O) is first integrated
+vertically from the bottom of the puff to the top. This is similar to the integration done in calculating the
+depletion from wet deposition
+f Qn Q
+e2dZ 4.44)
+O, .
+=Z)._,I . (2,T) 31-"2 ,2 exp I exp[-O, ]dz=_2Q~/7a"' f o; exp l -{ Oly] J(
+where
+(2), = vertically integrated concentration of radionuclide n at the center of the puff.
+This concentration is then divided by the number of slabs (ten) to get the concentration in each slab.
+Within the cylinder, the vertical position of the slabs is determined by the effective release height, the
+mixing-layer thickness, and the vertical-dispersion coefficient. When a Gaussian distribution is partitioned
+so the area under the curve is divided into ten equal parts and the center of mass of each part is
+determined, these centers of mass fall at ±0.127a, ±0.385a, ±0.674;, +1.037a, and ±1.645a. Using this as
+a basis, the slab heights are initially estimated as h_+0.127_, h_+0.385oF, he_+0.6740z, he±1.037a, and
+h_+1.645G .The initial heights may lie below ground level or above the top of the mixing-layer. Any
+2
+heights that fall outside these bounds are adjusted to account for reflection by the boundaries. Signs of.
+heights that are negative are changed to positive, and heights (hp) that are above the mixing layer are
+replaced by 2H-hP.
+The dose rate at ground level from a slab is calculated as
+D'2,(r,z ) ). = - _' W r 2ýD,r exp - 04 _k o A - ý . 2e(4 ( 4 I 5 + k ) - z) , (4.45)
+where
+z z height of the slab above the receptor, which is assumed to be at I m (m),
+DFP, = dose factor radionuclide n for an infinite plane [(rem/s)/(Ci/m2)1,
+= total gamma ray absorption coefficient for air (m-'),
+k = ratio of energy in scattered photons to absorbed energy.
+4-24
+
+--- PAGE 96 ---
+
+4.9.3.2 Plume Model Cloudshine Dose Calculations
+In the plume model, near the source, the plume is divided into a large number of equal-strength line
+sources spaced to properly represent the distribution of activity in the plume. The dose rates from these
+line sources are used to calculate the ground-level dose rate as a function of horizontal distance from the
+plume axis. This relationship is then used to calculate dose rates and 15-minute doses at receptor
+locations. When the width of the plume is sufficient (ay = 400 m), the plume model switches from the
+line-source model to an infinite-slab model. Finally, when the vertical dimensions of the plume are
+sufficient to make the semi-infinite cloud model appropriate (aY= 400 meters or a uniformly mixed plume
+with a thickness of 600 meters), the plume model switches to a semi-infinite cloud model.
+Dose rates from line sources are calculated using
+N
+D',(6)= Q'I.D'n(p) , (4.49)
+n=[
+where
+D '(p) = dose rate (rem/s) at a distance p from an infinite line source of Q ' (Ci/m),
+Q = line-source strength (Ci/m), Q ",= Q ' /u where Q ' is in Ci/s,
+I
+D = line-source dose rate factor [(rem/s)/(Ci/m)] for radionuclide n.
+n(p)
+Equation (4.49) is analogous to Eq. (4.42) with changes in the definitions of source term and dose factors.
+The line-source dose rates are combined to get the plume dose rate by summing over all line sources, just
+as the point-source dose rates were combined to get a puff dose rate. The number of line sources used is
+determined by the horizontal dispersion parameter, oy. If a5y > 200 m, 100 lines (1Oxl0) are used to
+describe the concentration distribution in the plume. Otherwise, the concentration distribution is described
+by 36 lines (6x6). In either case, the lines are spaced horizontally and vertically such that each line
+represents the same fraction of the total activity in the plume. The plume dose rate is given by
+D'(y) - DD (YI , (4.50)
+where
+D '(y) = plume dose rate,
+y = distance from the ground-level projection of the center of the plume,
+CR = finite line correction factor,
+N, = number of line sources (36 or 100),
+i,j = line source indices,
+D',(yj) = infinite line, line-source dose rate.
+A finite-line source correction factor is included in Eq. (4.50) to account for the fact that the plume does
+not extend upwind of the release point. A correction factor could be calculated by numerical integration of
+4-26
+
+--- PAGE 113 ---
+
+where
+"'H 0, = mass of liquid water entrained, and
+2
+f,2oH,,,= mass of water vapor entrained.
+Finally, an iterative procedure is used to arrive at a plume temperature that gives the same mixture
+enthalpy. During this procedure, the phase composition of the HIF-H 0 mixture and UF are adjusted as
+2 6
+the temperature changes. The convergence criterion for plume temperature is 0.1 'C. This precision is
+more than adequate because the plume temperature is used only in plume-rise calculations.
+5.3 Dispersion and Deposition of HF and U0 F
+2 2
+The UF model works in two stages. In the first stage, the model calculates the spread of the
+6 UF 6 ,
+conversion of UF to HF and U0 F, and the plume rise of the HF and U0 F .The products of this stage
+6 2 2 2 2
+are UJF , HF, and UO F source terms and the plume rise of HF and UO F, all as a function of distance
+6 2 2 2 2
+from the release point. In the second stage, a straight-line Gaussian model (based on the model described
+in Chapter 4) is used to calculate airborne concentrations and deposition of HF and U0 F at receptors on
+2 2
+a polar grid. The distance-dependent source terms calculated in the first stage are used as long as UF is
+6
+present. After the UF is gone, the HF and UOzF source terms are depleted to account for deposition.
+6 2
+The UF chemical and thermodynamics models are run in the first stage while the control volume moves
+6
+downwind in small time steps. The maximum time step is 15 seconds. If, with the I-meter wind, the UF
+6
+control volume would reach the first arc of receptors in less than 75 seconds, the time step is reduced so
+that the control volume reaches the first arc at the end of fifthtime step. As the control volume moves
+downwind, plume rise is calculated using the stable plume equations discussed in Section 4.5.2. In
+addition, transition plume rise is calculated using
+Ah, 1.6F13x213u-1 (5.32)
+where
+Ah, = transition rise (m) (Briggs 1984),
+Fb = buoyancy flux (m4/s3),
+x = downwind distance, and
+u = 10-m wind speed (m/s).
+The smaller of the transition and final rise is selected as the plume rise.
+Dispersion of the HF and UO F, plumes is calculated using the dispersion parameters that are used in the
+2
+main RASCAL 3.0.5 plume model. As long as unreacted UF is present, the HF and UOF plumes are
+6 2
+assumed to be uniformly mixed in the vertical because the plumes are being fed by the UF 6 - H 2 0 reaction.
+Normalized HF and U0 F concentrations in this range are given by
+2 2
+5-11
+
+--- PAGE 119 ---
+
+6 Meteorological Data Processor
+The meteorological data processor is the part of RASCAL 3.0.5 that allows the user to enter
+meteorological data and prepares the data for use by the atmospheric transport and diffusion models.
+Meteorological data for the site (release point) and as many as 35 additional meteorological stations may
+be entered. All data must be entered manually at the present time. A future version of the meteorological
+data processor may include options for importing meteorological data files.
+The following sections describe the technical aspects of the meteorological data requirements and the
+meteorological data processing.
+6.1 ModeiDomain
+Model domain refers to the area covered by the dose calculations in the source term to dose model. The
+model domain for the puff model is square. The release point is at the center of the square. The user can
+select a square that is 20, 50, or 100 miles (32, 80, and 160 km) on a side. The meteorological data
+processor creates a meteorological file for the selected domain for use by the puff model. This file
+describes the spatial and temporal variation of meteorological conditions at nodes on a Cartesian grid.
+The meteorological data processor also creates a smaller file of meteorological data for the release point
+for use by plume model and the UF plume model. This file describes the temporal variation of
+6
+meteorological conditions at the center of the polar grid used by these straight-line models.
+Meteorological data must be entered for at least one location, generally the release site. If data are not
+available for the release site, they may be entered for another location. However, the release location must
+still be selected as if it had meteorological data because the location of the release site is used to fix the
+position of the grid.
+6.2 Meteorological Stations
+Locations for which meteorological data are entered are called meteorological stations. Meteorological
+stations may be within or near the model domain. Spatial fields of winds, stability, etc., are produced from
+the station meteorological data. Section 6.3 discusses the meteorological data input.
+Information on each station must be available before a station's meteorological data can be used in
+generating the meteorological fields needed by the puff model. Files containing the required information
+for each operating nuclear power plant, large fuel cycle facilities, and several major radioactive materials
+facilities are included with RASCAL 3.0.5. Each file contains the information for the location of the site
+and for some selected meteorological observation stations near the site.
+Since the file for a specific site does all meteorological stations near the site and since the information for
+meteorological stations can become outdated, the meteorological data processor provides the means to add
+meteorological stations to the file or update information in the file.
+6-1
+
+--- PAGE 120 ---
+
+The following information is needed for each meteorological station:
+" A station identification. The station identification can be any 10 letter character; the release site ID is
+appropriate for the first station in the station list; FAA or ICAO location indicators are appropriate for
+national weather service or other stations that have them. A longer station name may be included for
+each station for better identification.
+* The latitude (positive north of the equator and negative south of the equator) and longitude (positive
+east of the prime meridian and negative west of the prime meridian) of the station in decimal degrees.
+* The elevation of the station in meters above mean sea level.
+* The surface roughness for the station (in). Meteorological texts such as Panofsky and Dutton (1984)
+and Stull (1988) provide guidance on estimating surface roughness. If no other information is
+available, a default surface roughness of 0.2 m may be used.
+* The height at which the wind measurements are made (in). The instrument height should be height
+above ground level.
+The meteorological data processor uses the station position to place station data at the proper location in
+the modeling domain; station elevations are used in the potential flow model that adjusts wind fields for
+topographic effects (Section 6.5.1), and the surface roughness and height of wind measurement are used in
+calculating wind speed variation with height (Section 6.4.2).
+The first station in the station file is the release point (the site). The latitude and longitude of the first
+station will define the coordinates of the center of the model domain grid. Distances from the center of the
+grid to the other stations are calculated using
+Xrs =rA Ars COSts (6.1)
+and
+Yrs = reA Ors (6.2)
+where
+xrs = distance of the station east (+) or west (-) of the source (center of the grid) (km),
+Yrs = distance of the station north (+) or south (-) of the source (center of the grid) (km),
+re = radius of the earth (= 6370 km),
+(p,= latitude of the center of the grid (release point),
+Airs = longitude difference between the station and the source (center of the grid) (radians),
+Apq, = latitude difference between the station and the source (center of the grid) (radians).
+6-2
+
+--- PAGE 121 ---
+
+6.3 Meteorological Data Input
+Station meteorological data are entered for specific dates and times. The data may be actual observations
+(measurements) or they may be taken from meteorological forecasts. If available, the following data
+should be entered for each station used:
+* whether the data is an observation or a forecast
+* the time of the data; (the program will round the time to the nearest quarter-hour. For example, an
+entry of 12:07 would be changed to 12:00. Similarly, an entry of 14:22 would be changed to 14:30)
+* surface-level wind speed
+* surface-level wind direction
+* estimated atmospheric stability
+• precipitation type
+* estimated mixing height (optional).
+If the plume rise option is used the ambient air temperature should also be entered.
+If the calculation is for a UF release, the following data should also be entered for the release point
+6
+(center of the grid):
+* ambient air temperature
+* pressure
+* humidity measurement (dew point temperature, relatively humidity, or wet bulb temperature).
+The air temperature is used in plume rise calculations in all three of the transport and diffusion models.
+The air temperature, pressure, and humidity are used in the thermodynamic calculations in the UF plume
+6
+model. Pressure and humidity are used only by the UF6 plume model.
+The following sections describe the meteorological variables in more detail.
+6.3.1 Surface Winds
+The surface winds are made up of the wind direction (the direction from which the wind is blowing) and
+the wind speed. Wind directions must be entered in degrees from 0' to 3600. Wind speed can be entered
+in units of m/s, mph, or knots and can range from 0 to 30 m/s (or equivalent in other units).
+6.3.2 Atmospheric Stability Class
+Atmospheric stability may be entered either as a stability class (A -extremely unstable through G -
+extremely stable) based on the general classification scheme discussed by Pasquill (1961), Gifford
+(1961), and Turner (1964) or as temperature variation with height (dT/dz). If dT/dz is entered, it will be
+converted to a stability class using the conversion table shown in Table 6.1 (NRC, 1972).
+6-3
+
+--- PAGE 127 ---
+
+The surface roughness length is associated with small-scale topographic features. It arises as a constant of
+integration in the derivation of the wind profile equations and is used in several boundary-layer
+relationships. Texts on atmospheric diffusion, air pollution and boundary-layer meteorology (Panofsky
+and Dutton 1984, Stull 1988) contain tables that give approximate relationships between surface
+roughness and land use, vegetation type, and topographic roughness.
+The term Vf(z/L) accounts for the effects of stability on the wind profile. In stable atmospheric conditions,
+V1(z/L) has the form -az/L where cc has a value of 5. In neutral conditions V'(z/L) is equal to zero, and the
+diabatic profile simplifies to a logarithmic profile.
+In unstable air, W(z/L) is more complicated. According to Panofsky and Dutton (1984), the most common
+form of V'(z/L) for unstable conditions, based on the work of Businger et al. (Paulson 1970) is
+y( L= nIn ( [( ] [ 2 2x)-]2tan-'(x) + (6.4)
+where
+x = (1-16z/L)"4.
+Equation (6.4) is used to estimate the friction velocity (u.) from the wind speed, surface roughness, and
+Monin-Obukhov length. In unstable and neutral conditions, the use of Eq. (6.4) is limited to the lowest
+100 meters of the atmosphere. In stable conditions, the upper limit for application of Eq. (6.4) is the
+smaller of 100 meters or three times the Monin-Obukhov length.
+6.4.3 Mixing Height
+Heating of the surface and surface friction combine to generate turbulence that mixes material released at
+or near ground level through a layer that varies in thickness from a few meters to a few kilometers. This
+layer is referred to as the mixing layer. The atmospheric models in RASCAL 3.0.5 use the mixing height
+(also referred to as the mixing-layer depth and mixing-layer thickness) to limit vertical diffusion.
+The meteorological data processor has three methods for obtaining estimates of the mixing height at
+meteorological stations. The mixing height may be entered directly, or it may be estimated by the program
+from either current meteorological data or climatological information. Of the latter two options, estimation
+of mixing height from current meteorological data is preferable to estimating the mixing height from
+climatological data, if sufficient data are available.
+The meteorological data processor uses algorithms developed by Ramsdell, Simonen, and Burk (1994 ) for
+estimating mixing height from current meteorological data. The algorithms are based relationships derived
+by Zilitinkevich (1972) for stable and neutral conditions.
+For stable atmospheric conditions, the relationship is
+H = k( . (6.5)
+6-9
+
+--- PAGE 132 ---
+
+precipitation rate zone. Each site in the RASCAL database is assigned to one of three precipitation rate
+zones. The precipitation zones, originally defined in Ramsdell, Simonen, and Burk (1994) are based on
+annual precipitation. Zone 1 is for areas where the annual precipitation is less than 10 inches, zone 2 is for
+areas where the annual precipitation is between 10 and 20 inches, and zone 3 is for areas where the annual
+precipitation exceeds 20 inches. Most existing reactor sites are assigned to precipitation rate zone 3. Some
+sites in the drier regions of the United States are assigned to zone 1. Precipitation rate zone assignments
+are made in the climatology database and can be modified as appropirate.
+The precipitation rates assigned by the meteorological data processor are listed in Table 6.4. These rates,
+based on data collected in the Pacific northwest, should be conservative for most nuclear facilities in the
+United States.
+Table 6.4 Precipitation Rates as a Function of Precipitation Climate Zone
+Precipitation Precipitation Rate (mm/h)
+Type
+Zone 1 Zone 2 Zone 3
+Light rain 0.4 0.6 0.7
+Medium rain 3.8 3.8 3.8
+Heavy rain 3.8 3.8 8.5
+Light snow 0.3 0.3 0.7
+Medium snow 1.7 1.7 3.8
+Heavy rain 1.7 1.7 3.8
+6.5 Calculating Spatially Varying Meteorological Conditions
+The puff model takes into account both spatial and temporal variations in the atmospheric conditions. The
+meteorological data processor provides the gridded fields of the atmospheric stability class, the inverse
+Monin-Obukhov length, the east-west (U) and north-south (V) components of the wind, the mixing height,
+and the precipitation type and precipitation rate for each of the three puff model domains. The following
+subsections describe the preparation of the fields from the station data.
+6.5.1 Wind Fields
+The puff model uses wind fields to calculate movement of puffs. These are fields of U (east-west) and V
+(north-south) components of the wind vector. The wind fields are created from station wind data using a
+I/r2 interpolation scheme, where r is the distance from the grid point to the station. This interpolation
+scheme, which was used in earlier NRC codes such as MESOI (Ramsdell, Athey, and Glantz 1983) and
+MESORAD (Scherpelz, et al. 1986; Ramsdell et al. 1988), is common in spatial interpolation of the wind
+fields (Hanna, Briggs, and Hosker 1982).
+6-14
+
+--- PAGE 133 ---
+
+6.5.2 Adjustment of Wind Fields for Topography
+If the meteorological stations reporting data are well placed with respect to major topographic features,
+the wind fields developed by interpolation will give reasonable puff trajectories. However, with one
+meteorological station or a small number of stations, the wind fields may not properly reflect the effects of
+topography. The meteorological data processor includes an option to use a simple one-layer model to
+adjust wind fields for topography. Wind field adjustments are greatest for stable atmospheric conditions
+(E, F, and G stability classes) and least for neutral conditions (stability class D). Wind fields are not
+adjusted in unstable atmospheric conditions (stability classes A, B, and C). For this purpose only,
+atmospheric stability at the release point (center of the model domain) is assumed to apply to the entire
+domain.
+The wind-field model in RASCAL 3.0.5 is a two-dimensional adaption of the wind fitting program
+described by Ross et al. (1988) that is used in the NUATMOS and MATTHEW codes. In the RASCAL
+3.0.5 implementation, wind fields created by interpolation are used as the starting point in the adjustment
+process. The thickness of the mixing layer is calculated for each node in the model domain by computing
+the difference between the top of the boundary layer and the terrain elevation. For those nodes where the
+terrain rises above the top of the boundary layer, the program assumes that the boundary-layer thickness is
+0.01 meter and sets the wind to zero. This technique is simple to implement and has proven effective at
+generating flows that avoid obstacles such as mountain ridges.
+The initial wind field is then adjusted using methods of variational calculus to produce a non-divergent
+wind field in the boundary layer, subject to the constraint of minimum difference between the initial wind
+field and the adjusted wind field. The procedure for adjusting the wind field involves solving Poisson's
+equation. The code uses a nine-point Laplacian operator and a simultaneous relaxation technique to obtain
+the solution.
+The model has been tested and shows that the winds produced by the model flow around obstacles that are
+well resolved by the grid. Obstacles having width of three grid points or greater are considered well
+resolved. Smaller obstacles may or may not be resolved, depending on their shape and orientation relative
+to the grid. For example, a ridge one grid point wide is well resolved if it runs in the x or y direction, but if
+that same ridge is at 450 to the grid, it is not resolved.
+The adjusted wind field is most accurate near stations and along trajectories that pass near stations. Wind
+fields are less accurate elsewhere. Thus, it is desirable to have wind data near the release point and, if
+possible, at downwind locations.
+Topographic data are included in RASCAL 3.0.5 for all sites in the database. Sites not included in the
+RASCAL database and the generic site do not have topographic data files. Therefore, the option of
+modifying wind fields for topographic effects is not available for these sites.
+6.5.3 Stability and Precipitation
+The stability class and precipitation fields (precipitation type and precipitation rate) are based on data for
+the closest meteorological station. Fields created in this manner include stability class, inverse Monin-
+Obukhov length, precipitation type, and precipitation rate. This procedure avoids averaging that would
+minimize the effects of extreme stability or instability. It also provides maximum detail in treating isolated
+precipitation events.
+6-15
+
+--- PAGE 139 ---
+
+The groundshine effective exposure duration Eegn(T) for each radionuclide n is
+Eeg,(T) = Ao-' JoA(t)W,(t)dt (7.3)
+where
+Ao = initial activity of the parent (Ci)
+An(t) activity of the radionuclide n (Ci)
+=
+W,(t) = groundshine weathering function (dimensionless)
+The activity of the parent radionuclide as a function of time is given by the usual exponential relationship
+A(t) = Ao exp(- b) (7.4)
+where
+Ao = initial activity, and
+, = decay constant (s').
+Activities for daughters are given by the Bateman equations (Benedict et al. 1987) modified to be
+appropriate for activity rather than atoms (Strenge 1997) and to include branching fractions. These
+equations are described in Section 7.2.
+The groundshine weathering function W,(t) (Anspaugh et al. 2002), based in large part on Chernobyl data,
+is a sum of two exponential terms
+WsV(t)= Cle-a + C e-Pt (7.5)
+2
+where
+t = the time after deposition in days.
+The first term describes the weathering during the first few years after deposition and the second term
+describes long term weathering. The values of C, and C2 are 0.4 and 0.6, respectively, and the values of a
+andf are 1.26x 10- d', and 3.8x 10-5 d', respectively. FRMAC has also recently adopted this weathering
+function.
+When Equations (7.4) and (7.5) are substituted into Equation (7.3), the resulting integral can be solved in
+closed form. Equation (7.3) can also be integrated for daughters. These solutions, which are not shown
+here, are used in intermediate phase groundshine dose calculations.
+7-3
+
+--- PAGE 142 ---
+
+R, (t) = Ro / t (7.11)
+where
+R,, =initial resuspension factor with a default value of I0 6/m
+t = time in days
+When expressions for the activity and the resuspension factor are substituted into Equation 7.11, the
+effective exposure cannot be calculated by closed form integration. In RASCAL, the effective exposure
+duration for intermediate phase inhalation doses is estimated using numerical integration.
+7.1.4 Precalculated Intermediate Phase Dose Conversion Parameters
+The RASCAL database contains precalculated dose conversion parameters for groundshine, inadvertent
+ingestion, and inhalation for the first 30 days, the first year, the second year, and 50 years for 219
+radionuclides. The precalculated dose conversion parameters reduce computing time and facilitate
+comparison with hand calculations.
+7.1.5 Dose Conversion Parameter Calculations with Delayed Reentry
+Dose conversion parameters for delayed reentry are calculated as the difference between the factor
+without delayed reentry and the factor for the delay period. For example, the first year dose conversion
+parameter for a 30-day delay in reentry is calculated as
+DCP(30d to ly) = DCP(O to ly) - DCP(O to 30d) (7.12)
+where
+DCP(30 d to I y) = dose conversion parameter over the interval from 30 days to 1 year
+DCP(O to 1 y) = dose conversion parameter for the first year
+DCP(O to 30 d) = dose conversion parameter for the first 30 days
+Intermediate phase dose conversion parameters for the first year D(O to I y), the second year D(J to 2 y),
+and 50 years D(O to 50 y) have been precalculated. Intermediate phase dose conversion parameters for the
+delay period are calculated as needed, after the delay period is defined.
+7-6
+
+--- PAGE 146 ---
+
+The following equations describe the activity of the parent and explicit daughters as a function of time.
+Given the measured activity of a radionuclide at time zero, the activities of the radionuclide and daughters,
+if any, following the measurement are given by the Bateman Equations (e.g., Benedict et al. 1987),
+modified to give activities (disintegrations/time) rather than number of atoms (Strenge 1997). The
+Bateman Equation for the parent radionuclide is
+AP(t) = Ap(O)e-A'l (7.13)
+where
+AP(t) = activity of the parent at time t following the measurement,
+Ap(O) = measured activity, and
+Ap = decay constant of the parent.
+The activity of first-generation explicit daughter radionuclides, assuming none of the daughter is present
+initially, is
+Ad,(,) = AP(0) 2 -A-d (eA - e-Ad'I) (7.14)
+where
+AdN(t) = activity of the first-generation daughter at time t,
+fd= fraction of disintegrations of the parent that yield the daughter
+2dl = decay constant for the daughter.
+This relationship applies to each first-generation daughter of the parent.
+Although there may be more than one second-generation daughter for a parent radionuclide, RASCAL
+assumes simplified decay chains that include, at most, a single second-generation daughter. The activity of
+second-generation daughter radionuclides, assuming none of the preceding first generation daughter and
+none second-generation daughter are present initially, is
+Ad (t) = Ap(O)x fd, Adlf, 2d2 x
+2 2
+e-Ap eAd- , e--Ad2 ) (7.15)
+where
+Ad2(t) = activity of the second-generation daughter at time t following the measurement,
+7-10
+
+--- PAGE 147 ---
+
+fraction of first-generation daughter disintegrations that yield the second generation daughter,
+fd2 =
+and
+2 decay constant for the second-generation daughter.
+d2 =
+In the above equations, the time-dependent activities of the parent and daughters are functions of the
+initial (measured) activity of the parent.
+7.3 Derived Response Levels (DRLs)
+A derived response level is a measurable quantity that indicates that the deposited activity could result in
+an intermediate phase dose equal to one of the intermediate phase protective action guides. One type of
+DRL is the closed window (gamma) dose rate in mR/hour equal to the first, second, or 50 year
+intermediate phase PAG. The other DRL is the ground concentration of a marker radionuclide equivalent
+to a PAG.
+RASCAL computes two sets of DRLs - one set for use with measured exposure rates (meter readings), and
+the other for use with measurement of the surface contamination of a marker radionuclide. In either case,
+the DRLs are based on an assumed mixture of radionuclides on the surface. In RASCAL, DRLs are
+computed for first year, second year, and 50 years for a range of times from 0 to 100 days since the initial
+measurement.
+7.3.1 Exposure Rate Derived Response Levels
+The exposure rate derived response level (DRL) is the exposure rate that will occur when the ground
+concentration present will cause a dose to an inhabitant that is equal to the intermediate phase protective
+action guide. Thus, an exposure rate measurement survey instrument can be used to identify areas where
+doses might exceed the intermediate phase protective action guides.
+Exposure rate DRLs are calculated using equations developed from methods described in the FRMAC
+Manual (SNL 2003). However, the RASCAL DRLs include an inadvertent ingestion component that is not
+included in the FRMAC computational method. The basic equation used in RASCAL for exposure rate
+DRLs is
+1.429 x (C x GRFox ECFoj x 3600.)
+DRLexp =PAGx (7.16)
+n
+(fi ýf x DCP~) + (uING x DC~i~gi) + (R,,x Vb x DCJpflhi]
+where
+DRLe,p derived response level for exposure. (mR/hr)
+=
+PAG = EPA protective action guide. (mrem)
+1.429 = conversion factor from mrem to mR from EPA 1992, page 7-11
+7-11
