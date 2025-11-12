@@ -760,6 +760,33 @@ void Gpuff::evac_output_binary_RCAP(int timestep) {
         vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
     }
 
+    // Cumulative cloudshine dose
+    vtkFile << "SCALARS dose_cloudshine_cumulative float 1\n";
+    vtkFile << "LOOKUP_TABLE default\n";
+    for (const auto& evacuee : evacuees) {
+        float vval = evacuee.dose_cloudshine_cumulative;
+        swapBytes(vval);
+        vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
+    }
+
+    // Instantaneous cloudshine dose (current timestep)
+    vtkFile << "SCALARS dose_cloudshine_instant float 1\n";
+    vtkFile << "LOOKUP_TABLE default\n";
+    for (const auto& evacuee : evacuees) {
+        float vval = evacuee.dose_cloudshine_instant;
+        swapBytes(vval);
+        vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
+    }
+
+    // Cloudshine mode (0: small_puff, 1: plane_source, 2: semi_infinite, -1: none)
+    vtkFile << "SCALARS cloudshine_mode int 1\n";
+    vtkFile << "LOOKUP_TABLE default\n";
+    for (const auto& evacuee : evacuees) {
+        int vval = evacuee.cloudshine_mode;
+        swapBytes_int(vval);
+        vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(int));
+    }
+
     vtkFile.close();
 }
 

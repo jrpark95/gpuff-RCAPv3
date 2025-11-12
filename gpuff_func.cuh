@@ -1,5 +1,9 @@
 
 #include "gpuff.cuh"
+#include <cmath>
+#include <algorithm>  // For std::min, std::max
+#include <fstream>    // For file output in debug functions
+#include <iomanip>    // For output formatting
 
 // ============================================================================
 // Constructor & Destructor
@@ -718,6 +722,324 @@ void Gpuff::time_update_RCAP(){
 
 }
 
+// ============================================================================
+// Puff720 Geometry Initialization Functions
+// ============================================================================
+
+// 표준정규 CDF 역함수 Φ^{-1}(p) 근사
+inline double inv_norm_cdf(double p) {
+    static const double a1=-3.969683028665376e+01,a2=2.209460984245205e+02,a3=-2.759285104469687e+02;
+    static const double a4= 1.383577518672690e+02,a5=-3.066479806614716e+01,a6= 2.506628277459239e+00;
+    static const double b1=-5.447609879822406e+01,b2=1.615858368580409e+02,b3=-1.556989798598866e+02;
+    static const double b4= 6.680131188771972e+01,b5=-1.328068155288572e+01;
+    static const double c1=-7.784894002430293e-03,c2=-3.223964580411365e-01,c3=-2.400758277161838e+00;
+    static const double c4=-2.549732539343734e+00,c5= 4.374664141464968e+00,c6= 2.938163982698783e+00;
+    static const double d1= 7.784695709041462e-03,d2= 3.224671290700398e-01,d3= 2.445134137142996e+00,d4= 3.754408661907416e+00;
+
+    const double plow  = 0.02425;
+    const double phigh = 1.0 - plow;
+
+    double q, r, x;
+    if (p < plow) {
+        q = std::sqrt(-2.0 * std::log(p));
+        x = (((((c1*q + c2)*q + c3)*q + c4)*q + c5)*q + c6) /
+            ((((d1*q + d2)*q + d3)*q + d4)*q + 1.0);
+        return -x;
+    } else if (p > phigh) {
+        q = std::sqrt(-2.0 * std::log(1.0 - p));
+        x = (((((c1*q + c2)*q + c3)*q + c4)*q + c5)*q + c6) /
+            ((((d1*q + d2)*q + d3)*q + d4)*q + 1.0);
+        return x;
+    } else {
+        q = p - 0.5;
+        r = q * q;
+        x = (((((a1*r + a2)*r + a3)*r + a4)*r + a5)*r + a6) * q /
+            (((((b1*r + b2)*r + b3)*r + b4)*r + b5)*r + 1.0);
+        return x;
+    }
+}
+
+// 수평 반경 r의 6개 등질량 셸 중심값
+// Rayleigh CDF F_R(r)=1-exp(-r^2/2) 를 6등분, 각 셸 중앙 분위수 p_c=(j-0.5)/6
+// σ_y=1 참조에서 r_c=sqrt(-2 ln(1-p_c))
+inline void build_radial_centers_6(std::vector<double>& r_centers) {
+    r_centers.resize(6);
+    for (int j = 1; j <= 6; ++j) {
+        const double p_c = (static_cast<double>(j) - 0.5) / 6.0;
+        const double r_c = std::sqrt(-2.0 * std::log(std::max(1e-12, 1.0 - p_c)));
+        r_centers[j - 1] = r_c; // σ_y=1 기준
+    }
+}
+
+// 수직 z의 10개 등질량 레이어 중심값
+// 표준정규 CDF Φ(z) 10등분, 각 레이어 중앙 분위수 p_c=(i-0.5)/10
+// z_c=Φ^{-1}(p_c), σ_z=1 기준
+inline void build_vertical_centers_10(std::vector<double>& z_centers) {
+    z_centers.resize(10);
+    for (int i = 1; i <= 10; ++i) {
+        const double p_c = (static_cast<double>(i) - 0.5) / 10.0;
+        const double z_c = inv_norm_cdf(std::min(1.0 - 1e-12, std::max(1e-12, p_c)));
+        z_centers[i - 1] = z_c; // σ_z=1 기준
+    }
+}
+
+// 방위각 12등분
+inline void build_theta_12(std::vector<double>& thetas) {
+    thetas.resize(12);
+    for (int j = 0; j < 12; ++j) thetas[j] = 2.0 * PI * static_cast<double>(j) / 12.0;
+}
+
+// 6 × 10 × 12 = 720 정규화 좌표 생성
+inline void build_geom720_normalized(Puff720& geom) {
+    std::vector<double> r6, z10, th12;
+    build_radial_centers_6(r6);
+    build_vertical_centers_10(z10);
+    build_theta_12(th12);
+
+    int idx = 0;
+    for (int ir = 0; ir < 6; ++ir) {
+        const double r = r6[ir];
+        for (int iz = 0; iz < 10; ++iz) {
+            const double z = z10[iz];
+            for (int it = 0; it < 12; ++it) {
+                const double th = th12[it];
+                const double x = r * std::cos(th);
+                const double y = r * std::sin(th);
+                geom.pos_local[idx++] = float3{static_cast<float>(x),
+                                               static_cast<float>(y),
+                                               static_cast<float>(z)};
+            }
+        }
+    }
+    std::cout << "[CLOUDSHINE:001] Initialized Puff720 geometry with 6×10×12 points" << std::endl;
+}
+
+// ============================================================================
+// Cloudshine Table Initialization Functions
+// ============================================================================
+
+// Constants for table building
+static constexpr float kMu_air_host  = 0.01f;   // Air attenuation coefficient [1/m]
+static constexpr float kK_build_host = 1.4f;    // Build-up factor coefficient
+static constexpr float kTwo13_host   = 2.13e6f; // Unit conversion factor
+
+// Create logarithmically spaced distance grid
+inline std::vector<float> make_p_grid(int Np, float p_min_m = 0.1f, float p_max_m = 5.0e4f) {
+    std::vector<float> p(Np);
+    float log_min = std::log(p_min_m);
+    float log_max = std::log(p_max_m);
+    for (int i = 0; i < Np; ++i) {
+        float t = static_cast<float>(i) / static_cast<float>(Np - 1);
+        p[i] = std::exp(log_min + t * (log_max - log_min));
+    }
+    // Avoid singularity at first point
+    if (p[0] < 1e-3f) p[0] = 1e-3f;
+    return p;
+}
+
+// Simplified attenuation function A(rho) = B(μ,rho) * exp(-μ rho) with B = 1 + k * μ * rho
+inline float A_of_rho(float rho) {
+    float mu = kMu_air_host;
+    float B  = 1.0f + kK_build_host * mu * rho;
+    return B * std::exp(-mu * rho);
+}
+
+// Point kernel dose rate: D′p(rho) = 2.13e6 / (4π rho^2) * A(rho)
+inline float Dp_point_of_rho(float rho) {
+    float geom = kTwo13_host / (4.0f * PI * rho * rho);
+    return geom * A_of_rho(rho);
+}
+
+// Debug output function for cloudshine tables
+inline void output_cloudshine_tables_to_file(
+    const std::vector<float>& h_p,
+    const std::vector<float>& h_dp,
+    const std::vector<float>& h_df,
+    int Nnucl, int Np,
+    const std::string& filename = "cloudshine_tables_debug.txt"
+) {
+    std::ofstream outfile(filename);
+
+    if (!outfile.is_open()) {
+        std::cerr << "Error: Could not open file " << filename << " for writing." << std::endl;
+        return;
+    }
+
+    outfile << "========================================\n";
+    outfile << "CLOUDSHINE DOSE TABLES DEBUG OUTPUT\n";
+    outfile << "========================================\n\n";
+
+    outfile << "Configuration:\n";
+    outfile << "  Number of nuclides: " << Nnucl << "\n";
+    outfile << "  Number of distance points: " << Np << "\n";
+    outfile << "  Distance range: " << h_p[0] << " - " << h_p[Np-1] << " meters\n\n";
+
+    // Output p_grid (distance grid)
+    outfile << "----------------------------------------\n";
+    outfile << "DISTANCE GRID (p_grid) [meters]\n";
+    outfile << "----------------------------------------\n";
+    outfile << std::scientific << std::setprecision(6);
+
+    for (int i = 0; i < Np; ++i) {
+        outfile << "p[" << std::setw(3) << i << "] = " << h_p[i] << " m";
+        if (i > 0) {
+            float ratio = h_p[i] / h_p[i-1];
+            outfile << "  (ratio: " << std::fixed << std::setprecision(3) << ratio << ")";
+        }
+        outfile << "\n";
+    }
+
+    // Output dp_point table (point kernel dose rates)
+    outfile << "\n----------------------------------------\n";
+    outfile << "POINT KERNEL TABLE (dp_point) [(rem/h)/Ci]\n";
+    outfile << "----------------------------------------\n";
+    outfile << "Note: All nuclides have same values (Cs-137 approximation)\n\n";
+    outfile << std::scientific << std::setprecision(6);
+
+    // Show values for first nuclide only (since all are the same)
+    outfile << "Nuclide 0 (representative for all " << Nnucl << " nuclides):\n";
+    outfile << std::setw(10) << "Distance" << std::setw(20) << "Dose Rate" << std::setw(20) << "Attenuation\n";
+    outfile << std::setw(10) << "[m]" << std::setw(20) << "[(rem/h)/Ci]" << std::setw(20) << "[relative]\n";
+
+    float dp_1m = h_dp[0];  // Find value at ~1m for normalization
+    for (int i = 0; i < Np; ++i) {
+        if (std::abs(h_p[i] - 1.0f) < 0.1f) {
+            dp_1m = h_dp[i];
+            break;
+        }
+    }
+
+    for (int i = 0; i < Np; ++i) {
+        outfile << std::setw(10) << h_p[i]
+                << std::setw(20) << h_dp[i]
+                << std::setw(20) << h_dp[i] / dp_1m << "\n";
+    }
+
+    // Output df_sic (semi-infinite cloud DCF)
+    outfile << "\n----------------------------------------\n";
+    outfile << "SEMI-INFINITE CLOUD DCF (df_sic)\n";
+    outfile << "----------------------------------------\n";
+    outfile << "Note: All nuclides have same value (Cs-137 approximation)\n\n";
+
+    outfile << "df_sic value for all nuclides: " << h_df[0] << " [(rem/s)/(Ci/m^3)]\n";
+
+    // Physical validation checks
+    outfile << "\n----------------------------------------\n";
+    outfile << "PHYSICAL VALIDATION CHECKS\n";
+    outfile << "----------------------------------------\n";
+
+    // Check 1: Monotonic decrease with distance
+    bool monotonic = true;
+    for (int i = 1; i < Np; ++i) {
+        if (h_dp[i] > h_dp[i-1]) {
+            monotonic = false;
+            break;
+        }
+    }
+    outfile << "1. Monotonic decrease with distance: " << (monotonic ? "PASS" : "FAIL") << "\n";
+
+    // Check 2: Approximate 1/r^2 behavior at close distances
+    float r1 = h_p[5];
+    float r2 = h_p[10];
+    float dp1 = h_dp[5];
+    float dp2 = h_dp[10];
+    float expected_ratio = (r1 * r1) / (r2 * r2);
+    float actual_ratio = dp1 / dp2;
+    float deviation = std::abs(actual_ratio - expected_ratio) / expected_ratio;
+
+    outfile << "2. 1/r^2 behavior check (r1=" << r1 << "m, r2=" << r2 << "m):\n";
+    outfile << "   Expected ratio: " << expected_ratio << "\n";
+    outfile << "   Actual ratio: " << actual_ratio << "\n";
+    outfile << "   Deviation: " << deviation * 100 << "%\n";
+
+    // Check 3: Attenuation at large distances
+    float atten_1km = h_dp[Np * 3/4] / dp_1m;  // Attenuation at ~1km
+    float atten_10km = h_dp[Np - 1] / dp_1m;   // Attenuation at max distance
+
+    outfile << "3. Attenuation factors:\n";
+    outfile << "   At ~1 km: " << atten_1km << "\n";
+    outfile << "   At " << h_p[Np-1]/1000 << " km: " << atten_10km << "\n";
+
+    outfile << "\n========================================\n";
+    outfile << "END OF DEBUG OUTPUT\n";
+    outfile << "========================================\n";
+
+    outfile.close();
+
+    std::cout << "[CLOUDSHINE:DEBUG] Table debug output written to " << filename << std::endl;
+}
+
+// Build cloudshine tables on device
+// All nuclides assumed to have same properties as Cs-137
+inline void build_cloudshine_tables_on_device(
+    int Nnucl, int Np,
+    float** d_p_grid_out,
+    float** d_dp_point_out,
+    float** d_df_sic_out,
+    DoseTables& h_tbl,
+    cudaStream_t stream = 0,
+    bool debug_output = false  // Toggle for debug output
+) {
+    // 1. Create p_grid
+    std::vector<float> h_p = make_p_grid(Np, 0.1f, 5.0e4f);
+
+    // 2. Create dp_point: same values for all nuclides (Cs-137 approximation)
+    std::vector<float> h_dp(Nnucl * Np);
+    for (int i = 0; i < Np; ++i) {
+        float rho = h_p[i];
+        float dp  = Dp_point_of_rho(rho); // [(rem/h)/Ci]
+        for (int n = 0; n < Nnucl; ++n) {
+            h_dp[n * Np + i] = dp;
+        }
+    }
+
+    // 3. Create df_sic (semi-infinite cloud dose conversion factors)
+    // Set df_sic = D′p(1 m) * 241.2 so that DCF_pn ≈ D′p(1 m)
+    float dp_at_1m = Dp_point_of_rho(1.0f);
+    std::vector<float> h_df(Nnucl, dp_at_1m * 241.2f);
+
+    // Debug output if enabled
+    if (debug_output) {
+        output_cloudshine_tables_to_file(h_p, h_dp, h_df, Nnucl, Np);
+    }
+
+    // 4. Allocate device memory
+    float* d_p_grid   = nullptr;
+    float* d_dp_point = nullptr;
+    float* d_df_sic   = nullptr;
+
+    cudaMalloc(&d_p_grid,   sizeof(float) * Np);
+    cudaMalloc(&d_dp_point, sizeof(float) * Nnucl * Np);
+    cudaMalloc(&d_df_sic,   sizeof(float) * Nnucl);
+
+    // 5. Copy to device
+    cudaMemcpyAsync(d_p_grid,   h_p.data(),  sizeof(float) * Np,         cudaMemcpyHostToDevice, stream);
+    cudaMemcpyAsync(d_dp_point, h_dp.data(), sizeof(float) * Nnucl * Np, cudaMemcpyHostToDevice, stream);
+    cudaMemcpyAsync(d_df_sic,   h_df.data(), sizeof(float) * Nnucl,      cudaMemcpyHostToDevice, stream);
+
+    // 6. Fill host-side DoseTables structure
+    h_tbl.p_grid   = d_p_grid;
+    h_tbl.dp_point = d_dp_point;
+    h_tbl.df_sic   = d_df_sic;
+    h_tbl.Np       = Np;
+
+    // Output pointers for cleanup later
+    if (d_p_grid_out)   *d_p_grid_out   = d_p_grid;
+    if (d_dp_point_out) *d_dp_point_out = d_dp_point;
+    if (d_df_sic_out)   *d_df_sic_out   = d_df_sic;
+
+    std::cout << "[CLOUDSHINE:002] Initialized dose tables - Np=" << Np
+              << ", Nnucl=" << Nnucl
+              << ", p_range=[" << h_p[0] << "," << h_p[Np-1] << "]m" << std::endl;
+}
+
+// Free cloudshine tables from device memory
+inline void free_cloudshine_tables_on_device(float* d_p_grid, float* d_dp_point, float* d_df_sic) {
+    if (d_p_grid)   cudaFree(d_p_grid);
+    if (d_dp_point) cudaFree(d_dp_point);
+    if (d_df_sic)   cudaFree(d_df_sic);
+}
+
 /**
  * Main RCAP simulation loop with evacuation and exposure calculation
  *
@@ -758,7 +1080,7 @@ void Gpuff::time_update_RCAP(){
  *   - Ground deposition fields
  */
 void Gpuff::time_update_RCAP2(const SimulationControl& SC, const EvacuationData& EP,
-    const std::vector<RadioNuclideTransport>& RT, const std::vector<NuclideData>& ND, NuclideData* d_ND, const ProtectionFactors* dPF, const EvacuationData* dEP, int input_num) {
+    const std::vector<RadioNuclideTransport>& RT, const std::vector<NuclideData>& ND, NuclideData* d_ND, const ProtectionFactors* dPF, const EvacuationData* dEP, int input_num, const WeatherSamplingData& WD) {
 
     std::cout << "\n[TIME_UPDATE:001] ==== ENTERING time_update_RCAP2() ====" << std::endl;
 
@@ -772,6 +1094,41 @@ void Gpuff::time_update_RCAP2(const SimulationControl& SC, const EvacuationData&
 
     cudaEvent_t start, stop;
     float timesum = 0;
+
+    // Allocate device memory for cloudshine kernel structures (outside the loop)
+    DoseTables h_tbl = {};  // Will be properly initialized with table data
+
+    // Initialize cloudshine dose tables
+    float* d_p_grid = nullptr;
+    float* d_dp_point = nullptr;
+    float* d_df_sic = nullptr;
+
+    const int Nnucl_tbl = MAX_NUCLIDES;  // Use MAX_NUCLIDES for consistency
+    const int Np = 200;  // Number of distance grid points (can be adjusted for performance)
+
+    // Toggle for debug output - set to true to enable table output to file
+    const bool ENABLE_TABLE_DEBUG_OUTPUT = true;  // Change to false to disable output
+
+    build_cloudshine_tables_on_device(
+        Nnucl_tbl, Np,
+        &d_p_grid, &d_dp_point, &d_df_sic,
+        h_tbl,
+        0,  // default stream
+        ENABLE_TABLE_DEBUG_OUTPUT  // Enable/disable debug output
+    );
+
+    // Initialize Puff720 geometry with 720 representative points
+    Puff720 h_geom720 = {};
+    build_geom720_normalized(h_geom720);  // Fill with normalized coordinates
+
+    DoseTables* d_tbl;
+    Puff720* d_geom720;
+    cudaMalloc(&d_tbl, sizeof(DoseTables));
+    cudaMalloc(&d_geom720, sizeof(Puff720));
+
+    // Copy structures to device (now h_tbl has valid pointers)
+    cudaMemcpy(d_tbl, &h_tbl, sizeof(DoseTables), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_geom720, &h_geom720, sizeof(Puff720), cudaMemcpyHostToDevice);
 
     std::cout << "[TIME_UPDATE:002] Starting simulation loop (time_end=" << time_end << ")" << std::endl;
     while (current_time <= time_end) {
@@ -792,10 +1149,10 @@ void Gpuff::time_update_RCAP2(const SimulationControl& SC, const EvacuationData&
 
         blocks = (evacuees.size() + threads_per_block - 1) / threads_per_block;
 
-            evacuation_calculation_1D << <blocks, threads_per_block >> >
-                (d_puffs_RCAP, d_dir, d_evacuees, d_radius, SC.numRad, SC.numTheta,
-                    evacuees.size(), EP.evaEndRing, EP.EP_endRing, d_ground_deposit, dEP, current_time);
-            cudaDeviceSynchronize();
+        evacuation_calculation_1D << <blocks, threads_per_block >> >
+            (d_puffs_RCAP, d_dir, d_evacuees, d_radius, SC.numRad, SC.numTheta,
+                evacuees.size(), EP.evaEndRing, EP.EP_endRing, d_ground_deposit, dEP, current_time);
+        cudaDeviceSynchronize();
 
         int num_evacuees = evacuees.size();
 
@@ -818,6 +1175,33 @@ void Gpuff::time_update_RCAP2(const SimulationControl& SC, const EvacuationData&
             dPF
             );
 
+        // Calculate cloudshine dose separately
+        // TEMPORARILY DISABLED - Using ComputeExposureHmix for cloudshine instead
+        // This kernel computes external gamma dose from airborne radioactive material
+        // Each evacuee can receive cloudshine from multiple puffs
+        // Weather scenarios (simIdx) are processed independently
+        // Need space for both dose reduction and mode tracking
+        /*
+        size_t cloudshine_shared_mem_size = sizeof(float) * block_size + sizeof(int) * block_size;
+
+        int Nnucl = MAX_NUCLIDES;
+
+        // Pass building height and mixing height from parsed input data
+        float build_height = RT[0].build_height;  // From RT215
+        float mix_height = WD.mixHeight;          // From RT350
+
+        ComputeCloudshineDose << <grid_dim, block_dim, cloudshine_shared_mem_size >> > (
+            d_puffs_RCAP,
+            d_evacuees,
+            dPF,
+            d_tbl,
+            d_geom720,
+            Nnucl,
+            build_height,
+            mix_height
+            );
+        */
+
         err = cudaGetLastError();
         if (err != cudaSuccess)
             printf("CUDA error: %s, timestep = %d\n", cudaGetErrorString(err), timestep);
@@ -835,6 +1219,14 @@ void Gpuff::time_update_RCAP2(const SimulationControl& SC, const EvacuationData&
         }
 
     }
+
+    // Free allocated device memory for cloudshine structures
+    // TEMPORARILY DISABLED - Not using ComputeCloudshineDose kernel
+    /*
+    free_cloudshine_tables_on_device(d_p_grid, d_dp_point, d_df_sic);
+    cudaFree(d_tbl);
+    cudaFree(d_geom720);
+    */
 
     std::cout << "Total sum execution time: " << timesum << " ms" << std::endl;
 

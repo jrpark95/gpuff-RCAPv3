@@ -744,17 +744,25 @@ struct Evacuee {
 
     float x, y;
 
-    float dose_inhalation = 0.0f; 
-    float dose_cloudshine = 0.0f; 
+    float dose_inhalation = 0.0f;
+    float dose_cloudshine = 0.0f;
 
     float dose_inhalations[MAX_ORGANS] = { 0.0f, };
     float dose_cloudshines[MAX_ORGANS] = { 0.0f, };
+
+    // Cloudshine tracking fields
+    float dose_cloudshine_cumulative = 0.0f;  // Cumulative cloudshine dose
+    float dose_cloudshine_instant = 0.0f;     // Instantaneous cloudshine dose (current timestep)
+    int cloudshine_mode = -1;                 // 0: small_puff, 1: plane_source, 2: semi_infinite, -1: none
 
     int prev_rad_idx;
     int prev_theta_idx;
     int met_idx;
 
-    Evacuee() : population(0.0f), r(0.0f), theta(0.0f), speed(0.0f), dose(0.0f), dose_inhalation(0.0f), dose_cloudshine(0.0f), flag(true) {}
+    Evacuee() : population(0.0f), r(0.0f), theta(0.0f), speed(0.0f), dose(0.0f),
+                dose_inhalation(0.0f), dose_cloudshine(0.0f),
+                dose_cloudshine_cumulative(0.0f), dose_cloudshine_instant(0.0f),
+                cloudshine_mode(-1), flag(true) {}
 
     void print() const {
         std::cout << "Population: " << population
