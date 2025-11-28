@@ -322,7 +322,19 @@ __global__ void ComputeCloudshineDose(
     // 공유메모리 초기화
     sdata_cloudshine[threadIdx.x] = 0.0f;
 
-    const Gpuff::Puffcenter_RCAP puff = d_puffs_RCAP[simIdx * d_totalpuff_per_Sim + puffIdx];
+    Gpuff::Puffcenter_RCAP puff = d_puffs_RCAP[simIdx * d_totalpuff_per_Sim + puffIdx];
+
+    // TEST: Add test concentrations if they are zero
+    bool hasConcentration = false;
+    for (int n = 0; n < Nnucl; ++n) {
+        if (puff.conc[n] > 0.0f) {
+            hasConcentration = true;
+            break;
+        }
+    }
+
+    // Test concentrations are now set in gpuff_init.cuh, no need to override here
+
     Evacuee evac = d_evacuees[simIdx * d_totalevacuees_per_Sim + evacueeIdx];
 
     // 수용체 좌표
@@ -350,29 +362,30 @@ __global__ void ComputeCloudshineDose(
     float dose_cloudshine = 0.0f;
     int current_mode = -1;  // Track which mode is being used
 
-    // Debug output for first few threads
-    if (blockIdx.x == 0 && blockIdx.y == 0 && threadIdx.x < 3) {
-        printf("[CLOUDSHINE DEBUG] Thread %d - Puff %d: flag=%d, sigma_y=%.2f, sigma_z=%.2f\n",
-               threadIdx.x, puffIdx, puff.flag, sigma_y, sigma_z);
+    // // Debug output for first few threads
+    // if (blockIdx.x == 0 && blockIdx.y == 0 && threadIdx.x < 3) {
+    //     printf("[CLOUDSHINE DEBUG] Thread %d - Puff %d: flag=%d, sigma_y=%.2f, sigma_z=%.2f\n",
+    //            threadIdx.x, puffIdx, puff.flag, sigma_y, sigma_z);
 
-        // Print first 3 nuclide concentrations
-        float total_conc = 0.0f;
-        for (int n = 0; n < 3; n++) {
-            if (puff.conc[n] > 0) {
-                printf("  conc[%d]=%.3e", n, puff.conc[n]);
-                total_conc += puff.conc[n];
-            }
-        }
-        if (total_conc > 0) printf(" (total=%.3e)\n", total_conc);
-        else printf(" (all zero)\n");
+    //     // Print first 3 nuclide concentrations
+    //     float total_conc = 0.0f;
+    //     for (int n = 0; n < 3; n++) {
+    //         if (puff.conc[n] > 0) {
+    //             printf("  conc[%d]=%.3e", n, puff.conc[n]);
+    //             total_conc += puff.conc[n];
+    //         }
+    //     }
+    //     if (total_conc > 0) printf(" (total=%.3e)\n", total_conc);
+    //     else printf(" (all zero)\n");
 
-        if (threadIdx.x == 0) {
-            printf("[CLOUDSHINE DEBUG] Evacuee %d: r=%.2f, theta=%.2f, evac_flag=%d\n",
-                   evacueeIdx, evac.r, evac.theta, evac.flag);
-            printf("[CLOUDSHINE DEBUG] Parameters: d_dt=%.2f, pf=%.3f\n", d_dt, pf);
-        }
-    }
+    //     if (threadIdx.x == 0) {
+    //         printf("[CLOUDSHINE DEBUG] Evacuee %d: r=%.2f, theta=%.2f, evac_flag=%d\n",
+    //                evacueeIdx, evac.r, evac.theta, evac.flag);
+    //         printf("[CLOUDSHINE DEBUG] Parameters: d_dt=%.2f, pf=%.3f\n", d_dt, pf);
+    //     }
+    // }
 
+    // Check if puff is active (flag == 1 means active based on debug output showing "ACTIVATED")
     if (puff.flag == 1) {
         if (small_puff) {
             current_mode = 0;  // Small puff mode
@@ -382,8 +395,19 @@ __global__ void ComputeCloudshineDose(
                 if (Qn <= 0.0f) continue;
                 float dprime_avg = small_puff_point_kernel_avg(*geom720, puffCenter, receptor, *tbl, n, sigma_y, sigma_z);
                 sum_all += Qn * dprime_avg;
+
+                // // Debug: Print contribution from each nuclide
+                // if (blockIdx.x == 0 && blockIdx.y == 0 && threadIdx.x == 0 && dprime_avg > 0.0f) {
+                //     printf("[SMALL_PUFF] Nuclide %d: Qn=%.3e, dprime_avg=%.3e, contrib=%.3e\n",
+                //            n, Qn, dprime_avg, Qn * dprime_avg);
+                // }
             }
             dose_cloudshine = sum_all;
+
+            // Debug: Print calculation result
+            if (blockIdx.x == 0 && blockIdx.y == 0 && threadIdx.x == 0 && sum_all > 0.0f) {
+                printf("[CALC RESULT] Mode %d: sum_all=%.3e -> dose_cloudshine=%.3e\n", current_mode, sum_all, dose_cloudshine);
+            }
         } else if (plane_src) {
             current_mode = 1;  // Plane source mode
             // 지상 투영 거리 r
@@ -399,6 +423,11 @@ __global__ void ComputeCloudshineDose(
                 sum_all += Qn * dsum;
             }
             dose_cloudshine = sum_all;
+
+            // Debug: Print calculation result
+            if (blockIdx.x == 0 && blockIdx.y == 0 && threadIdx.x == 0 && sum_all > 0.0f) {
+                printf("[CALC RESULT] Mode %d: sum_all=%.3e -> dose_cloudshine=%.3e\n", current_mode, sum_all, dose_cloudshine);
+            }
         } else if (semi_inf) {
             current_mode = 2;  // Semi-infinite mode
             const float dxg = ex - puff.x;
@@ -412,6 +441,11 @@ __global__ void ComputeCloudshineDose(
                 sum_all += semi_infinite_dose_sum(r, sigma_y, mix_height, *tbl, n, Qn);
             }
             dose_cloudshine = sum_all;
+
+            // Debug: Print calculation result
+            if (blockIdx.x == 0 && blockIdx.y == 0 && threadIdx.x == 0 && sum_all > 0.0f) {
+                printf("[CALC RESULT] Mode %d: sum_all=%.3e -> dose_cloudshine=%.3e\n", current_mode, sum_all, dose_cloudshine);
+            }
         } else {
             current_mode = 1;  // Default to plane source mode for boundary cases
             // 경계 부근 보수적으로 평면원천 처리
@@ -427,6 +461,11 @@ __global__ void ComputeCloudshineDose(
                 sum_all += Qn * dsum;
             }
             dose_cloudshine = sum_all;
+
+            // Debug: Print calculation result
+            if (blockIdx.x == 0 && blockIdx.y == 0 && threadIdx.x == 0 && sum_all > 0.0f) {
+                printf("[CALC RESULT] Mode %d: sum_all=%.3e -> dose_cloudshine=%.3e\n", current_mode, sum_all, dose_cloudshine);
+            }
         }
 
         // 외부피폭 PF 적용
@@ -436,18 +475,18 @@ __global__ void ComputeCloudshineDose(
         // Apply time interval to convert dose rate to dose
         dose_cloudshine *= d_dt;
 
-        // Debug output when dose is calculated
-        if (dose_cloudshine > 0.0f && threadIdx.x == 0) {
-            printf("[CLOUDSHINE CALC] Puff %d -> Evacuee %d: dose=%.3e, mode=%d\n",
-                   puffIdx, evacueeIdx, dose_cloudshine, current_mode);
-        }
+        // // Debug output when dose is calculated
+        // if (dose_cloudshine > 0.0f && threadIdx.x == 0) {
+        //     printf("[CLOUDSHINE CALC] Puff %d -> Evacuee %d: dose=%.3e, mode=%d\n",
+        //            puffIdx, evacueeIdx, dose_cloudshine, current_mode);
+        // }
     }
 
-    // Debug output for dose calculation
-    if (blockIdx.x == 0 && blockIdx.y == 0 && threadIdx.x == 0) {
-        printf("[CLOUDSHINE DEBUG] Thread 0: dose=%.3e, mode=%d, pf=%.3f, dt=%.3f\n",
-               dose_cloudshine, current_mode, pf, d_dt);
-    }
+    // // Debug output for dose calculation
+    // if (blockIdx.x == 0 && blockIdx.y == 0 && threadIdx.x == 0) {
+    //     printf("[CLOUDSHINE DEBUG] Thread 0: dose=%.3e, mode=%d, pf=%.3f, dt=%.3f\n",
+    //            dose_cloudshine, current_mode, pf, d_dt);
+    // }
 
     // 스레드 로컬 합산
     sdata_cloudshine[threadIdx.x] = dose_cloudshine;
@@ -455,6 +494,11 @@ __global__ void ComputeCloudshineDose(
     // Store mode in shared memory (use the second half for mode tracking)
     int* sdata_mode = (int*)(&sdata_cloudshine[blockDim.x]);
     sdata_mode[threadIdx.x] = (dose_cloudshine > 0.0f) ? current_mode : -1;
+
+    // // Debug: Print values before reduction
+    // if (blockIdx.x == 0 && blockIdx.y == 0 && dose_cloudshine > 0.0f) {
+    //     printf("[BEFORE_REDUCTION] Thread %d: dose=%.3e\n", threadIdx.x, dose_cloudshine);
+    // }
     __syncthreads();
 
     // 블록 내 병렬 감소
@@ -469,29 +513,53 @@ __global__ void ComputeCloudshineDose(
         __syncthreads();
     }
 
+    // // Debug: Print final reduced value
+    // if (blockIdx.x == 0 && blockIdx.y == 0 && threadIdx.x == 0) {
+    //     printf("[AFTER_REDUCTION] Final sum: %.3e\n", sdata_cloudshine[0]);
+    // }
+
     if (threadIdx.x == 0) {
         int evac_idx = simIdx * d_totalevacuees_per_Sim + evacueeIdx;
         Evacuee& evacuee = d_evacuees[evac_idx];
 
+        // // Debug: Check if we're accessing the right evacuee
+        // if (blockIdx.x == 0 && blockIdx.y == 0) {
+        //     printf("[EVACUEE ACCESS] evac_idx=%d, simIdx=%d, evacueeIdx=%d, totalevac=%d\n",
+        //            evac_idx, simIdx, evacueeIdx, d_totalevacuees_per_Sim);
+        // }
+
+        // // Debug: Print values BEFORE update
+        // if (blockIdx.x == 0 && blockIdx.y == 0 && sdata_cloudshine[0] > 0.0f) {
+        //     printf("[BEFORE UPDATE] Evacuee %d: sdata[0]=%.3e, cumulative=%.3e, dose[0]=%.3e\n",
+        //            evacueeIdx, sdata_cloudshine[0], evacuee.dose_cloudshine_cumulative, evacuee.dose_cloudshines[0]);
+        // }
+
         // Update cumulative cloudshine dose for all 3 organs (assuming same dose for simplicity)
         // This matches the original cloudshine calculation
         if (sdata_cloudshine[0] > 0.0f) {
-            evacuee.dose_cloudshines[0] += sdata_cloudshine[0];
-            evacuee.dose_cloudshines[1] += sdata_cloudshine[0];
-            evacuee.dose_cloudshines[2] += sdata_cloudshine[0];
+            float dose_to_add = sdata_cloudshine[0];
+
+            evacuee.dose_cloudshines[0] += dose_to_add;
+            evacuee.dose_cloudshines[1] += dose_to_add;
+            evacuee.dose_cloudshines[2] += dose_to_add;
 
             // Update tracking fields
-            evacuee.dose_cloudshine_cumulative += sdata_cloudshine[0];
-            evacuee.dose_cloudshine_instant = sdata_cloudshine[0];
-            evacuee.cloudshine_mode = sdata_mode[0];
+            float old_cumulative = evacuee.dose_cloudshine_cumulative;
+            evacuee.dose_cloudshine_cumulative += dose_to_add;
+
+            // // Debug: Verify the update
+            // if (blockIdx.x == 0 && blockIdx.y == 0) {
+            //     printf("[UPDATE] old_cumulative=%.3e + dose_to_add=%.3e = new_cumulative=%.3e\n",
+            //            old_cumulative, dose_to_add, evacuee.dose_cloudshine_cumulative);
+            // }
         }
 
-        // Debug output for final values
-        if (blockIdx.x == 0 && blockIdx.y == 0) {
-            printf("[CLOUDSHINE FINAL] Evacuee %d: cumulative=%.3e, instant=%.3e, mode=%d, dose[0]=%.3e\n",
-                   evacueeIdx, evacuee.dose_cloudshine_cumulative, evacuee.dose_cloudshine_instant,
-                   evacuee.cloudshine_mode, evacuee.dose_cloudshines[0]);
-        }
+        // // Debug output for final values
+        // if (blockIdx.x == 0 && blockIdx.y == 0) {
+        //     printf("[CLOUDSHINE FINAL] Evacuee %d: cumulative=%.3e, dose[0]=%.3e, dose[1]=%.3e, dose[2]=%.3e\n",
+        //            evacueeIdx, evacuee.dose_cloudshine_cumulative,
+        //            evacuee.dose_cloudshines[0], evacuee.dose_cloudshines[1], evacuee.dose_cloudshines[2]);
+        // }
     }
 }
 

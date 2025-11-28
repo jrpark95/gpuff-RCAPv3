@@ -76,7 +76,7 @@ int main() {
 
     // Parse input file list
     std::cout << "\n[MAIN:010] ===== PARSING INPUT FILES =====" << std::endl;
-    std::string filename = ".\\input\\RCAPdata\\Test1.inp";
+    std::string filename = ".\\input\\RCAPdata\\Test.inp";
     std::cout << "[MAIN:011] Opening main input file: " << filename << std::endl;
 
     std::vector<std::string> multifiles;
@@ -202,7 +202,7 @@ int main() {
     std::cout << "[MAIN:042] Meteorological data loaded" << std::endl;
 
     std::cout << "[MAIN:043] Initializing puffs..." << std::endl;
-    gpuff.initializePuffs(input_num, RT, ND);
+    gpuff.initializePuffs(input_num, RT, ND, WD);
     std::cout << "[MAIN:044] Puffs initialized" << std::endl;
 
     std::cout << "[MAIN:045] Reading simulation config..." << std::endl;
@@ -267,7 +267,7 @@ int main() {
 
     std::cout << "[MAIN:065] >>> Calling time_update_RCAP2()..." << std::endl;
     // Run main time integration loop on GPU
-    gpuff.time_update_RCAP2(SC, EP, RT, ND, d_ND, dPF, dEP, input_num);
+    gpuff.time_update_RCAP2(SC, EP, RT, ND, d_ND, dPF, dEP, input_num, WD);
     std::cout << "[MAIN:066] <<< Returned from time_update_RCAP2()" << std::endl;
 
     // Calculate execution time
@@ -278,6 +278,9 @@ int main() {
 
     cudaEventDestroy(start);
     cudaEventDestroy(stop);
+
+    // Print results summary table
+    gpuff.print_results_summary(SC, ND);
 
     // Cleanup device memory
     gpuff.free_puffs_RCAP_device_memory();

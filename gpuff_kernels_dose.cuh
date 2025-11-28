@@ -609,15 +609,6 @@ __global__ void ComputeExposureHmix(
         if (threadIdx.x == 0 && total_cloudshine_instant > 0.0f) {
             int evac_idx = simIdx * d_totalevacuees_per_Sim + evacueeIdx;
             d_evacuees[evac_idx].dose_cloudshine_cumulative += total_cloudshine_instant;
-            d_evacuees[evac_idx].dose_cloudshine_instant = total_cloudshine_instant;
-            // Determine cloudshine mode based on puff size
-            if (sigma_h < 400.0f && sigma_z < 400.0f) {
-                d_evacuees[evac_idx].cloudshine_mode = 0; // small_puff
-            } else if (sigma_z < 400.0f) {
-                d_evacuees[evac_idx].cloudshine_mode = 1; // plane_source
-            } else {
-                d_evacuees[evac_idx].cloudshine_mode = 2; // semi_infinite
-            }
         }
 
         if (sdata_inhalation[threadIdx.x] > 0.000)

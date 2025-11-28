@@ -734,7 +734,8 @@ inline double inv_norm_cdf(double p) {
     static const double b4= 6.680131188771972e+01,b5=-1.328068155288572e+01;
     static const double c1=-7.784894002430293e-03,c2=-3.223964580411365e-01,c3=-2.400758277161838e+00;
     static const double c4=-2.549732539343734e+00,c5= 4.374664141464968e+00,c6= 2.938163982698783e+00;
-    static const double d1= 7.784695709041462e-03,d2= 3.224671290700398e-01,d3= 2.445134137142996e+00,d4= 3.754408661907416e+00;
+    static const double d1= 7.784695709041462e-03,d2= 3.224671290700398e-01;
+    static const double d3= 2.445134137142996e+00,d4= 3.754408661907416e+00;
 
     const double plow  = 0.02425;
     const double phigh = 1.0 - plow;
@@ -1168,12 +1169,15 @@ void Gpuff::time_update_RCAP2(const SimulationControl& SC, const EvacuationData&
 
         // Calculate radiation exposure for all evacuees
         // Uses Gaussian puff model with shared memory reduction
-        ComputeExposureHmix << <grid_dim, block_dim, shared_mem_size >> > (
+        // TEMPORARILY DISABLED - Conflicts with ComputeCloudshineDose kernel
+        /*
+        ComputeExposureHmix << <grid_dim, block_dim, shared_mem_size >>> (
             d_puffs_RCAP,
             d_evacuees,
             d_exposure,
             dPF
             );
+        */
 
         // Calculate cloudshine dose separately
         // TEMPORARILY DISABLED - Using ComputeExposureHmix for cloudshine instead
@@ -1181,7 +1185,7 @@ void Gpuff::time_update_RCAP2(const SimulationControl& SC, const EvacuationData&
         // Each evacuee can receive cloudshine from multiple puffs
         // Weather scenarios (simIdx) are processed independently
         // Need space for both dose reduction and mode tracking
-        /*
+        
         size_t cloudshine_shared_mem_size = sizeof(float) * block_size + sizeof(int) * block_size;
 
         int Nnucl = MAX_NUCLIDES;
@@ -1200,7 +1204,7 @@ void Gpuff::time_update_RCAP2(const SimulationControl& SC, const EvacuationData&
             build_height,
             mix_height
             );
-        */
+        
 
         err = cudaGetLastError();
         if (err != cudaSuccess)
@@ -1221,12 +1225,9 @@ void Gpuff::time_update_RCAP2(const SimulationControl& SC, const EvacuationData&
     }
 
     // Free allocated device memory for cloudshine structures
-    // TEMPORARILY DISABLED - Not using ComputeCloudshineDose kernel
-    /*
     free_cloudshine_tables_on_device(d_p_grid, d_dp_point, d_df_sic);
     cudaFree(d_tbl);
     cudaFree(d_geom720);
-    */
 
     std::cout << "Total sum execution time: " << timesum << " ms" << std::endl;
 

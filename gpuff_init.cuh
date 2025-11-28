@@ -1460,23 +1460,55 @@ inline double toRadians(double degrees) {
 void Gpuff::initializePuffs(
     int input_num,
     const std::vector<RadioNuclideTransport>& RT,
-    const std::vector<NuclideData>& ND
+    const std::vector<NuclideData>& ND,
+    const WeatherSamplingData& WD
 ) {
     int totalPuffs = 0;
     for (int i = 0; i < input_num; i++) {
         totalPuffs += RT[i].nPuffTotal;
     }
 
-    puffs_RCAP.reserve(RCAP_metdata.size() * totalPuffs);
-
     double base_longitude = RT[0].lon;
     double base_latitude = RT[0].lat;
 
-    printf("RCAP_metdata = %d\n", RCAP_metdata.size());
+    // Determine number of meteorological scenarios
+    size_t num_met_scenarios;
 
+    if (WD.isConstant) {
+        // Constant weather: single scenario using RT350 data
+        num_met_scenarios = 1;
+        numSims = 1;  // Override global numSims for constant weather
+        printf("[initializePuffs] Using CONSTANT weather (WD.isConstant = true)\n");
+        printf("  - Wind Speed: %.2f m/s\n", WD.windSpeed);
+        printf("  - Stability: %c\n", WD.stability);
+        printf("  - Rain Rate: %.2f mm/hr\n", WD.rainRate);
+        printf("  - Mix Height: %.2f m\n", WD.mixHeight);
+        printf("  - numSims set to: %d\n", numSims);
+    } else {
+        // Time-varying weather: use METEO.inp data
+        num_met_scenarios = RCAP_metdata.size();
+        // numSims already set by read_meteorological_data_RCAP2()
+        printf("[initializePuffs] Using TIME-VARYING weather from METEO.inp\n");
+        printf("  - RCAP_metdata scenarios = %zu\n", num_met_scenarios);
+        printf("  - numSims = %d\n", numSims);
+    }
 
+    puffs_RCAP.reserve(num_met_scenarios * totalPuffs);
 
-    for (size_t met_index = 0; met_index < RCAP_metdata.size(); met_index++) {
+    // Convert stability character (A-F) to integer (1-6) for constant weather
+    auto charToStabilityClass = [](char stab) -> int {
+        switch (stab) {
+            case 'A': case 'a': return 1;
+            case 'B': case 'b': return 2;
+            case 'C': case 'c': return 3;
+            case 'D': case 'd': return 4;
+            case 'E': case 'e': return 5;
+            case 'F': case 'f': return 6;
+            default: return 4; // Default to D (neutral)
+        }
+    };
+
+    for (size_t met_index = 0; met_index < num_met_scenarios; met_index++) {
         for (int source_index = 0; source_index < input_num; source_index++) {
             for (int puff_index = 0; puff_index < RT[source_index].nPuffTotal; puff_index++) {
 
@@ -1494,6 +1526,17 @@ void Gpuff::initializePuffs(
                 for (int nuclide_idx = 0; nuclide_idx < MAX_NUCLIDES; nuclide_idx++) {
                     nuclide_concentrations[nuclide_idx] = RT[source_index].conc[nuclide_idx] *
                         RT[source_index].RT_puffs[puff_index].release_fractions[ND[nuclide_idx].chemical_group];
+
+                    // TEST: Add test concentration if RT110/RT220 not provided
+                    if (nuclide_concentrations[nuclide_idx] == 0.0f && nuclide_idx < 3) {
+                        // Set test concentration for first 3 nuclides (1e10 Bq = ~270 mCi for testing)
+                        nuclide_concentrations[nuclide_idx] = 1e10f;
+                        if (puff_index == 0 && met_index == 0) {
+                            std::cout << "[TEST] Setting test concentration for nuclide " << nuclide_idx
+                                      << ": " << nuclide_concentrations[nuclide_idx] << " Bq" << std::endl;
+                        }
+                    }
+
                     if (nuclide_concentrations[nuclide_idx] > 1.0) {
                         //std::cout << "nuc = " << nuclide_idx << ", conc = " << nuclide_concentrations[nuclide_idx] << std::endl;
                     }
@@ -1502,23 +1545,59 @@ void Gpuff::initializePuffs(
                 float release_time_seconds = RT[source_index].RT_puffs[puff_index].rele_time;
                 int unit_index = source_index;
 
-                // Assign meteorology from current timestep
-                float wind_speed_m_per_s = RCAP_metdata[met_index].spd;
+                // Assign meteorology based on weather mode
+                float wind_speed_m_per_s;
+                float wind_direction_degrees;
+                int stability_class;
+                float rain_rate_mm_per_h;
 
-                // Calculate wind direction index based on release time
-                int time_steps_since_start = static_cast<int>(release_time_seconds / 360);
-                int wind_direction_index = (met_index + time_steps_since_start) % RCAP_metdata.size();
+                if (WD.isConstant) {
+                    // Use constant weather from RT350
+                    wind_speed_m_per_s = WD.windSpeed;
+                    wind_direction_degrees = 0.0f;  // Default direction (can be extended if needed)
+                    stability_class = charToStabilityClass(WD.stability);
+                    rain_rate_mm_per_h = WD.rainRate;
+                } else {
+                    // Use time-varying weather from METEO.inp
+                    wind_speed_m_per_s = RCAP_metdata[met_index].spd;
 
-                float wind_direction_degrees = RCAP_metdata[wind_direction_index].dir;
-                int stability_class = RCAP_metdata[met_index].stab;
-                float rain_rate_mm_per_h = RCAP_metdata[met_index].rain;
+                    // Calculate wind direction index based on release time
+                    int time_steps_since_start = static_cast<int>(release_time_seconds / 360);
+                    int wind_direction_index = (met_index + time_steps_since_start) % RCAP_metdata.size();
+
+                    wind_direction_degrees = RCAP_metdata[wind_direction_index].dir;
+                    stability_class = RCAP_metdata[met_index].stab;
+                    rain_rate_mm_per_h = RCAP_metdata[met_index].rain;
+                }
 
                 puffs_RCAP.emplace_back(puff_x_meters, puff_y_meters, puff_z_meters,
                     nuclide_concentrations, release_time_seconds, unit_index,
                     wind_speed_m_per_s, wind_direction_degrees, stability_class, rain_rate_mm_per_h, met_index);
+
+                // Debug: Print first puff values to verify initialization
+                if (met_index == 0 && source_index == 0 && puff_index == 0) {
+                    printf("\n[DEBUG] ===== FIRST PUFF VALUES =====\n");
+                    printf("  Position: x=%.2f, y=%.2f, z=%.2f (m)\n", puff_x_meters, puff_y_meters, puff_z_meters);
+                    printf("  Concentrations: [0]=%.2e, [1]=%.2e, [2]=%.2e (Bq)\n",
+                           nuclide_concentrations[0], nuclide_concentrations[1], nuclide_concentrations[2]);
+                    printf("  Release time: %.2f (s)\n", release_time_seconds);
+                    printf("  Unit index: %d\n", unit_index);
+                    printf("  Wind speed: %.2f (m/s)\n", wind_speed_m_per_s);
+                    printf("  Wind direction: %.4f (rad)\n", wind_direction_degrees);
+                    printf("  Stability class: %d\n", stability_class);
+                    printf("  Rain rate: %.2f (mm/hr)\n", rain_rate_mm_per_h);
+                    printf("  Met index: %zu\n", met_index);
+                    printf("  isNaN checks: x=%d, y=%d, z=%d, ws=%d, wd=%d\n",
+                           std::isnan(puff_x_meters), std::isnan(puff_y_meters), std::isnan(puff_z_meters),
+                           std::isnan(wind_speed_m_per_s), std::isnan(wind_direction_degrees));
+                    printf("=====================================\n\n");
+                }
             }
         }
     }
+
+    // Summary
+    printf("[initializePuffs] Total puffs created: %zu\n", puffs_RCAP.size());
 }
 
 // ============================================================================
@@ -1552,7 +1631,9 @@ void Gpuff::initializeEvacuees(std::vector<Evacuee>& evacuees, const SimulationC
     int num_radial_rings = SC.numRad;
     int num_angular_sectors = SC.numTheta;
 
-    for (int met_scenario = 0; met_scenario < RCAP_metdata.size(); met_scenario++) {
+    printf("[initializeEvacuees] Creating evacuees for %d meteorological scenarios\n", numSims);
+
+    for (int met_scenario = 0; met_scenario < numSims; met_scenario++) {
         for (int ring_index = 0; ring_index < num_radial_rings; ++ring_index) {
             for (int sector_index = 0; sector_index < num_angular_sectors; ++sector_index) {
                 int population_count = SD.population[ring_index][sector_index];
@@ -1619,7 +1700,9 @@ void Gpuff::initializeEvacuees_xy(std::vector<Evacuee>& evacuees, const Simulati
     const float y_max_meters = 1500.0f;
     const float population_per_cell = 100.0f;
 
-    for (int met_scenario = 0; met_scenario < RCAP_metdata.size(); met_scenario++) {
+    printf("[initializeEvacuees_xy] Creating evacuees for %d meteorological scenarios\n", numSims);
+
+    for (int met_scenario = 0; met_scenario < numSims; met_scenario++) {
         for (int i = 0; i < grid_x_cells; ++i) {
             for (int j = 0; j < grid_y_cells; ++j) {
 

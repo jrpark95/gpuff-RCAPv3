@@ -1,8 +1,11 @@
 {
     "files.associations": {
+        "*.f90": "fortran-modern",
+        "*.f": "fortran",
         "iosfwd": "cpp",
         "*.cu": "cuda-cpp",
-        "*.cuh": "cuda-cpp"
+        "*.cuh": "cuda-cpp",
+        "xstring": "cpp"
     },
     "C_Cpp.default.includePath": [
         "${workspaceFolder}",

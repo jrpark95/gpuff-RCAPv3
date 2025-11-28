@@ -297,6 +297,7 @@ public:
         // Dispersion parameters (Pasquill-Gifford or similar)
         float virtual_distance;   // Virtual source distance (m)
         float sigma_h;            // Horizontal dispersion coefficient (m)
+        float sigma_y;            // Horizontal dispersion coefficient Y-direction (m)
         float sigma_z;            // Vertical dispersion coefficient (m)
 
         // Release characteristics
@@ -313,6 +314,14 @@ public:
         int stab;                 // Pasquill-Gifford stability class (1-6)
         float rain;               // Rainfall rate (mm/h) for wet deposition
 
+        // Building and environmental parameters
+        float he;                 // Effective release height (m)
+        float mixing_depth;       // Mixing layer depth/height (m)
+        float drydep_vel;         // Dry deposition velocity (m/s)
+
+        // Total activity for cloudshine
+        float Qn[MAX_NUCLIDES];   // Total activity per nuclide (Ci)
+
         // Simulation tracking
         int simulnum;             // Simulation number for multi-scenario runs
 
@@ -320,9 +329,12 @@ public:
             x(0.0f), y(0.0f), z(0.0f),
             age(0.0f), releasetime(0.0f),
             windvel(0.5f), windir(0), stab(1), unitidx(0), rain(0.0f),
-            virtual_distance(0.0f), sigma_h(0.0f), sigma_z(0.0f), flag(0), simulnum(0) {
-                for (int i = 0; i < MAX_NUCLIDES; i++) conc[i] = 0.0f;
-                 
+            virtual_distance(0.0f), sigma_h(0.0f), sigma_y(0.0f), sigma_z(0.0f), flag(0), simulnum(0),
+            he(0.0f), mixing_depth(1500.0f), drydep_vel(0.0f) {
+                for (int i = 0; i < MAX_NUCLIDES; i++) {
+                    conc[i] = 0.0f;
+                    Qn[i] = 0.0f;
+                }
             }
 
         __device__ __host__ Puffcenter_RCAP(float _x, float _y, float _z,
@@ -385,7 +397,7 @@ public:
     void time_update_RCAP();
     void time_update_RCAP2(const SimulationControl& SC, const EvacuationData& EP,
         const std::vector<RadioNuclideTransport>& RT, const std::vector<NuclideData>& ND, NuclideData* d_ND,
-        const ProtectionFactors* dPF, const EvacuationData* dEP, int input_num);
+        const ProtectionFactors* dPF, const EvacuationData* dEP, int input_num, const WeatherSamplingData& WD);
     void time_update_RCAP_cpu(const SimulationControl& SC, const EvacuationData& EP,
         const std::vector<RadioNuclideTransport>& RT, const std::vector<NuclideData>& ND, NuclideData* d_ND,
         const ProtectionFactors* dPF, int input_num, EvacuationDirections ED, ProtectionFactors PF);
@@ -414,7 +426,8 @@ public:
     void initializePuffs(
         int input_num,
         const std::vector<RadioNuclideTransport>& RT,
-        const std::vector<NuclideData>& ND
+        const std::vector<NuclideData>& ND,
+        const WeatherSamplingData& WD
     );
     void initializeEvacuees(std::vector<Evacuee>& evacuees, const SimulationControl& SC,
         const EvacuationData& EP, const SiteData& SD);
@@ -449,6 +462,7 @@ public:
     void evac_output_binary_RCAP_xy_single(int timestep);
     void plant_output_binary_RCAP(int input_num,
         const std::vector<RadioNuclideTransport>& RT, const std::vector<NuclideData>& ND);
+    void print_results_summary(const SimulationControl& SC, const std::vector<NuclideData>& ND);
 
     // CPU-only methods for testing and validation
     void update_puff_flags2_cpu(float currentTime, int nop);

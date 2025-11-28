@@ -1,0 +1,142 @@
+// geom720_init.hpp
+#pragma once
+#include <cmath>
+#include <vector>
+#include <cuda_runtime.h>
+
+#ifndef PI
+#define PI 3.14159265358979323846
+#endif
+
+struct float3 { float x, y, z; };
+
+struct Puff720 {
+    float3 pos_local[720]; // 퍼프 중심 기준, 정규화 좌표(σ_y=1, σ_z=1)
+};
+
+// 표준정규 CDF의 역함수 Φ^{-1}(p) 근사
+// Peter J. Acklam의 rational approximation에 기반한 구현
+// 유효 범위 0 < p < 1
+inline double inv_norm_cdf(double p) {
+    // 상수
+    static const double a1 = -3.969683028665376e+01;
+    static const double a2 =  2.209460984245205e+02;
+    static const double a3 = -2.759285104469687e+02;
+    static const double a4 =  1.383577518672690e+02;
+    static const double a5 = -3.066479806614716e+01;
+    static const double a6 =  2.506628277459239e+00;
+
+    static const double b1 = -5.447609879822406e+01;
+    static const double b2 =  1.615858368580409e+02;
+    static const double b3 = -1.556989798598866e+02;
+    static const double b4 =  6.680131188771972e+01;
+    static const double b5 = -1.328068155288572e+01;
+
+    static const double c1 = -7.784894002430293e-03;
+    static const double c2 = -3.223964580411365e-01;
+    static const double c3 = -2.400758277161838e+00;
+    static const double c4 = -2.549732539343734e+00;
+    static const double c5 =  4.374664141464968e+00;
+    static const double c6 =  2.938163982698783e+00;
+
+    static const double d1 =  7.784695709041462e-03;
+    static const double d2 =  3.224671290700398e-01;
+    static const double d3 =  2.445134137142996e+00;
+    static const double d4 =  3.754408661907416e+00;
+
+    // 분할점
+    const double plow  = 0.02425;
+    const double phigh = 1.0 - plow;
+
+    double q, r, x;
+    if (p < plow) {
+        q = std::sqrt(-2.0 * std::log(p));
+        x = (((((c1*q + c2)*q + c3)*q + c4)*q + c5)*q + c6) /
+            ((((d1*q + d2)*q + d3)*q + d4)*q + 1.0);
+        return -x;
+    } else if (p > phigh) {
+        q = std::sqrt(-2.0 * std::log(1.0 - p));
+        x = (((((c1*q + c2)*q + c3)*q + c4)*q + c5)*q + c6) /
+            ((((d1*q + d2)*q + d3)*q + d4)*q + 1.0);
+        return x;
+    } else {
+        q = p - 0.5;
+        r = q * q;
+        x = (((((a1*r + a2)*r + a3)*r + a4)*r + a5)*r + a6) * q /
+            (((((b1*r + b2)*r + b3)*r + b4)*r + b5)*r + 1.0);
+        return x;
+    }
+}
+
+// 2D 횡방향 등질량 원의 반지름 r
+// 2D 가우시안의 반경 CDF: F(r) = 1 - exp(-r^2 / 2σ^2)
+// 등질량 10 분할에서 셸 중심 확률 p_c = (i - 0.5) / 10
+// 정규화 좌표이므로 σ = 1, r_c = sqrt(-2 ln(1 - p_c))
+inline void build_radial_centers_10(std::vector<double>& r_centers) {
+    r_centers.resize(10);
+    for (int i = 1; i <= 10; ++i) {
+        const double p_c = (static_cast<double>(i) - 0.5) / 10.0;
+        const double r_c = std::sqrt(-2.0 * std::log(std::max(1e-12, 1.0 - p_c)));
+        r_centers[i - 1] = r_c; // σ_y=1 기준
+    }
+}
+
+// 수직 z 등질량 6 분할의 중심 z 값
+// 표준정규 분포의 분위수 사용. 레이어 중심 확률 p_c = (k - 0.5) / 6
+// z_c = Φ^{-1}(p_c) 이고, 실제 높이는 σ_z * z_c
+inline void build_vertical_centers_6(std::vector<double>& z_centers) {
+    z_centers.resize(6);
+    for (int k = 1; k <= 6; ++k) {
+        const double p_c = (static_cast<double>(k) - 0.5) / 6.0;
+        const double z_c = inv_norm_cdf(std::min(1.0 - 1e-12, std::max(1e-12, p_c)));
+        z_centers[k - 1] = z_c; // σ_z=1 기준
+    }
+}
+
+// 12개 방위각
+inline void build_theta_12(std::vector<double>& thetas) {
+    thetas.resize(12);
+    for (int j = 0; j < 12; ++j) {
+        thetas[j] = 2.0 * PI * static_cast<double>(j) / 12.0;
+    }
+}
+
+// 10 × 6 × 12 = 720 정규화 좌표 생성
+// 결과는 σ_y=1, σ_z=1 기준의 pos_local로 저장
+inline void build_geom720_normalized(Puff720& geom) {
+    std::vector<double> r10, z6, th12;
+    build_radial_centers_10(r10);
+    build_vertical_centers_6(z6);
+    build_theta_12(th12);
+
+    int idx = 0;
+    for (int ir = 0; ir < 10; ++ir) {
+        const double r = r10[ir];
+        for (int iz = 0; iz < 6; ++iz) {
+            const double z = z6[iz];
+            for (int it = 0; it < 12; ++it) {
+                const double th = th12[it];
+                const double x = r * std::cos(th);
+                const double y = r * std::sin(th);
+                geom.pos_local[idx++] = float3{static_cast<float>(x),
+                                               static_cast<float>(y),
+                                               static_cast<float>(z)};
+            }
+        }
+    }
+}
+
+// GPU 복사 유틸
+inline void upload_geom720_to_device(const Puff720& h_geom, Puff720** d_geom_out) {
+    Puff720* d_ptr = nullptr;
+    cudaError_t e1 = cudaMalloc(reinterpret_cast<void**>(&d_ptr), sizeof(Puff720));
+    if (e1 != cudaSuccess) {
+        throw std::runtime_error("cudaMalloc for Puff720 failed");
+    }
+    cudaError_t e2 = cudaMemcpy(d_ptr, &h_geom, sizeof(Puff720), cudaMemcpyHostToDevice);
+    if (e2 != cudaSuccess) {
+        cudaFree(d_ptr);
+        throw std::runtime_error("cudaMemcpy H2D for Puff720 failed");
+    }
+    *d_geom_out = d_ptr;
+}

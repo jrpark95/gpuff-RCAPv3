@@ -706,59 +706,59 @@ void Gpuff::evac_output_binary_RCAP(int timestep) {
         vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(int));
     }
 
-    // Inhalation dose for nuclide 0
-    vtkFile << "SCALARS dose_inhalation_0 float 1\n";
-    vtkFile << "LOOKUP_TABLE default\n";
-    for (const auto& evacuee : evacuees) {
-        float vval = evacuee.dose_inhalations[0];
-        swapBytes(vval);
-        vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
-    }
+    // // Inhalation dose for nuclide 0
+    // vtkFile << "SCALARS dose_inhalation_0 float 1\n";
+    // vtkFile << "LOOKUP_TABLE default\n";
+    // for (const auto& evacuee : evacuees) {
+    //     float vval = evacuee.dose_inhalations[0];
+    //     swapBytes(vval);
+    //     vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
+    // }
 
-    // Inhalation dose for nuclide 1
-    vtkFile << "SCALARS dose_inhalation_1 float 1\n";
-    vtkFile << "LOOKUP_TABLE default\n";
-    for (const auto& evacuee : evacuees) {
-        float vval = evacuee.dose_inhalations[1];
-        swapBytes(vval);
-        vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
-    }
+    // // Inhalation dose for nuclide 1
+    // vtkFile << "SCALARS dose_inhalation_1 float 1\n";
+    // vtkFile << "LOOKUP_TABLE default\n";
+    // for (const auto& evacuee : evacuees) {
+    //     float vval = evacuee.dose_inhalations[1];
+    //     swapBytes(vval);
+    //     vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
+    // }
 
-    // Inhalation dose for nuclide 2
-    vtkFile << "SCALARS dose_inhalation_2 float 1\n";
-    vtkFile << "LOOKUP_TABLE default\n";
-    for (const auto& evacuee : evacuees) {
-        float vval = evacuee.dose_inhalations[2];
-        swapBytes(vval);
-        vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
-    }
+    // // Inhalation dose for nuclide 2
+    // vtkFile << "SCALARS dose_inhalation_2 float 1\n";
+    // vtkFile << "LOOKUP_TABLE default\n";
+    // for (const auto& evacuee : evacuees) {
+    //     float vval = evacuee.dose_inhalations[2];
+    //     swapBytes(vval);
+    //     vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
+    // }
 
-    // Cloudshine dose for nuclide 0
-    vtkFile << "SCALARS dose_cloudshine_0 float 1\n";
-    vtkFile << "LOOKUP_TABLE default\n";
-    for (const auto& evacuee : evacuees) {
-        float vval = evacuee.dose_cloudshines[0];
-        swapBytes(vval);
-        vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
-    }
+    // // Cloudshine dose for nuclide 0
+    // vtkFile << "SCALARS dose_cloudshine_0 float 1\n";
+    // vtkFile << "LOOKUP_TABLE default\n";
+    // for (const auto& evacuee : evacuees) {
+    //     float vval = evacuee.dose_cloudshines[0];
+    //     swapBytes(vval);
+    //     vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
+    // }
 
-    // Cloudshine dose for nuclide 1
-    vtkFile << "SCALARS dose_cloudshine_1 float 1\n";
-    vtkFile << "LOOKUP_TABLE default\n";
-    for (const auto& evacuee : evacuees) {
-        float vval = evacuee.dose_cloudshines[1];
-        swapBytes(vval);
-        vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
-    }
+    // // Cloudshine dose for nuclide 1
+    // vtkFile << "SCALARS dose_cloudshine_1 float 1\n";
+    // vtkFile << "LOOKUP_TABLE default\n";
+    // for (const auto& evacuee : evacuees) {
+    //     float vval = evacuee.dose_cloudshines[1];
+    //     swapBytes(vval);
+    //     vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
+    // }
 
-    // Cloudshine dose for nuclide 2
-    vtkFile << "SCALARS dose_cloudshine_2 float 1\n";
-    vtkFile << "LOOKUP_TABLE default\n";
-    for (const auto& evacuee : evacuees) {
-        float vval = evacuee.dose_cloudshines[2];
-        swapBytes(vval);
-        vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
-    }
+    // // Cloudshine dose for nuclide 2
+    // vtkFile << "SCALARS dose_cloudshine_2 float 1\n";
+    // vtkFile << "LOOKUP_TABLE default\n";
+    // for (const auto& evacuee : evacuees) {
+    //     float vval = evacuee.dose_cloudshines[2];
+    //     swapBytes(vval);
+    //     vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
+    // }
 
     // Cumulative cloudshine dose
     vtkFile << "SCALARS dose_cloudshine_cumulative float 1\n";
@@ -767,24 +767,6 @@ void Gpuff::evac_output_binary_RCAP(int timestep) {
         float vval = evacuee.dose_cloudshine_cumulative;
         swapBytes(vval);
         vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
-    }
-
-    // Instantaneous cloudshine dose (current timestep)
-    vtkFile << "SCALARS dose_cloudshine_instant float 1\n";
-    vtkFile << "LOOKUP_TABLE default\n";
-    for (const auto& evacuee : evacuees) {
-        float vval = evacuee.dose_cloudshine_instant;
-        swapBytes(vval);
-        vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(float));
-    }
-
-    // Cloudshine mode (0: small_puff, 1: plane_source, 2: semi_infinite, -1: none)
-    vtkFile << "SCALARS cloudshine_mode int 1\n";
-    vtkFile << "LOOKUP_TABLE default\n";
-    for (const auto& evacuee : evacuees) {
-        int vval = evacuee.cloudshine_mode;
-        swapBytes_int(vval);
-        vtkFile.write(reinterpret_cast<char*>(&vval), sizeof(int));
     }
 
     vtkFile.close();
@@ -1399,4 +1381,181 @@ void Gpuff::plant_output_binary_RCAP(
     }
 
     vtkFile.close();
+}
+
+// ============================================================================
+// Print Results Summary
+// ============================================================================
+// Prints a formatted table of maximum radionuclide dispersion values
+// for each radial distance ring. Output format matches RCAP legacy output.
+//
+// Metrics calculated per ring:
+//   - Center Air Concentration (Bq-s/m3): Time-integrated air concentration
+//   - Ground Air Concentration (Bq-s/m3): Ground-level air concentration
+//   - Center Ground Concentration (Bq/m2): Ground deposition
+//   - Ground Dilution X/Q (s/m3): Dilution factor
+//
+// Parameters:
+//   SC: SimulationControl - Contains radial distances and grid info
+//   ND: NuclideData vector - Nuclide names and properties
+// ============================================================================
+void Gpuff::print_results_summary(const SimulationControl& SC, const std::vector<NuclideData>& ND) {
+
+    // Copy puff data from device to host
+    cudaMemcpy(puffs_RCAP.data(), d_puffs_RCAP, puffs_RCAP.size() * sizeof(Puffcenter_RCAP), cudaMemcpyDeviceToHost);
+
+    int numRad = SC.numRad;
+    int numTheta = SC.numTheta;
+
+    // Find the first nuclide with non-zero concentration (for display)
+    int display_nuclide = -1;
+    std::string nuclide_name = "Unknown";
+    for (int n = 0; n < MAX_NUCLIDES; n++) {
+        for (size_t i = 0; i < puffs_RCAP.size(); i++) {
+            if (puffs_RCAP[i].conc[n] > 0.0f) {
+                display_nuclide = n;
+                nuclide_name = ND[n].name;
+                break;
+            }
+        }
+        if (display_nuclide >= 0) break;
+    }
+
+    if (display_nuclide < 0) {
+        std::cout << "\n[WARNING] No nuclide with non-zero concentration found.\n";
+        return;
+    }
+
+    // Arrays to store maximum values per ring
+    std::vector<float> max_center_air_conc(numRad, 0.0f);
+    std::vector<float> max_ground_air_conc(numRad, 0.0f);
+    std::vector<float> max_ground_conc(numRad, 0.0f);
+    std::vector<float> max_xq(numRad, 0.0f);
+    std::vector<int> max_dir_center_air(numRad, 1);
+    std::vector<int> max_dir_ground_air(numRad, 1);
+    std::vector<int> max_dir_ground(numRad, 1);
+    std::vector<int> max_dir_xq(numRad, 1);
+
+    // Calculate values for each puff and find maximum per ring
+    for (size_t i = 0; i < puffs_RCAP.size(); i++) {
+        const Puffcenter_RCAP& puff = puffs_RCAP[i];
+        if (puff.flag == 0) continue;
+
+        float r = sqrtf(puff.x * puff.x + puff.y * puff.y);
+        float theta = atan2f(puff.y, puff.x);
+        if (theta < 0) theta += 2.0f * PI;
+
+        // Find radial ring index
+        int rad_idx = numRad - 1;
+        for (int ri = 0; ri < numRad; ri++) {
+            if (r < SC.ir_distances[ri]) {
+                rad_idx = ri;
+                break;
+            }
+        }
+
+        // Find angular sector index
+        int theta_idx = static_cast<int>(theta / (2.0f * PI) * numTheta) % numTheta;
+
+        // Calculate concentrations using Gaussian plume formula
+        float sigma_y = puff.sigma_h > 0.1f ? puff.sigma_h : 0.1f;
+        float sigma_z = puff.sigma_z > 0.1f ? puff.sigma_z : 0.1f;
+        float Q = puff.conc[display_nuclide];
+
+        if (Q <= 0.0f) continue;
+
+        // Center air concentration (at plume centerline)
+        float center_air = Q / (2.0f * PI * sigma_y * sigma_z * puff.windvel);
+
+        // Ground-level air concentration (with ground reflection)
+        float H = puff.z;  // Release height
+        float ground_factor = 2.0f * expf(-0.5f * (H * H) / (sigma_z * sigma_z));
+        float ground_air = center_air * ground_factor;
+
+        // Ground concentration (simplified deposition model)
+        float vd = 0.01f;  // Dry deposition velocity (m/s)
+        float ground_conc = ground_air * vd * dt;
+
+        // X/Q (dilution factor)
+        float xq = 1.0f / (PI * sigma_y * sigma_z * puff.windvel) *
+                   expf(-0.5f * (H * H) / (sigma_z * sigma_z));
+
+        // Update maximum values
+        if (center_air > max_center_air_conc[rad_idx]) {
+            max_center_air_conc[rad_idx] = center_air;
+            max_dir_center_air[rad_idx] = theta_idx + 1;
+        }
+        if (ground_air > max_ground_air_conc[rad_idx]) {
+            max_ground_air_conc[rad_idx] = ground_air;
+            max_dir_ground_air[rad_idx] = theta_idx + 1;
+        }
+        if (ground_conc > max_ground_conc[rad_idx]) {
+            max_ground_conc[rad_idx] = ground_conc;
+            max_dir_ground[rad_idx] = theta_idx + 1;
+        }
+        if (xq > max_xq[rad_idx]) {
+            max_xq[rad_idx] = xq;
+            max_dir_xq[rad_idx] = theta_idx + 1;
+        }
+    }
+
+    // Print header
+    std::cout << "\n ---------------------------------------------------------" << std::endl;
+    std::cout << "  Maximum Values for Radionuclide Dispersion (All Plumes) " << std::endl;
+    std::cout << " --------------------------------------------------------- \n" << std::endl;
+
+    // Print nuclide name and column headers
+    std::cout << "  " << std::left << std::setw(26) << nuclide_name << " |";
+    for (int i = 0; i < numRad; i++) {
+        float r_start = (i == 0) ? 0.0f : SC.ir_distances[i-1];
+        float r_end = SC.ir_distances[i];
+
+        std::ostringstream header;
+        if (r_end < 10.0f) {
+            header << std::fixed << std::setprecision(1) << r_start << "km ~" << r_end << "km";
+        } else {
+            header << std::fixed << std::setprecision(1) << r_start << "km~" << r_end << "km";
+        }
+        std::cout << " " << std::setw(14) << header.str();
+    }
+    std::cout << std::endl;
+
+    // Print (iDir/Total) row
+    std::cout << std::setw(28) << " " << " ";
+    for (int i = 0; i < numRad; i++) {
+        std::cout << "  (iDir/Total)  ";
+    }
+    std::cout << std::endl;
+
+    // Print separator
+    std::cout << "------------------------------+";
+    for (int i = 0; i < numRad; i++) {
+        std::cout << "---------------" << (i < numRad - 1 ? "+" : "-");
+    }
+    std::cout << std::endl;
+
+    // Helper lambda for printing a data row
+    auto printRow = [&](const std::string& label, const std::vector<float>& values,
+                        const std::vector<int>& dirs, int total) {
+        std::cout << " " << std::left << std::setw(27) << label << " |";
+        for (int i = 0; i < numRad; i++) {
+            std::cout << "  " << std::scientific << std::setprecision(5) << values[i] << "   ";
+        }
+        std::cout << std::endl;
+
+        // Print direction row
+        std::cout << std::setw(28) << " " << " ";
+        for (int i = 0; i < numRad; i++) {
+            std::cout << "  (" << std::setw(2) << dirs[i] << "/" << std::setw(2) << total << ")       ";
+        }
+        std::cout << std::endl;
+    };
+
+    // Print data rows
+    printRow("Center Air Conc. (Bq-s/m3)", max_center_air_conc, max_dir_center_air, numTheta);
+    printRow("Ground Air Conc. (Bq-s/m3)", max_ground_air_conc, max_dir_ground_air, numTheta);
+    printRow("Center Ground Conc. (Bq/m2)", max_ground_conc, max_dir_ground, numTheta);
+    printRow("Ground Dilution, X/Q (s/m3)", max_xq, max_dir_xq, numTheta);
+
+    std::cout << std::endl;
 }
