@@ -110,7 +110,7 @@ RT110  60   Cm-244         0.00E+00
 !      ID  rel_class_name  wet_dep  dry_dep
 RT120  1   xenon           n        n
 RT120  2   iodine          y        y
-RT120  3   cesium          y        y
+RT120  3   cesium          n        n
 RT120  4   tellurium       y        y
 RT120  5   strontium       y        y
 RT120  6   ruthenium       y        y
@@ -153,12 +153,12 @@ RT200  1          1
 ! +      2        1/2               10800.0       3600.0       50.0            0.0E+00      1
 ! +      3        1/3               14400.0       3600.0       50.0            3.7E+06      1
 ! +      4        1/4               16000.0       14400.0      50.0            1.7E+05      1
-RT210  1        1/1               0.0           3600.0       50.0            1.0E+06      1
+RT210  1        1/1               0.0           3600.0       50.0            0.0E+00      1
 !+      2        1/2               900.0         3600.0       50.0            0.0E+00      1
 !+      3        1/3               3600.0        3600.0       50.0            3.7E+06      1
 !+      4        1/4               7200.0        14400.0      50.0            1.7E+05      1
-!      iRelePath  build_height(m)  build_width(m) 
-RT215  1          50.00            50.0
+!      iRelePath  build_height(m)  build_width(m)
+RT215  1          0.00             0.0
 !      release_fraction
 !      plumeID  1_Xe     2_I      3_Cs     4_Te     5_Sr     6_Ru     7_La     8_Ce     9_Ba
 RT220  1        0.0E-01  0.0E-01  9.9E-01  0.0E-01  0.0E-03  0.0E-03  0.0E-04  0.0E-04  0.0E-03
@@ -177,7 +177,7 @@ RT320  1
 !      seed for random number 
 RT340  -79
 !      wind_speed(m/s)  stability  rain_rate(mm/hr)  mix_height(m)
-RT350  2.2              D          5.0               1000.0  
+RT350  2.2              D          0.0               1000.0  
 
 *END RN_Trans
 

@@ -1384,6 +1384,137 @@ void Gpuff::plant_output_binary_RCAP(
 }
 
 // ============================================================================
+// init_max_tracking
+//
+// Initialize the maximum value tracking arrays. Call this once before simulation.
+// ============================================================================
+void Gpuff::init_max_tracking(int numRad) {
+    max_center_air_conc.assign(numRad, 0.0f);
+    max_ground_air_conc.assign(numRad, 0.0f);
+    max_ground_conc.assign(numRad, 0.0f);
+    max_xq.assign(numRad, 0.0f);
+    max_dir_center_air.assign(numRad, 1);
+    max_dir_ground_air.assign(numRad, 1);
+    max_dir_ground.assign(numRad, 1);
+    max_dir_xq.assign(numRad, 1);
+    max_tracking_nuclide = -1;
+}
+
+// ============================================================================
+// update_max_values
+//
+// Update maximum values using RCAP Segmented Plume model.
+// For each ring, calculate concentration at the ring's center distance using
+// Pasquill-Gifford dispersion coefficients.
+//
+// RCAP Center Air Conc formula: Q / (π * σ_y * σ_z * u)
+// This is the crosswind-integrated Gaussian plume formula.
+// ============================================================================
+void Gpuff::update_max_values(const SimulationControl& SC, const std::vector<NuclideData>& ND) {
+
+    // Copy puff data from device to host
+    cudaMemcpy(puffs_RCAP.data(), d_puffs_RCAP, puffs_RCAP.size() * sizeof(Puffcenter_RCAP), cudaMemcpyDeviceToHost);
+
+    int numRad = SC.numRad;
+    int numTheta = SC.numTheta;
+
+    // Find nuclide to track (first one with non-zero concentration)
+    if (max_tracking_nuclide < 0) {
+        for (int n = 0; n < MAX_NUCLIDES; n++) {
+            for (size_t i = 0; i < puffs_RCAP.size(); i++) {
+                if (puffs_RCAP[i].conc[n] > 0.0f) {
+                    max_tracking_nuclide = n;
+                    break;
+                }
+            }
+            if (max_tracking_nuclide >= 0) break;
+        }
+    }
+
+    if (max_tracking_nuclide < 0) return;
+
+    // For each active puff, calculate concentrations at each ring it has passed
+    for (size_t i = 0; i < puffs_RCAP.size(); i++) {
+        const Puffcenter_RCAP& puff = puffs_RCAP[i];
+        if (puff.flag == 0) continue;
+
+        float Q = puff.conc[max_tracking_nuclide];
+        if (Q <= 0.0f) continue;
+
+        float ws = puff.windvel > 0.1f ? puff.windvel : 0.1f;
+        int stab_class = puff.stab - 1;  // Convert from 1-6 to 0-5 index for sigma arrays
+        float H = puff.he > 0.0f ? puff.he : puff.z;  // Effective release height
+
+        // Current puff distance from source
+        float puff_distance = sqrtf(puff.x * puff.x + puff.y * puff.y);
+
+        // Get puff direction for theta index
+        float theta = atan2f(puff.y, puff.x);
+        if (theta < 0) theta += 2.0f * PI;
+        int theta_idx = static_cast<int>(theta / (2.0f * PI) * numTheta) % numTheta;
+
+        // Calculate concentration at each ring the puff has passed through
+        for (int rad_idx = 0; rad_idx < numRad; rad_idx++) {
+            // Get ring outer boundary distance (RCAP uses outer boundary)
+            float r_inner = (rad_idx == 0) ? 0.0f : SC.ir_distances[rad_idx - 1];
+            float r_outer = SC.ir_distances[rad_idx];
+            float ring_distance = r_outer;  // Use outer boundary like RCAP
+
+            // Only calculate if puff has reached or passed this ring
+            if (puff_distance < r_inner) continue;
+
+            // Calculate sigma_y and sigma_z at ring distance using Hybrid T-G Modified model
+            // (Tadmor-Gur < 5km, NUREG/CR-7161 >= 5km) - matches RCAP's "T-G_Modi" dispersion option
+            float sigma_y = Sigma_y_Hybrid_cpu(stab_class, ring_distance);
+            float sigma_z = Sigma_z_Hybrid_cpu(stab_class, ring_distance);
+
+            // ORIGINAL NUREG7161 (commented out)
+            // float sigma_y = Sigma_y_NUREG7161_cpu(stab_class, ring_distance);
+            // float sigma_z = Sigma_z_NUREG7161_cpu(stab_class, ring_distance);
+
+            // Ensure minimum values
+            sigma_y = fmaxf(sigma_y, 0.1f);
+            sigma_z = fmaxf(sigma_z, 0.1f);
+
+            // RCAP formula: Q / (2π * σ_y * σ_z * u)
+            // Using Gaussian puff model formula
+            float center_air = Q / (2.0f * PI * sigma_y * sigma_z * ws);
+
+            // Ground-level air concentration with ground reflection
+            // Factor of 2 for ground reflection, exp term for height attenuation
+            float ground_factor = 2.0f * expf(-0.5f * (H * H) / (sigma_z * sigma_z));
+            float ground_air = center_air * ground_factor;
+
+            // Ground concentration (deposition)
+            // Using cesium dry deposition velocity from RCAP
+            float vd = puff.drydep_vel > 0.0f ? puff.drydep_vel : 0.001f;
+            float ground_conc = ground_air * vd * dt;
+
+            // X/Q (dilution factor) - normalized by source term
+            float xq = ground_air / Q;
+
+            // Update maximum values
+            if (center_air > max_center_air_conc[rad_idx]) {
+                max_center_air_conc[rad_idx] = center_air;
+                max_dir_center_air[rad_idx] = theta_idx + 1;
+            }
+            if (ground_air > max_ground_air_conc[rad_idx]) {
+                max_ground_air_conc[rad_idx] = ground_air;
+                max_dir_ground_air[rad_idx] = theta_idx + 1;
+            }
+            if (ground_conc > max_ground_conc[rad_idx]) {
+                max_ground_conc[rad_idx] = ground_conc;
+                max_dir_ground[rad_idx] = theta_idx + 1;
+            }
+            if (xq > max_xq[rad_idx]) {
+                max_xq[rad_idx] = xq;
+                max_dir_xq[rad_idx] = theta_idx + 1;
+            }
+        }
+    }
+}
+
+// ============================================================================
 // Print Results Summary
 // ============================================================================
 // Prints a formatted table of maximum radionuclide dispersion values
@@ -1401,154 +1532,96 @@ void Gpuff::plant_output_binary_RCAP(
 // ============================================================================
 void Gpuff::print_results_summary(const SimulationControl& SC, const std::vector<NuclideData>& ND) {
 
-    // Copy puff data from device to host
-    cudaMemcpy(puffs_RCAP.data(), d_puffs_RCAP, puffs_RCAP.size() * sizeof(Puffcenter_RCAP), cudaMemcpyDeviceToHost);
-
     int numRad = SC.numRad;
     int numTheta = SC.numTheta;
 
-    // Find the first nuclide with non-zero concentration (for display)
-    int display_nuclide = -1;
+    // Get nuclide name for display
     std::string nuclide_name = "Unknown";
-    for (int n = 0; n < MAX_NUCLIDES; n++) {
-        for (size_t i = 0; i < puffs_RCAP.size(); i++) {
-            if (puffs_RCAP[i].conc[n] > 0.0f) {
-                display_nuclide = n;
-                nuclide_name = ND[n].name;
-                break;
-            }
-        }
-        if (display_nuclide >= 0) break;
+    if (max_tracking_nuclide >= 0 && max_tracking_nuclide < MAX_NUCLIDES) {
+        nuclide_name = ND[max_tracking_nuclide].name;
     }
 
-    if (display_nuclide < 0) {
+    if (max_tracking_nuclide < 0) {
         std::cout << "\n[WARNING] No nuclide with non-zero concentration found.\n";
         return;
     }
 
-    // Arrays to store maximum values per ring
-    std::vector<float> max_center_air_conc(numRad, 0.0f);
-    std::vector<float> max_ground_air_conc(numRad, 0.0f);
-    std::vector<float> max_ground_conc(numRad, 0.0f);
-    std::vector<float> max_xq(numRad, 0.0f);
-    std::vector<int> max_dir_center_air(numRad, 1);
-    std::vector<int> max_dir_ground_air(numRad, 1);
-    std::vector<int> max_dir_ground(numRad, 1);
-    std::vector<int> max_dir_xq(numRad, 1);
-
-    // Calculate values for each puff and find maximum per ring
-    for (size_t i = 0; i < puffs_RCAP.size(); i++) {
-        const Puffcenter_RCAP& puff = puffs_RCAP[i];
-        if (puff.flag == 0) continue;
-
-        float r = sqrtf(puff.x * puff.x + puff.y * puff.y);
-        float theta = atan2f(puff.y, puff.x);
-        if (theta < 0) theta += 2.0f * PI;
-
-        // Find radial ring index
-        int rad_idx = numRad - 1;
-        for (int ri = 0; ri < numRad; ri++) {
-            if (r < SC.ir_distances[ri]) {
-                rad_idx = ri;
-                break;
-            }
-        }
-
-        // Find angular sector index
-        int theta_idx = static_cast<int>(theta / (2.0f * PI) * numTheta) % numTheta;
-
-        // Calculate concentrations using Gaussian plume formula
-        float sigma_y = puff.sigma_h > 0.1f ? puff.sigma_h : 0.1f;
-        float sigma_z = puff.sigma_z > 0.1f ? puff.sigma_z : 0.1f;
-        float Q = puff.conc[display_nuclide];
-
-        if (Q <= 0.0f) continue;
-
-        // Center air concentration (at plume centerline)
-        float center_air = Q / (2.0f * PI * sigma_y * sigma_z * puff.windvel);
-
-        // Ground-level air concentration (with ground reflection)
-        float H = puff.z;  // Release height
-        float ground_factor = 2.0f * expf(-0.5f * (H * H) / (sigma_z * sigma_z));
-        float ground_air = center_air * ground_factor;
-
-        // Ground concentration (simplified deposition model)
-        float vd = 0.01f;  // Dry deposition velocity (m/s)
-        float ground_conc = ground_air * vd * dt;
-
-        // X/Q (dilution factor)
-        float xq = 1.0f / (PI * sigma_y * sigma_z * puff.windvel) *
-                   expf(-0.5f * (H * H) / (sigma_z * sigma_z));
-
-        // Update maximum values
-        if (center_air > max_center_air_conc[rad_idx]) {
-            max_center_air_conc[rad_idx] = center_air;
-            max_dir_center_air[rad_idx] = theta_idx + 1;
-        }
-        if (ground_air > max_ground_air_conc[rad_idx]) {
-            max_ground_air_conc[rad_idx] = ground_air;
-            max_dir_ground_air[rad_idx] = theta_idx + 1;
-        }
-        if (ground_conc > max_ground_conc[rad_idx]) {
-            max_ground_conc[rad_idx] = ground_conc;
-            max_dir_ground[rad_idx] = theta_idx + 1;
-        }
-        if (xq > max_xq[rad_idx]) {
-            max_xq[rad_idx] = xq;
-            max_dir_xq[rad_idx] = theta_idx + 1;
-        }
+    // Open output file
+    std::ofstream outFile(".\\output\\dispersion_results.txt");
+    if (!outFile.is_open()) {
+        std::cerr << "[ERROR] Failed to open output file: .\\output\\dispersion_results.txt" << std::endl;
+        return;
     }
 
+    // Helper lambda for printing to both console and file
+    auto printBoth = [&](const std::string& text) {
+        std::cout << text;
+        outFile << text;
+    };
+
     // Print header
-    std::cout << "\n ---------------------------------------------------------" << std::endl;
-    std::cout << "  Maximum Values for Radionuclide Dispersion (All Plumes) " << std::endl;
-    std::cout << " --------------------------------------------------------- \n" << std::endl;
+    printBoth("\n ---------------------------------------------------------\n");
+    printBoth("  Maximum Values for Radionuclide Dispersion (All Plumes) \n");
+    printBoth(" --------------------------------------------------------- \n\n");
 
     // Print nuclide name and column headers
-    std::cout << "  " << std::left << std::setw(26) << nuclide_name << " |";
+    std::ostringstream headerLine;
+    headerLine << "  " << std::left << std::setw(26) << nuclide_name << " |";
     for (int i = 0; i < numRad; i++) {
         float r_start = (i == 0) ? 0.0f : SC.ir_distances[i-1];
         float r_end = SC.ir_distances[i];
 
         std::ostringstream header;
-        if (r_end < 10.0f) {
-            header << std::fixed << std::setprecision(1) << r_start << "km ~" << r_end << "km";
+        // Format distance in meters with appropriate precision
+        if (r_end < 1000.0f) {
+            header << std::fixed << std::setprecision(0) << r_start << "~" << r_end << "m";
+        } else if (r_end < 10000.0f) {
+            header << std::fixed << std::setprecision(1) << r_start/1000.0f << "~" << r_end/1000.0f << "km";
         } else {
-            header << std::fixed << std::setprecision(1) << r_start << "km~" << r_end << "km";
+            header << std::fixed << std::setprecision(0) << r_start/1000.0f << "~" << r_end/1000.0f << "km";
         }
-        std::cout << " " << std::setw(14) << header.str();
+        headerLine << " " << std::setw(12) << header.str();
     }
-    std::cout << std::endl;
+    headerLine << "\n";
+    printBoth(headerLine.str());
 
     // Print (iDir/Total) row
-    std::cout << std::setw(28) << " " << " ";
+    std::ostringstream dirHeaderLine;
+    dirHeaderLine << std::setw(28) << " " << " ";
     for (int i = 0; i < numRad; i++) {
-        std::cout << "  (iDir/Total)  ";
+        dirHeaderLine << "  (iDir/Total)  ";
     }
-    std::cout << std::endl;
+    dirHeaderLine << "\n";
+    printBoth(dirHeaderLine.str());
 
     // Print separator
-    std::cout << "------------------------------+";
+    std::ostringstream sepLine;
+    sepLine << "------------------------------+";
     for (int i = 0; i < numRad; i++) {
-        std::cout << "---------------" << (i < numRad - 1 ? "+" : "-");
+        sepLine << "---------------" << (i < numRad - 1 ? "+" : "-");
     }
-    std::cout << std::endl;
+    sepLine << "\n";
+    printBoth(sepLine.str());
 
     // Helper lambda for printing a data row
     auto printRow = [&](const std::string& label, const std::vector<float>& values,
                         const std::vector<int>& dirs, int total) {
-        std::cout << " " << std::left << std::setw(27) << label << " |";
+        std::ostringstream dataLine;
+        dataLine << " " << std::left << std::setw(27) << label << " |";
         for (int i = 0; i < numRad; i++) {
-            std::cout << "  " << std::scientific << std::setprecision(5) << values[i] << "   ";
+            dataLine << "  " << std::scientific << std::setprecision(5) << values[i] << "   ";
         }
-        std::cout << std::endl;
+        dataLine << "\n";
+        printBoth(dataLine.str());
 
         // Print direction row
-        std::cout << std::setw(28) << " " << " ";
+        std::ostringstream dirLine;
+        dirLine << std::setw(28) << " " << " ";
         for (int i = 0; i < numRad; i++) {
-            std::cout << "  (" << std::setw(2) << dirs[i] << "/" << std::setw(2) << total << ")       ";
+            dirLine << "  (" << std::setw(2) << dirs[i] << "/" << std::setw(2) << total << ")       ";
         }
-        std::cout << std::endl;
+        dirLine << "\n";
+        printBoth(dirLine.str());
     };
 
     // Print data rows
@@ -1557,5 +1630,8 @@ void Gpuff::print_results_summary(const SimulationControl& SC, const std::vector
     printRow("Center Ground Conc. (Bq/m2)", max_ground_conc, max_dir_ground, numTheta);
     printRow("Ground Dilution, X/Q (s/m3)", max_xq, max_dir_xq, numTheta);
 
-    std::cout << std::endl;
+    printBoth("\n");
+
+    outFile.close();
+    std::cout << "[INFO] Results saved to: .\\output\\dispersion_results.txt" << std::endl;
 }

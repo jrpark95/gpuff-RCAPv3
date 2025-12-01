@@ -347,6 +347,7 @@ void Gpuff::time_update(){
         if (err != cudaSuccess)
             printf("CUDA error: %s, timestep = %d\n", cudaGetErrorString(err), timestep);
 
+
         current_time += dt;
         timestep++;
 
@@ -413,6 +414,7 @@ void Gpuff::time_update_val(){
         err = cudaGetLastError();
         if (err != cudaSuccess)
             printf("CUDA error: %s, timestep = %d\n", cudaGetErrorString(err), timestep);
+
 
         current_time += dt;
         timestep++;
@@ -654,6 +656,7 @@ void Gpuff::time_update_RCAP(){
         err = cudaGetLastError();
         if (err != cudaSuccess)
             printf("CUDA error: %s, timestep = %d\n", cudaGetErrorString(err), timestep);
+
 
         current_time += dt;
         timestep++;
@@ -1131,7 +1134,15 @@ void Gpuff::time_update_RCAP2(const SimulationControl& SC, const EvacuationData&
     cudaMemcpy(d_tbl, &h_tbl, sizeof(DoseTables), cudaMemcpyHostToDevice);
     cudaMemcpy(d_geom720, &h_geom720, sizeof(Puff720), cudaMemcpyHostToDevice);
 
+    // Initialize max value tracking
+    init_max_tracking(SC.numRad);
+
     std::cout << "[TIME_UPDATE:002] Starting simulation loop (time_end=" << time_end << ")" << std::endl;
+
+    // DEBUG: Track initial concentration for deposition analysis
+    float initial_conc_cs137 = 0.0f;
+    bool deposition_header_printed = false;
+
     while (current_time <= time_end) {
 
 
@@ -1145,6 +1156,28 @@ void Gpuff::time_update_RCAP2(const SimulationControl& SC, const EvacuationData&
             (d_puffs_RCAP, d_Vdepo, d_particleSizeDistr, EP.EP_endRing, d_ground_deposit,
                 d_ND, d_radius, SC.numRad, SC.numTheta);
         cudaDeviceSynchronize();
+
+        // DEBUG: Print sigma values at specific timesteps
+        if (timestep == 1 || timestep == 10 || timestep == 50 || timestep == 100 ||
+            timestep == 200 || timestep == 500 || timestep == 1000 || timestep == 2000 ||
+            timestep == 5000 || timestep == 10000) {
+            cudaMemcpy(puffs_RCAP.data(), d_puffs_RCAP,
+                       puffs_RCAP.size() * sizeof(Puffcenter_RCAP), cudaMemcpyDeviceToHost);
+
+            if (!deposition_header_printed) {
+                printf("\n=== HYBRID SIGMA DEBUG (Tadmor-Gur <5km, NUREG7161 >=5km) ===\n");
+                printf("Timestep, Time(s), Distance(m), sigma_h(m), sigma_z(m)\n");
+                deposition_header_printed = true;
+            }
+
+            if (puffs_RCAP.size() > 0) {
+                Puffcenter_RCAP& p = puffs_RCAP[0];
+                float r = sqrt(p.x * p.x + p.y * p.y);
+
+                printf("%d, %.0f, %.0f, %.2f, %.2f\n",
+                       timestep, current_time, r, p.sigma_h, p.sigma_z);
+            }
+        }
 
         update_evac_velocity(EP, current_time);
 
@@ -1209,6 +1242,9 @@ void Gpuff::time_update_RCAP2(const SimulationControl& SC, const EvacuationData&
         err = cudaGetLastError();
         if (err != cudaSuccess)
             printf("CUDA error: %s, timestep = %d\n", cudaGetErrorString(err), timestep);
+
+        // Update maximum values for this timestep
+        update_max_values(SC, ND);
 
         current_time += dt;
         timestep++;

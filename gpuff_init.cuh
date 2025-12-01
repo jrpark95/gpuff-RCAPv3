@@ -1525,17 +1525,9 @@ void Gpuff::initializePuffs(
                 float nuclide_concentrations[MAX_NUCLIDES];
                 for (int nuclide_idx = 0; nuclide_idx < MAX_NUCLIDES; nuclide_idx++) {
                     nuclide_concentrations[nuclide_idx] = RT[source_index].conc[nuclide_idx] *
-                        RT[source_index].RT_puffs[puff_index].release_fractions[ND[nuclide_idx].chemical_group];
+                        RT[source_index].RT_puffs[puff_index].release_fractions[ND[nuclide_idx].chemical_group > 0 ? ND[nuclide_idx].chemical_group - 1 : 0];
 
-                    // TEST: Add test concentration if RT110/RT220 not provided
-                    if (nuclide_concentrations[nuclide_idx] == 0.0f && nuclide_idx < 3) {
-                        // Set test concentration for first 3 nuclides (1e10 Bq = ~270 mCi for testing)
-                        nuclide_concentrations[nuclide_idx] = 1e10f;
-                        if (puff_index == 0 && met_index == 0) {
-                            std::cout << "[TEST] Setting test concentration for nuclide " << nuclide_idx
-                                      << ": " << nuclide_concentrations[nuclide_idx] << " Bq" << std::endl;
-                        }
-                    }
+                    // TEST code removed - now uses actual input concentrations
 
                     if (nuclide_concentrations[nuclide_idx] > 1.0) {
                         //std::cout << "nuc = " << nuclide_idx << ", conc = " << nuclide_concentrations[nuclide_idx] << std::endl;
@@ -1574,10 +1566,16 @@ void Gpuff::initializePuffs(
                     nuclide_concentrations, release_time_seconds, unit_index,
                     wind_speed_m_per_s, wind_direction_degrees, stability_class, rain_rate_mm_per_h, met_index);
 
+                // Calculate Plume Rise and set effective height
+                float rel_heat = RT[source_index].RT_puffs[puff_index].rel_heat;
+                float delta_h = calculate_plume_rise(rel_heat, wind_speed_m_per_s, stability_class);
+                puffs_RCAP.back().he = puff_z_meters + delta_h;
+
                 // Debug: Print first puff values to verify initialization
                 if (met_index == 0 && source_index == 0 && puff_index == 0) {
                     printf("\n[DEBUG] ===== FIRST PUFF VALUES =====\n");
                     printf("  Position: x=%.2f, y=%.2f, z=%.2f (m)\n", puff_x_meters, puff_y_meters, puff_z_meters);
+                    printf("  Plume Rise: delta_h=%.2f m, he=%.2f m (rel_heat=%.2e W)\n", delta_h, puffs_RCAP.back().he, rel_heat);
                     printf("  Concentrations: [0]=%.2e, [1]=%.2e, [2]=%.2e (Bq)\n",
                            nuclide_concentrations[0], nuclide_concentrations[1], nuclide_concentrations[2]);
                     printf("  Release time: %.2f (s)\n", release_time_seconds);

@@ -5,7 +5,8 @@
         "iosfwd": "cpp",
         "*.cu": "cuda-cpp",
         "*.cuh": "cuda-cpp",
-        "xstring": "cpp"
+        "xstring": "cpp",
+        "vector": "cpp"
     },
     "C_Cpp.default.includePath": [
         "${workspaceFolder}",

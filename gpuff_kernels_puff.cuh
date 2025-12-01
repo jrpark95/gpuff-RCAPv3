@@ -739,14 +739,20 @@ __global__ void move_puffs_by_wind_RCAP2(
 
     p.virtual_distance += p.windvel * d_dt;
 
-    if (d_isPG) {
-        p.sigma_h = Sigma_h_Pasquill_Gifford(p.stab - 1, p.virtual_distance);
-        p.sigma_z = Sigma_z_Pasquill_Gifford(p.stab - 1, p.virtual_distance);
-    }
-    else {
-        //p.sigma_h = Sigma_h_Briggs_McElroy_Pooler(PasquillCategory, new_virtual_distance_h);
-        //p.sigma_z = Sigma_z_Briggs_McElroy_Pooler(PasquillCategory, new_virtual_distance_z);
-    }
+    // Use Hybrid T-G Modified model (Tadmor-Gur < 5km, NUREG/CR-7161 >= 5km)
+    // This matches RCAP's "T-G_Modi" dispersion option
+    p.sigma_h = Sigma_y_Hybrid(p.stab - 1, p.virtual_distance);
+    p.sigma_z = Sigma_z_Hybrid(p.stab - 1, p.virtual_distance);
+
+    // ORIGINAL Pasquill-Gifford (commented out)
+    // if (d_isPG) {
+    //     p.sigma_h = Sigma_h_Pasquill_Gifford(p.stab - 1, p.virtual_distance);
+    //     p.sigma_z = Sigma_z_Pasquill_Gifford(p.stab - 1, p.virtual_distance);
+    // }
+    // else {
+    //     //p.sigma_h = Sigma_h_Briggs_McElroy_Pooler(PasquillCategory, new_virtual_distance_h);
+    //     //p.sigma_z = Sigma_z_Briggs_McElroy_Pooler(PasquillCategory, new_virtual_distance_z);
+    // }
 
     float wetf = expf(-d_wc1*powf(p.rain, d_wc2)*d_dt);
 
@@ -773,7 +779,8 @@ __global__ void move_puffs_by_wind_RCAP2(
             continue;
         }
 
-        if (nuclide.dry_deposition == true) {
+        if (0) {
+        // if (nuclide.dry_deposition == true) {
             float conc = p.conc[nuc_idx];
             float f_total = 0.0f;
 
@@ -810,6 +817,19 @@ void Gpuff::move_puffs_by_wind_RCAP2_cpu(
     int EP_endRing, std::vector<NuclideData> ND, float* radius,
     int numRad, int numTheta, int nop)
 {
+    // Static variables for debug output control
+    static int debug_timestep = 0;
+    static bool header_printed = false;
+
+    // Print header once
+    if (!header_printed) {
+        printf("\n=== DEPOSITION DEBUG OUTPUT ===\n");
+        printf("Timestep, PuffIdx, Distance(m), he(m), Sigma_z(m), Psi0, NucIdx, Group, InitConc, f_total(OLD), f_total(NEW), DecayF, FinalConc, Remaining%%\n");
+        header_printed = true;
+    }
+
+    debug_timestep++;
+
     for (int idx = 0; idx < nop; ++idx) {
         Gpuff::Puffcenter_RCAP& p = puffs_RCAP[idx];
         if (p.flag == 0) continue;
@@ -822,13 +842,16 @@ void Gpuff::move_puffs_by_wind_RCAP2_cpu(
 
         p.virtual_distance += p.windvel * dt;
 
-        if (1) {
-            p.sigma_h = Sigma_h_Pasquill_Gifford_cpu(p.stab - 1, p.virtual_distance);
-            p.sigma_z = Sigma_z_Pasquill_Gifford_cpu(p.stab - 1, p.virtual_distance);
-        }
-        else {
+        // Use Hybrid T-G Modified model (Tadmor-Gur < 5km, NUREG/CR-7161 >= 5km)
+        // This matches RCAP's "T-G_Modi" dispersion option
+        p.sigma_h = Sigma_y_Hybrid_cpu(p.stab - 1, p.virtual_distance);
+        p.sigma_z = Sigma_z_Hybrid_cpu(p.stab - 1, p.virtual_distance);
 
-        }
+        // ORIGINAL Pasquill-Gifford (commented out)
+        // if (1) {
+        //     p.sigma_h = Sigma_h_Pasquill_Gifford_cpu(p.stab - 1, p.virtual_distance);
+        //     p.sigma_z = Sigma_z_Pasquill_Gifford_cpu(p.stab - 1, p.virtual_distance);
+        // }
 
         float wetf = expf(-wc1 * powf(p.rain, wc2) * dt);
 
@@ -845,6 +868,14 @@ void Gpuff::move_puffs_by_wind_RCAP2_cpu(
         int theta_idx = round(p.windir * 8.0f * (1 / PI));
         theta_idx = (theta_idx - 1) % 16 + 1;
 
+        // Calculate psi_0 (ground-level vertical distribution) for MACCS-style deposition
+        // psi_0 = 1/(sqrt(2*pi)*sigma_z) * exp(-h^2/(2*sigma_z^2))
+        float psi_0 = 0.0f;
+        if (p.sigma_z > 0.0f) {
+            float h_eff = p.he;  // effective plume height
+            psi_0 = (1.0f / (sqrtf(2.0f * PI) * p.sigma_z)) * expf(-(h_eff * h_eff) / (2.0f * p.sigma_z * p.sigma_z));
+        }
+
         for (int nuc_idx = 0; nuc_idx < MAX_NUCLIDES; ++nuc_idx) {
             NuclideData nuclide = ND[nuc_idx];
 
@@ -857,21 +888,58 @@ void Gpuff::move_puffs_by_wind_RCAP2_cpu(
 
             if (nuclide.dry_deposition) {
                 float conc = p.conc[nuc_idx];
-                float f_total = 0.0f;
+                float f_total_old = 0.0f;  // Original formula
+                float f_total_new = 0.0f;  // MACCS formula
 
                 for (int size_idx = 0; size_idx < PARTICLE_COUNT; ++size_idx) {
                     float fraction = particleSizeDistr[0][(group - 1)][size_idx];
                     float vdep = Vdepo[size_idx];
-                    float f_size = expf(-vdep * dt / 1500.0f);
-                    f_total += fraction * f_size;
+
+                    // ORIGINAL formula (keep for comparison)
+                    float f_size_old = expf(-vdep * dt / 1500.0f);
+                    f_total_old += fraction * f_size_old;
+
+                    // NEW MACCS formula: f_d = exp(-v_d * psi_0 * dt)
+                    float f_size_new = expf(-vdep * psi_0 * dt);
+                    f_total_new += fraction * f_size_new;
                 }
+
+                // === USE ORIGINAL FORMULA FOR NOW (comment out to switch) ===
+                float f_total = f_total_old;
+                // float f_total = f_total_new;  // Uncomment to use MACCS formula
 
                 float new_conc = nuclide.wet_deposition ? conc * f_total * wetf : conc * f_total;
                 p.conc[nuc_idx] = new_conc * decay_factor;
 
                 float deposition = conc - new_conc;
+
+                // Debug output for first puff, Cs-137 (group 3), every 100 timesteps
+                // Print for specific distances: ~100m, ~500m, ~1000m, ~3000m, ~5000m
+                bool at_key_distance = (r > 90 && r < 110) || (r > 450 && r < 550) ||
+                                       (r > 950 && r < 1050) || (r > 2900 && r < 3100) ||
+                                       (r > 4900 && r < 5100);
+                if (idx == 0 && group == 3 && debug_timestep % 100 == 0 && at_key_distance) {
+                    float remaining_pct = (conc > 0) ? (new_conc * decay_factor / conc * 100.0f) : 0.0f;
+                    printf("%d, %d, %.1f, %.1f, %.2f, %.2e, %d, %d, %.4e, %.6f, %.6f, %.6f, %.4e, %.2f%%\n",
+                           debug_timestep, idx, r, p.he, p.sigma_z, psi_0, nuc_idx, group,
+                           conc, f_total_old, f_total_new, decay_factor, new_conc * decay_factor, remaining_pct);
+                }
             }
         }
+    }
+
+    // Summary output at key distances
+    if (debug_timestep % 500 == 0 && nop > 0) {
+        float total_conc = 0.0f;
+        float initial_conc = puffs_RCAP[0].conc[0];  // Assuming first nuclide
+        for (int idx = 0; idx < nop; ++idx) {
+            if (puffs_RCAP[idx].flag == 1) {
+                total_conc += puffs_RCAP[idx].conc[0];
+            }
+        }
+        float r0 = sqrt(puffs_RCAP[0].x * puffs_RCAP[0].x + puffs_RCAP[0].y * puffs_RCAP[0].y);
+        printf(">>> Timestep %d: Puff0 distance=%.0fm, he=%.1fm, TotalConc=%.4e, sigma_z=%.2f, mixing_depth=%.0f\n",
+               debug_timestep, r0, puffs_RCAP[0].he, total_conc, puffs_RCAP[0].sigma_z, puffs_RCAP[0].mixing_depth);
     }
 }
 

@@ -199,6 +199,17 @@ public:
     ~Gpuff();
 
     float minX, minY, maxX, maxY;
+
+    // Maximum value tracking arrays (accumulated over all timesteps)
+    std::vector<float> max_center_air_conc;
+    std::vector<float> max_ground_air_conc;
+    std::vector<float> max_ground_conc;
+    std::vector<float> max_xq;
+    std::vector<int> max_dir_center_air;
+    std::vector<int> max_dir_ground_air;
+    std::vector<int> max_dir_ground;
+    std::vector<int> max_dir_xq;
+    int max_tracking_nuclide = -1;  // Nuclide index being tracked
     float *d_minX, *d_minY, *d_maxX, *d_maxY;
 
     std::chrono::high_resolution_clock::time_point _clock0, _clock1;
@@ -462,6 +473,8 @@ public:
     void evac_output_binary_RCAP_xy_single(int timestep);
     void plant_output_binary_RCAP(int input_num,
         const std::vector<RadioNuclideTransport>& RT, const std::vector<NuclideData>& ND);
+    void init_max_tracking(int numRad);
+    void update_max_values(const SimulationControl& SC, const std::vector<NuclideData>& ND);
     void print_results_summary(const SimulationControl& SC, const std::vector<NuclideData>& ND);
 
     // CPU-only methods for testing and validation
