@@ -3,10 +3,10 @@
 # Source coordinates (Lat(deg180), Lon(deg180), Height(m))
 #
 [SOURCE]
-129.4761 35.7131 20.0
-129.4753 35.7122 20.0
-129.4739 35.7106 20.0
-129.4728 35.7094 20.0
+129.4761 35.7131 500.0
+129.4753 35.7122 500.0
+129.4739 35.7106 500.0
+129.4728 35.7094 500.0
 
 # Source term information (Source term number, Decay const(/s), Deposition velocity(m/s))
 #

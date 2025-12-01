@@ -495,8 +495,8 @@ __global__ void puff_dispersion_update(
         p.sigma_z = Sigma_z_Pasquill_Gifford(PasquillCategory, new_virtual_distance_z);
     }
     else{
-        //p.sigma_h = Sigma_h_Briggs_McElroy_Pooler(PasquillCategory, new_virtual_distance_h);
-        //p.sigma_z = Sigma_z_Briggs_McElroy_Pooler(PasquillCategory, new_virtual_distance_z);
+        p.sigma_h = Sigma_h_Briggs_McElroy_Pooler(PasquillCategory, new_virtual_distance_h);
+        p.sigma_z = Sigma_z_Briggs_McElroy_Pooler(PasquillCategory, new_virtual_distance_z);
     }
 
     p.virtual_distance = new_virtual_distance_h;
@@ -652,8 +652,8 @@ __global__ void puff_dispersion_update_val(Gpuff::Puffcenter* d_puffs)
         p.sigma_z = Sigma_z_Pasquill_Gifford(PasquillCategory, new_virtual_distance_z);
     }
     else{
-        //p.sigma_h = Sigma_h_Briggs_McElroy_Pooler(PasquillCategory, new_virtual_distance_h);
-        //p.sigma_z = Sigma_z_Briggs_McElroy_Pooler(PasquillCategory, new_virtual_distance_z);
+        p.sigma_h = Sigma_h_Briggs_McElroy_Pooler(PasquillCategory, new_virtual_distance_h);
+        p.sigma_z = Sigma_z_Briggs_McElroy_Pooler(PasquillCategory, new_virtual_distance_z);
     }
 
     p.virtual_distance = new_virtual_distance_h;
@@ -739,20 +739,9 @@ __global__ void move_puffs_by_wind_RCAP2(
 
     p.virtual_distance += p.windvel * d_dt;
 
-    // Use Hybrid T-G Modified model (Tadmor-Gur < 5km, NUREG/CR-7161 >= 5km)
-    // This matches RCAP's "T-G_Modi" dispersion option
-    p.sigma_h = Sigma_y_Hybrid(p.stab - 1, p.virtual_distance);
-    p.sigma_z = Sigma_z_Hybrid(p.stab - 1, p.virtual_distance);
-
-    // ORIGINAL Pasquill-Gifford (commented out)
-    // if (d_isPG) {
-    //     p.sigma_h = Sigma_h_Pasquill_Gifford(p.stab - 1, p.virtual_distance);
-    //     p.sigma_z = Sigma_z_Pasquill_Gifford(p.stab - 1, p.virtual_distance);
-    // }
-    // else {
-    //     //p.sigma_h = Sigma_h_Briggs_McElroy_Pooler(PasquillCategory, new_virtual_distance_h);
-    //     //p.sigma_z = Sigma_z_Briggs_McElroy_Pooler(PasquillCategory, new_virtual_distance_z);
-    // }
+    // Use Briggs-McElroy-Pooler dispersion model
+    p.sigma_h = Sigma_h_Briggs_McElroy_Pooler(p.stab - 1, p.virtual_distance);
+    p.sigma_z = Sigma_z_Briggs_McElroy_Pooler(p.stab - 1, p.virtual_distance);
 
     float wetf = expf(-d_wc1*powf(p.rain, d_wc2)*d_dt);
 
@@ -842,16 +831,9 @@ void Gpuff::move_puffs_by_wind_RCAP2_cpu(
 
         p.virtual_distance += p.windvel * dt;
 
-        // Use Hybrid T-G Modified model (Tadmor-Gur < 5km, NUREG/CR-7161 >= 5km)
-        // This matches RCAP's "T-G_Modi" dispersion option
-        p.sigma_h = Sigma_y_Hybrid_cpu(p.stab - 1, p.virtual_distance);
-        p.sigma_z = Sigma_z_Hybrid_cpu(p.stab - 1, p.virtual_distance);
-
-        // ORIGINAL Pasquill-Gifford (commented out)
-        // if (1) {
-        //     p.sigma_h = Sigma_h_Pasquill_Gifford_cpu(p.stab - 1, p.virtual_distance);
-        //     p.sigma_z = Sigma_z_Pasquill_Gifford_cpu(p.stab - 1, p.virtual_distance);
-        // }
+        // Use Briggs-McElroy-Pooler dispersion model
+        p.sigma_h = Sigma_h_Briggs_McElroy_Pooler_cpu(p.stab - 1, p.virtual_distance);
+        p.sigma_z = Sigma_z_Briggs_McElroy_Pooler_cpu(p.stab - 1, p.virtual_distance);
 
         float wetf = expf(-wc1 * powf(p.rain, wc2) * dt);
 

@@ -513,6 +513,44 @@ __device__ float dSz_PG(int PasquillCategory, float virtual_distance) {
  * @param virtual_distance Effective distance traveled by puff (meters)
  * @return Vertical dispersion parameter sigma_z (meters)
  */
+__device__ float Sigma_h_Briggs_McElroy_Pooler(int PasquillCategory, float virtual_distance){
+
+    float coefficient0_rural[7] = {0.22, 0.16, 0.11, 0.08, 0.06, 0.04, 0.04};
+    float coefficient0_urban[7] = {0.32, 0.32, 0.22, 0.16, 0.11, 0.11, 0.11};
+    float coefficient1_rural = 0.0001;
+    float coefficient1_urban = 0.0004;
+
+    float sigma;
+    
+    if(d_isRural) sigma = coefficient0_rural[PasquillCategory]*virtual_distance
+                            *pow(1 + coefficient1_rural*virtual_distance, -0.5);
+
+    else sigma = coefficient0_urban[PasquillCategory]*virtual_distance
+                    *pow(1 + coefficient1_urban*virtual_distance, -0.5);
+
+    return sigma;
+}
+
+__device__ float dSh_BMP(int PasquillCategory, float virtual_distance){
+
+    float coefficient0_rural[7] = {0.22, 0.16, 0.11, 0.08, 0.06, 0.04, 0.04};
+    float coefficient0_urban[7] = {0.32, 0.32, 0.22, 0.16, 0.11, 0.11, 0.11};
+    float coefficient1_rural = 0.0001;
+    float coefficient1_urban = 0.0004;
+
+    float sigma;
+    
+    if(d_isRural) sigma = 0.5*coefficient0_rural[PasquillCategory]
+                            *(coefficient1_rural*virtual_distance+2)
+                            /pow(coefficient1_rural*virtual_distance+1,1.5);
+
+    else sigma = 0.5*coefficient0_urban[PasquillCategory]
+                    *(coefficient1_urban*virtual_distance+2)
+                    /pow(coefficient1_urban*virtual_distance+1,1.5);
+
+    return sigma;
+}
+
 __device__ float Sigma_z_Briggs_McElroy_Pooler(int PasquillCategory, float virtual_distance) {
     // Coefficients for rural terrain
     float coefficient0_rural[7] = {0.20, 0.12, 0.08, 0.06, 0.03, 0.016, 0.016};
@@ -572,6 +610,60 @@ __device__ float dSz_BMP(int PasquillCategory, float virtual_distance) {
 }
 
 // ====================================================================================
+// CPU Helper Functions - Briggs-McElroy-Pooler Dispersion Formulas
+// ====================================================================================
+
+// Global variable for CPU terrain type (matches device d_isRural)
+static bool cpu_isRural = true;
+
+/**
+ * CPU version: Briggs-McElroy-Pooler horizontal dispersion coefficient
+ */
+float Sigma_h_Briggs_McElroy_Pooler_cpu(int PasquillCategory, float virtual_distance) {
+    float coefficient0_rural[7] = {0.22f, 0.16f, 0.11f, 0.08f, 0.06f, 0.04f, 0.04f};
+    float coefficient0_urban[7] = {0.32f, 0.32f, 0.22f, 0.16f, 0.11f, 0.11f, 0.11f};
+    float coefficient1_rural = 0.0001f;
+    float coefficient1_urban = 0.0004f;
+
+    float sigma;
+
+    if (cpu_isRural) {
+        sigma = coefficient0_rural[PasquillCategory] * virtual_distance
+                * powf(1 + coefficient1_rural * virtual_distance, -0.5f);
+    } else {
+        sigma = coefficient0_urban[PasquillCategory] * virtual_distance
+                * powf(1 + coefficient1_urban * virtual_distance, -0.5f);
+    }
+
+    return sigma;
+}
+
+/**
+ * CPU version: Briggs-McElroy-Pooler vertical dispersion coefficient
+ */
+float Sigma_z_Briggs_McElroy_Pooler_cpu(int PasquillCategory, float virtual_distance) {
+    float coefficient0_rural[7] = {0.20f, 0.12f, 0.08f, 0.06f, 0.03f, 0.016f, 0.016f};
+    float coefficient1_rural[7] = {0.0f, 0.0f, 0.0002f, 0.0015f, 0.0003f, 0.0003f, 0.0003f};
+    float coefficient2_rural[7] = {1.0f, 1.0f, -0.5f, -0.5f, -1.0f, -1.0f, -1.0f};
+
+    float coefficient0_urban[7] = {0.24f, 0.24f, 0.2f, 0.14f, 0.08f, 0.08f, 0.08f};
+    float coefficient1_urban[7] = {0.001f, 0.001f, 0.0f, 0.0003f, 0.00015f, 0.00015f, 0.00015f};
+    float coefficient2_urban[7] = {0.5f, 0.5f, 1.0f, -0.5f, -0.5f, -0.5f, -0.5f};
+
+    float sigma;
+
+    if (cpu_isRural) {
+        sigma = coefficient0_rural[PasquillCategory] * virtual_distance *
+                powf(1 + coefficient1_rural[PasquillCategory] * virtual_distance, coefficient2_rural[PasquillCategory]);
+    } else {
+        sigma = coefficient0_urban[PasquillCategory] * virtual_distance *
+                powf(1 + coefficient1_urban[PasquillCategory] * virtual_distance, coefficient2_urban[PasquillCategory]);
+    }
+
+    return sigma;
+}
+
+// ====================================================================================
 // Device Helper Functions - Newton-Raphson Iteration
 // ====================================================================================
 
@@ -598,6 +690,10 @@ __device__ float NewtonRaphson_h(int PasquillCategory, float targetSigma, float 
         if (d_isPG) {
             fx = Sigma_h_Pasquill_Gifford(PasquillCategory, x) - targetSigma;
             dfx = dSh_PG(PasquillCategory, x);
+        }
+        else {
+            fx = Sigma_h_Briggs_McElroy_Pooler(PasquillCategory, x) - targetSigma;
+            dfx = dSh_BMP(PasquillCategory, x);
         }
 
         x = x - fx / dfx;

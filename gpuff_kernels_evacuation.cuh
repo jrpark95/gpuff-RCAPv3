@@ -337,7 +337,7 @@ __global__ void puff_dispersion_update_RCAP(
         p.sigma_h = Sigma_h_Pasquill_Gifford(PasquillCategory, new_virtual_distance_h);
     }
     else{
-        //p.sigma_h = Sigma_h_Briggs_McElroy_Pooler(PasquillCategory, new_virtual_distance_h);
+        p.sigma_h = Sigma_h_Briggs_McElroy_Pooler(PasquillCategory, new_virtual_distance_h);
     }
 
     p.virtual_distance = new_virtual_distance_h;
@@ -374,7 +374,7 @@ __global__ void puff_dispersion_update_RCAP2(
         p.sigma_h = Sigma_h_Pasquill_Gifford(PasquillCategory, new_virtual_distance_h);
     }
     else {
-        //p.sigma_h = Sigma_h_Briggs_McElroy_Pooler(PasquillCategory, new_virtual_distance_h);
+        p.sigma_h = Sigma_h_Briggs_McElroy_Pooler(PasquillCategory, new_virtual_distance_h);
     }
 
     p.virtual_distance = new_virtual_distance_h;

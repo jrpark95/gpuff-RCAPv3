@@ -1393,6 +1393,8 @@ void Gpuff::init_max_tracking(int numRad) {
     max_ground_air_conc.assign(numRad, 0.0f);
     max_ground_conc.assign(numRad, 0.0f);
     max_xq.assign(numRad, 0.0f);
+    max_sigma_y.assign(numRad, 0.0f);
+    max_sigma_z.assign(numRad, 0.0f);
     max_dir_center_air.assign(numRad, 1);
     max_dir_ground_air.assign(numRad, 1);
     max_dir_ground.assign(numRad, 1);
@@ -1455,35 +1457,95 @@ void Gpuff::update_max_values(const SimulationControl& SC, const std::vector<Nuc
 
         // Calculate concentration at each ring the puff has passed through
         for (int rad_idx = 0; rad_idx < numRad; rad_idx++) {
-            // Get ring outer boundary distance (RCAP uses outer boundary)
+            // Get ring boundaries
             float r_inner = (rad_idx == 0) ? 0.0f : SC.ir_distances[rad_idx - 1];
             float r_outer = SC.ir_distances[rad_idx];
-            float ring_distance = r_outer;  // Use outer boundary like RCAP
+
+            // Use ring center (midpoint) as reference distance
+            float ring_distance = (r_inner + r_outer) / 2.0f;
+
+            // [Alternative] Use outer boundary - commented out for comparison
+            // float ring_distance = r_outer;  // Use outer boundary like RCAP
 
             // Only calculate if puff has reached or passed this ring
             if (puff_distance < r_inner) continue;
 
-            // Calculate sigma_y and sigma_z at ring distance using Hybrid T-G Modified model
-            // (Tadmor-Gur < 5km, NUREG/CR-7161 >= 5km) - matches RCAP's "T-G_Modi" dispersion option
-            float sigma_y = Sigma_y_Hybrid_cpu(stab_class, ring_distance);
-            float sigma_z = Sigma_z_Hybrid_cpu(stab_class, ring_distance);
+            // Calculate sigma_y and sigma_z at ring distance using Briggs-McElroy-Pooler model
+            float sigma_y = Sigma_h_Briggs_McElroy_Pooler_cpu(stab_class, ring_distance);
+            float sigma_z = Sigma_z_Briggs_McElroy_Pooler_cpu(stab_class, ring_distance);
 
-            // ORIGINAL NUREG7161 (commented out)
-            // float sigma_y = Sigma_y_NUREG7161_cpu(stab_class, ring_distance);
-            // float sigma_z = Sigma_z_NUREG7161_cpu(stab_class, ring_distance);
+            // σy 보정: Ft (샘플시간 보정인자)만 적용
+            const float FT = 1.27f;  // Ft = (td/tref)^0.2 = (600/180)^0.2
+            sigma_y = FT * sigma_y;
+
+            // σz 상한값 적용: σz_max = mixing_height / sqrt(2π)
+            // mixing height 내에서 균일 혼합 가정
+            const float SQRT_2PI = 2.506628f;
+            const float MIXING_HEIGHT = 1000.0f;  // mixing height (m)
+            float sigma_z_max = MIXING_HEIGHT / SQRT_2PI;
+            sigma_z = fminf(sigma_z, sigma_z_max);
 
             // Ensure minimum values
             sigma_y = fmaxf(sigma_y, 0.1f);
             sigma_z = fmaxf(sigma_z, 0.1f);
 
-            // RCAP formula: Q / (2π * σ_y * σ_z * u)
-            // Using Gaussian puff model formula
-            float center_air = Q / (2.0f * PI * sigma_y * sigma_z * ws);
+            // ============================================================
+            // RCAP Ground Reflection Model (RCAP 모델설명서 식 3.2.4, 3.2.5)
+            // ============================================================
+            // g = g1 + g2 + g3
+            // g1: 반사 없는 수직확산항
+            // g2: 지면반사에 의한 수직확산항
+            // g3: 다중반사(역전층)에 의한 수직확산항
+            // ============================================================
 
-            // Ground-level air concentration with ground reflection
-            // Factor of 2 for ground reflection, exp term for height attenuation
-            float ground_factor = 2.0f * expf(-0.5f * (H * H) / (sigma_z * sigma_z));
-            float ground_air = center_air * ground_factor;
+            float L = 1000.0f;  // 역전층 높이 (m)
+            float z = 0.0f;     // 지표면 높이에서 계산
+            float sigma_z2 = sigma_z * sigma_z;
+            float two_sigma_z2 = 2.0f * sigma_z2;
+
+            // g1: 반사 없는 수직확산항 - exp[-(z-H)²/(2σz²)]
+            float g1 = expf(-((z - H) * (z - H)) / two_sigma_z2);
+
+            // g2: 지면반사에 의한 수직확산항 - exp[-(z+H)²/(2σz²)]
+            float g2 = expf(-((z + H) * (z + H)) / two_sigma_z2);
+
+            // g3: 다중반사 (역전층 반사) - n≤5 고려
+            float g3 = 0.0f;
+            for (int n = 1; n <= 5; n++) {
+                float iL = static_cast<float>(n) * L;
+                // g_i = exp[-(z-H-2iL)²/(2σz²)] + exp[-(z+H-2iL)²/(2σz²)]
+                //     + exp[-(z-H+2iL)²/(2σz²)] + exp[-(z+H+2iL)²/(2σz²)]
+                g3 += expf(-((z - H - 2.0f * iL) * (z - H - 2.0f * iL)) / two_sigma_z2);
+                g3 += expf(-((z + H - 2.0f * iL) * (z + H - 2.0f * iL)) / two_sigma_z2);
+                g3 += expf(-((z - H + 2.0f * iL) * (z - H + 2.0f * iL)) / two_sigma_z2);
+                g3 += expf(-((z + H + 2.0f * iL) * (z + H + 2.0f * iL)) / two_sigma_z2);
+            }
+
+            // 수직확산 매개함수 g = g1 + g2 + g3
+            float g_total = g1 + g2 + g3;
+
+            // RCAP 공식: C = Q/(u) * f/(σy√2π) * g/(σz√2π)
+            // 여기서 f = exp[-y²/(2σy²)], 중심선(y=0)에서 f=1
+            // 따라서: C = Q / (2π * σy * σz * u) * g
+            float base_conc = Q / (2.0f * PI * sigma_y * sigma_z * ws);
+
+            // Center Air Conc: 플룸 중심선(z=H)에서의 농도 (지면반사 포함)
+            // z=H일 때: g1=1, g2=exp[-(2H)²/(2σz²)]
+            float g1_center = 1.0f;
+            float g2_center = expf(-(4.0f * H * H) / two_sigma_z2);
+            float g3_center = 0.0f;
+            for (int n = 1; n <= 5; n++) {
+                float iL = static_cast<float>(n) * L;
+                g3_center += expf(-((H - H - 2.0f * iL) * (H - H - 2.0f * iL)) / two_sigma_z2);
+                g3_center += expf(-((H + H - 2.0f * iL) * (H + H - 2.0f * iL)) / two_sigma_z2);
+                g3_center += expf(-((H - H + 2.0f * iL) * (H - H + 2.0f * iL)) / two_sigma_z2);
+                g3_center += expf(-((H + H + 2.0f * iL) * (H + H + 2.0f * iL)) / two_sigma_z2);
+            }
+            float g_center = g1_center + g2_center + g3_center;
+            float center_air = base_conc * g_center;
+
+            // Ground Air Conc: 지표면(z=0)에서의 농도 (지면반사 포함)
+            float ground_air = base_conc * g_total;
 
             // Ground concentration (deposition)
             // Using cesium dry deposition velocity from RCAP
@@ -1497,6 +1559,8 @@ void Gpuff::update_max_values(const SimulationControl& SC, const std::vector<Nuc
             if (center_air > max_center_air_conc[rad_idx]) {
                 max_center_air_conc[rad_idx] = center_air;
                 max_dir_center_air[rad_idx] = theta_idx + 1;
+                max_sigma_y[rad_idx] = sigma_y;  // 농도 계산에 사용된 sigma 저장
+                max_sigma_z[rad_idx] = sigma_z;
             }
             if (ground_air > max_ground_air_conc[rad_idx]) {
                 max_ground_air_conc[rad_idx] = ground_air;
@@ -1562,7 +1626,10 @@ void Gpuff::print_results_summary(const SimulationControl& SC, const std::vector
     // Print header
     printBoth("\n ---------------------------------------------------------\n");
     printBoth("  Maximum Values for Radionuclide Dispersion (All Plumes) \n");
-    printBoth(" --------------------------------------------------------- \n\n");
+    printBoth(" ---------------------------------------------------------\n");
+    printBoth(std::string("  Dispersion Model: ") + (isPG ? "Pasquill-Gifford" : "Briggs-McElroy-Pooler") + "\n");
+    printBoth(std::string("  Terrain Type    : ") + (isRural ? "Rural" : "Urban") + "\n");
+    printBoth(" ---------------------------------------------------------\n\n");
 
     // Print nuclide name and column headers
     std::ostringstream headerLine;
@@ -1629,6 +1696,32 @@ void Gpuff::print_results_summary(const SimulationControl& SC, const std::vector
     printRow("Ground Air Conc. (Bq-s/m3)", max_ground_air_conc, max_dir_ground_air, numTheta);
     printRow("Center Ground Conc. (Bq/m2)", max_ground_conc, max_dir_ground, numTheta);
     printRow("Ground Dilution, X/Q (s/m3)", max_xq, max_dir_xq, numTheta);
+
+    // ============================================================
+    // Sigma-y, Sigma-z 출력 (거리별)
+    // ============================================================
+    // 첫 번째 puff의 안정도 등급 사용 (모든 puff가 동일하다고 가정)
+    int stab_class = 0;
+    if (!puffs.empty()) {
+        stab_class = puffs[0].stab - 1;  // 1-based to 0-based
+        if (stab_class < 0) stab_class = 0;
+        if (stab_class > 6) stab_class = 6;
+    }
+
+    // 농도 계산에 사용된 실제 sigma 값 출력 (max_sigma_y, max_sigma_z에 저장됨)
+    // Helper lambda for printing sigma row (without direction info)
+    auto printSigmaRow = [&](const std::string& label, const std::vector<float>& values) {
+        std::ostringstream dataLine;
+        dataLine << " " << std::left << std::setw(27) << label << " |";
+        for (int i = 0; i < numRad; i++) {
+            dataLine << "  " << std::scientific << std::setprecision(5) << values[i] << "   ";
+        }
+        dataLine << "\n";
+        printBoth(dataLine.str());
+    };
+
+    printSigmaRow("Plume Sigma-y (m)", max_sigma_y);
+    printSigmaRow("Plume Sigma-z (m)", max_sigma_z);
 
     printBoth("\n");
 

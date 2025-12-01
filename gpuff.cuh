@@ -205,6 +205,8 @@ public:
     std::vector<float> max_ground_air_conc;
     std::vector<float> max_ground_conc;
     std::vector<float> max_xq;
+    std::vector<float> max_sigma_y;  // Sigma-y at max concentration
+    std::vector<float> max_sigma_z;  // Sigma-z at max concentration
     std::vector<int> max_dir_center_air;
     std::vector<int> max_dir_ground_air;
     std::vector<int> max_dir_ground;
