@@ -1,0 +1,1835 @@
+2.4 Atmospheric Release
+2.4.1 Wake Effects
+MACCS does not directly model building wake effects. Instead, if there is building wake, it is up 
+to the user to specify the initial plume width (SIGYINIT) and height (SIGZINIT) of the gaussian 
+plume segments that are emitted from building wakes. The initial plume dimensions must be larger 
+than 0.1 meters. To incorporate the initial plume dimensions into the Gaussian plume equations, 
+MACCS treats this initial dispersion by means of a virtual release point upwind of the actual 
+release location. See Section 2.5.4 for more information.
+One method to estimate the building wake dimensions from a ground-level release in the middle 
+of a downwind face of a building is to assume that 10% of the plume centerline concentrations 
+exist at the building edges and roofline, which corresponds to 2.15 standard deviations from the 
+plume centerline. Assuming that this method is reasonable for most releases, users commonly 
+estimate the initial plume dimensions with the following relationship:
+𝜎𝑦,𝑖𝑛𝑖𝑡 =
+𝑊𝑏
+4.3
+and 𝜎𝑧,𝑖𝑛𝑖𝑡 =
+𝐻𝑏
+2.15 (2-5)47
+Where 
+• 𝜎𝑦,𝑖𝑛𝑖𝑡 is the initial plume width (SIGYINIT),
+• 𝜎𝑧,𝑖𝑛𝑖𝑡 is the initial plume height (SIGZINIT),
+• 𝑊𝑏 is the width (m) of the building from which release occurs, and
+• 𝐻𝑏 is the height (m) of the building from which release occurs.
+2.4.2 Plume Rise
+Plume segments that are hot (contain appreciable sensible heat) or that contain gases that are less 
+dense than the surrounding atmosphere are buoyant and may rise to heights much greater than their 
+initial release height. However, plume liftoff depends on both the buoyancy flux and the height of 
+the building, and it may not occur if the prevailing windspeed at the time of release exceeds a 
+critical windspeed.
+If a plume is not captured within a building wake (i.e., if liftoff occurs), the amount of plume rise 
+depends on the initial atmospheric conditions of the plume segment during release. MACCS 
+models plume rise until it is terminated by any of the following conditions:
+• When the plume reaches its final amount of rise ∆ℎ𝑓, which depends on atmospheric 
+conditions and is defined below.
+• When the height of the plume centerline reaches the mixing height (height of the capping 
+inversion layer).
+• When one hour has elapsed since release of the plume segment began.
+To calculate the amount of plume rise, MACCS has two alternative plume rise models known as 
+the “improved” plume rise model and the “original” plume rise model, both of which are based on 
+the work of Briggs.
+5 For both models, the amount of plume rise also depends on the stability class
+and other factors described in more detail below in Section 2.4.2.2.
+The improved plume rise model is recommended over the original MACCS plume rise model 
+based on benchmarking analyses with a mechanistic model (the ALOFT-FT code created by 
+NIST). The improved plume rise model is much closer to matching the mechanistic model than 
+the original MACCS plume rise model. The user can select the improved Briggs model by setting 
+the MACCS variable BRGSMD to a value of “IMPROVED.”
+Both the original and improved plume rise models reflect buoyancy effects but not momentum 
+effects. If momentum effects are important, such as for an explosive release, users may instead be 
+able to specify initial plume dimensions (SIGZINIT, SIGYINIT) for the scenario.
+5 An unusual aspect of the two plume rise models is that the recommended “improved” plume rise model was published 
+earlier than the “original” model that is no longer recommended. Usually, more recent work represents an 
+improvement over previous work.48
+2.4.2.1 Plume Liftoff
+When wind speeds are high, a buoyant plume segment that is released into a building wake is 
+unable to escape from the wake. In MACCS, escape of a buoyant plume segment from a building 
+wake is governed by a liftoff criterion that was originally proposed by Briggs (1973) and validated 
+by experiments performed at the Warren Spring Laboratory in Great Britain (Hall & Waters, 1986). 
+The criterion states that plume rise occurs only when the wind speed upon release of the segment 
+is less than a critical wind speed 𝑢𝑐
+that is calculated using the following formula:
+𝑢𝑐 = (
+9.09𝐹
+𝐻𝑏
+)
+1
+3
+(2-6)
+Where
+• Hb is the height (m) of the building from which the plume escapes (BUILDH), and
+• F is the buoyancy flux (m
+4
+/s3
+) of the plume segment, as calculated below in Section 2.4.2.3.
+While the value 9.09 is fixed in the code, MACCS has a linear scaling factor (SCLCRW) that acts 
+as a multiplier on the critical wind speed. The user can change SCLCRW to make liftoff more or 
+less likely.
+According to the plume liftoff criterion, there is little possibility of plume liftoff due to sensible 
+heat when the release rate is less than 100 kW for a typical, 50-m high, reactor or containment 
+building. When the rate of release of sensible heat is 1 MW, the plume only lifts off when wind 
+speed is less than approximately 1.2 m/s. Larger release rates of sensible heat, like 10 MW, produce 
+lift off under most weather conditions and sites.
+2.4.2.2 Plume Rise Equations
+MACCS models plume rise when the plume liftoff criterion is met. If plume rise occurs, plume 
+rise also depends on atmospheric stability. Unlike dispersion rate models, plume rise models
+assume atmospheric stability and windspeed do not vary once release of the plume segment 
+reference location begins.
+There are two plume rise models. The user can choose the improved model by giving the MACCS 
+parameter BRGSMD a value of “IMPROVED” or can choose the original model by BRGSMD a 
+value of “ORIGINAL.” Both models treat plume rise using formulae for a buoyant plume.
+Two major characteristics of plume rise are the plume trajectory during plume rise, ∆ℎ(𝑥), and the 
+final amount of plume rise, ∆ℎ𝑓, both of which are defined relative to the initial release height 
+(PLHITE). Both models define the final amount of plume rise, ∆ℎ𝑓, and in most cases, the models 
+also define the plume rise trajectory, ∆ℎ(𝑥). The exception is the original Briggs model, which
+does not model a plume rise trajectory for stable atmospheric conditions (stability class E or F).
+Instead, the model assumes that the plume reaches its final amount of rise when it begins to travel 
+downwind. Under stable conditions, the actual plume rise trajectory likely occurs quickly relative 
+to its downwind transport and its trajectory is unlikely to significantly impact downwind doses. 49
+When MACCS models plume trajectory ∆ℎ(𝑥), it uses the Briggs “two-thirds law” for bent-over 
+plumes (Hanna, Briggs, & Hosker, 1982):
+∆ℎ(𝑥) =
+1.6𝐹
+1
+3𝑥
+2
+3
+𝑢
+Briggs improved model: Any stability class 
+Briggs original model: Stability class A-D (2-7)
+where 
+• ∆ℎ(𝑥) is the plume rise (m), as measured from the initial release height (PLHITE),
+• x is downwind distance (m),
+• F is the buoyancy flux (m
+4
+/s3
+) of the plume segment, as calculated below in 
+Section 2.4.2.3,
+• 𝑢 is the wind speed (m/s) averaged between the initial release height and the final 
+centerline height (ℎ𝑓), which is discussed below in Section 2.4.2.4
+MACCS assumes plumes do not penetrate the boundary mixing layer. If the final plume centerline 
+height is calculated to be higher than the mixing layer, or if plume rise continues after one hour, 
+MACCS truncates plume rise before it reaches the final rise height determined in the plume rise 
+models.
+For unstable or neutral atmospheric conditions (stability classes A-D), the MACCS improved
+plume rise model determines the amount of plume rise using the following formulae based on the 
+work of Briggs (1970):
+∆ℎ𝑓 =
+{
+ 
+ 
+38.7 ∙ 𝐹
+0.6
+𝑢
+𝑖𝑓 𝐹 ≥ 55 𝑚4
+𝑠
+3 ⁄
+21.4 ∙ 𝐹
+0.75
+𝑢
+𝑖𝑓 𝐹 < 55 𝑚4
+𝑠
+3 ⁄
+(2-8)
+In the original MACCS plume rise model, the following equation determines the amount of plume
+rise for stability classes A through D (Briggs, 1975):
+∆ℎ𝑓 =
+300𝐹
+𝑢
+3
+(2-9)
+While the values 38.7, 21.4, and 300 are fixed in the code, MACCS has a linear scaling factor 
+(SCLADP) for the plume rise under unstable and neutrally stable conditions (stability classes AD)
+that acts as a multiplier on the final plume rise, ∆ℎ𝑓. The user can change SCLADP to decrease 
+or increase the final amount of plume rise, assuming that plume rise is not limited by either the 
+mixing layer height or by the one-hour limit. 
+Use of the SCLADP parameter for plume rise under neutral or unstable conditions is appropriate 
+with the MACCS original plume rise model, in which final plume rise under neutral or stable 
+conditions is proportional to 𝐹
+𝑢
+3 (cf., Equation 80 of Briggs [1975]), where the leading coefficient 50
+can vary from 200 to 400, and for which the original MACCS plume rise model assumes a value 
+of 300 based on the discussion in Section 5.1 of Briggs (1975). When using the original MACCS 
+plume rise model, a scale factor from 0.36 to 1.8 results in a range of about 100 to 500 for the 
+leading coefficient.
+When atmospheric conditions are stable (stability classes E or F), the amount of plume rise, ∆ℎ𝑓,
+in the improved Briggs model depends on the downwind distance 𝑥𝑓 where the plume is expected 
+to reach its final rise height, which in turn depends on the buoyancy flux F. The plume rise ∆ℎ𝑓
+during stable conditions in the improved Briggs model is the following:
+∆ℎ𝑓 =
+{
+ 
+ 
+ 
+ 
+2.4 (
+𝐹
+𝑢𝑆
+)
+1
+3
+𝑖𝑓 𝑥𝑓 > 1.84
+𝑢̄
+√𝑆
+Equation (𝟐-𝟖) 𝑖𝑓 𝑥𝑓 ≤ 1.84
+𝑢̄
+√𝑆
+(2-10)
+Where
+𝑥𝑓 = {
+119 ∙ 𝐹
+0.4
+𝑖𝑓 𝐹 ≥ 55 𝑚4
+𝑠
+3 ⁄
+49 ∙ 𝐹
+0.625 𝑖𝑓 𝐹 < 55 𝑚4
+𝑠
+3 ⁄
+(2-11)
+And where 
+• ∆ℎ𝑓 is the final amount of plume rise (m), starting from the initial release height (PLHITE),
+• F is the buoyancy flux (m
+4
+/s3
+) of the plume segment, as calculated below in Section 2.4.2.3,
+• 𝑢 is the wind speed (m/s) averaged between the initial release height and centerline height 
+(h), which is also calculated below in Section 2.4.2.4, 
+• S is the stability parameter (s
+-2
+), which is fixed in the MACCS code (5.04  10-4
+s
+-2
+for 
+stability class E and 1.27  10-3
+s
+-2
+for stability class F) and is also calculated later in Section 
+2.4.2.5, and 
+• 𝑥𝑓 is the downwind distance (m) where the plume reaches its final rise height.
+When the downwind distance where the plume levels off is small (i.e., 𝑥𝑓 ≤ 1.84 𝑢
+√𝑆
+), MACCS 
+assumes the plume behaves identically to the improved Briggs model for unstable conditions in 
+Equation (2-8). When 𝑥𝑓 > 1.84 𝑢
+√𝑆
+, which is the more likely case for stable atmospheric 51
+conditions, MACCS models plume rise according to formula shown in Equation (2-10) based on 
+the work of Briggs (Hanna, Briggs, & Hosker, 1982)6
+. 
+In the MACCS original Briggs model, during stable atmospheric conditions (stability class E or 
+F), MACCS models plume rise using a single, slightly modified version of the previous equation:
+∆ℎ𝑓 = 2.6 (
+𝐹
+𝑢𝑆
+)
+1
+3
+(2-12)
+While the values 2.4 and 2.6 are fixed in the code, MACCS has a linear scaling factor (SCLEFP) 
+for the plume rise under stable (stability classes E or F) conditions that acts as a multiplier on the 
+amount of plume rise, ∆ℎ𝑓. Briggs (1975) reports that the leading coefficient for plume rise under 
+stable conditions can range from 1.8 (less plume rise) to 3.4 (more plume rise). With a base value 
+of 2.4 for the improved model, this translates to a range for SCLEFP of 0.75 to 1.4.
+2.4.2.3 Buoyancy Flux
+Buoyancy flux is an important value that MACCS uses to calculate the plume liftoff, plume 
+trajectory, and the final amount of plume rise. MACCS has two methods to calculate the buoyancy 
+flux F, which are named the “Power Model,” and the “Density and Flow Model.” The user can 
+select the “Power Model” by setting the MACCS variable PLMMOD to a value of “HEAT”. In 
+the Power Model, MACCS calculates buoyancy flux F from the sensible heat release rate 𝑄̇
+(PLHEAT). The buoyancy flux F is related to the sensible heat release rate 𝑄̇ according to the 
+following formula (Briggs G. A., 1965):
+𝐹 =
+𝑔
+𝜋𝐶𝑝𝜌𝑎𝑇𝑎
+𝑄̇
+(2-13)
+Where 
+• F is the buoyancy flux (m
+4
+/s3
+) of the plume segment
+• 𝑔 is acceleration due to gravity (9.8 m/s2
+)
+• 𝐶𝑝 is specific heat of air at constant pressure at ambient temperature and pressure (1.005 
+kJ/kg-K) 
+• 𝜌𝑎 is density of air at ambient temperature and pressure (1.178 kg/m3
+) 
+• 𝑇𝑎 is ambient temperature (300 K)
+• 𝑄̇ is sensible heat release rate (watts) of a plume segment, as given by the parameter 
+PLHEAT
+6 Note that although MACCS uses a coefficient of 2.4, there are a number of different values for the value of the 
+leading coefficient. Briggs (1970) Equation 4 gives a value of 2.9. Table 4 of Briggs (1975) shows a range of values 
+from 1.8 to 3.4 and recommends a value of 2.6, which is the value recommended in Equation 2-19 of Hanna, Briggs, 
+& Hosker (1982). This is the value used in the MACCS2 1.12 original plume rise model. Because the amount of plume 
+rise is linear with respect to the leading coefficient, adopting the more common coefficient would result in a slight 
+increase in plume rise.52
+MACCS assumes standard atmospheric conditions (i.e., 300 K and 1 atm) for the buoyancy flux.
+As such, the buoyancy flux simplifies to the following:
+𝐹 = 8.79  10−6
+∙ 𝑄̇ (2-14)
+Where the coefficient of 8.79  10-6
+is fixed in the code. Alternatively, the “Density and Flow 
+Model” can calculate the buoyancy flux F from the density (PLMDEN) and mass flow rate 
+(PLMFLO) of the release. The user can select this model by setting the MACCS variable 
+PLMMOD to a value of “DENSITY.” In this model, MACCS calculates the buoyancy flux F with 
+the following formula:
+𝐹 =
+𝑔
+𝜋
+[1 −
+𝜌
+𝜌𝑎
+]
+𝑚̇
+𝜌
+(2-15)
+Where 
+• 𝜌 is the density of the plume segment (kg/m3
+), as given by the parameter PLMDEN,
+• 𝑚̇ is the mass flow rate of the plume segment (kg/s), as given by the parameter PLMFLO,
+and
+• 𝜌𝑎 and 𝑔 are the same as before.
+Unlike the Power Model, this method is also able to account for the release of gases that are less 
+dense than air, such as hydrogen and steam.
+2.4.2.4 Average Windspeed
+Average windspeed is an important value that MACCS uses to calculate both near-field plume 
+trajectory and the final amount of plume rise. Since windspeeds generally increase with altitude, 
+if the plume rise models were to use surface windspeeds they would overestimate plume rise and 
+produce nonconservative ground-level concentrations near the source. Since this could produce a 
+significant underestimation of radiation exposures, for purposes of calculating plume rise, MACCS 
+uses a windspeed averaged between the windspeed at the point of release and the windspeed at the 
+final plume centerline height. The windspeed as a function of height is represented as follows
+(Hanna, Briggs, & Hosker, 1982):
+𝑢 = 𝑢0 (
+ℎ
+ℎ′)
+𝑝
+(2-16)
+where
+• 𝑢 the windspeed (m/s) at the height h,
+• 𝑢0 is the surface windspeed (m/s), as provided by the weather data and usually represents 
+a 10-m election above ground level, 
+• ℎ′ is a reference height of 10 m, which is fixed in the code, and
+• 𝑝 is a dimensionless parameter that varies with stability class and surface roughness as 
+shown in Table 2-3.53
+Because the maximum intended value of h in Equation (2-16) is 200 m, MACCS assumes that
+windspeeds higher than 200 m are uniform. While Table 2-3 shows values for both urban and rural 
+surfaces, MACCS only uses p values based on rural surfaces, which are fixed in the code. 
+Table 2-3 Estimates of the Exponent p in Equation (2-16) for Six Stability Classes and Two 
+Surface Roughnesses (Hanna, Briggs, & Hosker, 1982)
+Stability Class A B C D E F
+Urban Surfaces 0.15 0.15 0.20 0.25 0.40 0.60
+Rural Surfaces 0.07 0.07 0.10 0.15 0.35 0.55
+To calculate the final plume height ∆ℎ𝑓
+(𝑢) in Equations (2-8), (2-9), (2-10), or (2-12), MACCS 
+calculates an average value of 𝑢 in three steps:
+(1). MACCS first makes a first-order estimate of the final centerline height ℎ𝑓 just using 
+the surface windspeed 𝑢0 and the equation for ∆ℎ𝑓, that is, ℎ𝑓,1 = ℎ0 + ∆ℎ𝑓
+(𝑢0
+) where 
+ℎ0 is the initial release height of the plume segment (PLHITE).
+(2). Then MACCS calculates the windspeed 𝑢1 at the height ℎ𝑓,1 using Equation (2-16).
+(3). Finally, MACCS estimates an average windspeed 𝑢 over this range by averaging 𝑢0
+and 𝑢1 [i.e., (𝑢0 + 𝑢1)/2 ], which are the windspeeds at heights ℎ0 and ℎ𝑓,1.
+Using the average windspeed 𝑢 from this process, the MACCS calculates both the plume rise 
+trajectory ∆ℎ(𝑥) shown in Equation (2-7) and the final plume height ∆ℎ𝑓
+(𝑢) shown in either 
+Equation (2-8), (2-9), (2-10), or (2-12), depending on the stability class and the selected plume rise 
+model.
+2.4.2.5 Stability Parameter
+The stability parameter, S, is defined as the following:
+𝑆 =
+𝑔
+𝑇𝑎
+(
+𝜕𝑇𝑎
+𝜕𝑧 +
+𝑔
+𝑐𝑝
+) (2-17)
+where 
+• g is the acceleration due to gravity (9.8 m/s2
+), 
+• 𝑇𝑎 is the ambient temperature (288 K), 
+• 𝜕𝑇𝑎⁄𝜕𝑧 is the ambient temperatures lapse rate (K/m), 
+• 𝐶𝑝 is the specific heat of air at constant pressure (1.005 kJ/kg-K), and 
+• 𝑔⁄𝐶𝑝 is the dry adiabatic lapse rate (0.98 K/100 m)54
+The midpoint of the temperature lapse rates 𝜕𝑇𝑎⁄𝜕𝑧 are 0.5 K/100 m for stability class E, and 
+2.75 K/100 m for stability class F (Regulatory Guide 1.23 [NRC, 2007]). Therefore, the stability 
+parameters S for stability classes E and F are 5.04  10-4
+s
+-2
+and 1.27  10-3
+s
+-2
+, respectively. These 
+values are fixed in the MACCS code.
+2.5 Atmospheric Dispersion
+During downwind transport (x-direction), atmospheric turbulence causes plume segments to 
+expand laterally (y-direction) and vertically (z-direction) relative to the plume direction. Vertical 
+expansion of the plume is increased by surface roughness and is constrained by the ground and by 
+the temperature structure of the atmosphere (i.e., location of inversion layers). Lateral expansion 
+of the plume may be increased from its centerline trajectory by fluctuations in wind direction called 
+plume meander and is unconstrained along the y-direction.
+MACCS models plume dispersion during downwind transport using a straight-line Gaussian 
+plume segment model. Gaussian plume dispersion assumes that during its downwind transport, the 
+air concentration of gas molecules and aerosol particles can be modeled as a random walk that 
+generates a normal distribution. Even though plume segments cannot change direction after they 
+have been released, the gaussian model is useful because it is simple and computationally efficient.
+The Gaussian plume equations require two spatially dependent dispersion parameters, 𝜎𝑦
+(𝑥) and 
+𝜎𝑧
+(𝑥), to estimate the atmospheric dispersion. These dispersion parameters are the standard 
+deviations of gaussian distribution in the lateral and vertical directions and thereby determine the 
+shape of the plume. The Gaussian plume equations do not consider dispersion in the downwind 
+x-direction. 
+For the purpose of calculating lateral and vertical dispersion, MACCS treats the plume segment as 
+being located entirely at its reference location (REFTIM), which is a fixed point along the length 
+of the plume segment specified by the user. As such, MACCS does not calculate a time-varying 
+air concentration at an arbitrary location (𝑥, 𝑦, 𝑧) during plume passage. Instead, the passage of 
+the reference location is used to calculate the entire time-integrated air concentration 𝜒(𝑥, 𝑦, 𝑧). 
+The user can choose to model the lateral and vertical dispersion parameters either according to a 
+power-law model or based on user-supplied lookup tables, both of which depend on stability class
+and downwind distance. As an option to model long-range dispersion, the user can also implement 
+a time-based dispersion model for lateral dispersion after a specified distance downwind.
+2.5.1 Gaussian Plume Equations
+The Gaussian plume equations describe the lateral and vertical profile of a plume segment.
+MACCS assumes that the dispersion of the plume forms a normal distribution in both of these 
+directions, where the lateral dispersion parameter (𝜎𝑦) defines the shape in the crosswind direction 
+and the vertical dispersion parameter (𝜎𝑧) defines the shape in the vertical direction. When not 
+constrained by the ground or by inversion layers, the Gaussian plume equation has the following 
+form (Turner, 1970):55
+𝜒(𝑥, 𝑦, 𝑧) =
+𝑄
+𝑢
+∙ 𝑓𝐺
+(𝑦) ∙ 𝑓𝐺
+(𝑧 − ℎ)
+𝜒(𝑥, 𝑦, 𝑧)
+=
+𝑄
+𝑢
+∙
+1
+√2𝜋𝜎𝑦
+(𝑥)
+𝑒𝑥𝑝 [−
+1
+2
+(
+𝑦
+𝜎𝑦
+(𝑥)
+)
+2
+]∙
+1
+√2𝜋𝜎𝑧
+(𝑥)
+𝑒𝑥𝑝 [−
+1
+2
+(
+𝑧 − ℎ
+𝜎𝑧
+(𝑥)
+)
+2
+]
+(2-18)
+Where
+• 𝜒(𝑥, 𝑦, 𝑧) is the time-integrated air concentration (Bq∙s/m3
+) at downwind location 
+(𝑥, 𝑦, 𝑧),
+• 𝑄 is the activity (Bq) entering the spatial element. The released activity 𝑄0 for a plume 
+segment is the product of RELFRC and CORINV, modified by CORSCA,
+• u is the windspeed (m/s), as given by the weather data,
+• 𝑓𝐺
+(𝑦) is the Gaussian distribution (m
+-1
+) representing lateral dispersion,
+• 𝑓𝐺
+(𝑧 − ℎ) is the Gaussian distribution (m
+-1
+) representing vertical dispersion, with a 
+centerline height h,
+• h is the height of the plume centerline (m), as determined by the plume rise equations
+discussed in Section 2.4.2.
+• 𝜎𝑦
+(𝑥) is the lateral dispersion parameter representing one standard deviation of the
+Gaussian distribution (m), and
+• 𝜎𝑧
+(𝑥) is the vertical dispersion parameter representing one standard deviation of the
+Gaussian distribution (m).
+The lateral and vertical dispersion parameters (σy and σz) are calculated by the user-selected 
+dispersion rate model, discussed in Section 2.5.3. MACCS does not use Equation (2-18) because 
+it allows for infinite expansion in the vertical direction. Instead, MACCS replaces the boundless 
+Gaussian distribution in the vertical direction with a distribution that is constrained by the ground 
+and the capping inversion layer, as shown in Equation (2-19): 
+𝜒(𝑥, 𝑦, 𝑧) =
+𝑄
+𝑢
+∙ 𝑓𝐺(𝑦) ∙ 𝜓(𝑧) for 𝑧 ∈ [0, 𝐻]
+(2-19)
+and where
+• 𝜓(𝑧) is a vertical distribution (m
+-1
+) of the plume segment discussed below,
+• H is the height (m) of the capping inversion layer (i.e., the height of the mixing layer), and
+• 𝑄, u, and 𝑓𝐺(𝑦) are the same as before.56
+At short distances, MACCS treats the vertical distribution 𝜓(𝑧) as being a Gaussian distribution, 
+but accounts for the ground and the inversion layer as vertically bounding by treating them as 
+reflecting boundaries. In this case, MACCS approximates the Gaussian distribution (m
+-1
+) in the 
+vertical direction between [0, 𝐻] using the following equation:
+𝜓(𝑧) =
+1
+√2𝜋𝜎𝑧
+∑ {𝑒𝑥𝑝 [−
+1
+2
+(
+𝑧 − ℎ + 2𝑛𝐻
+𝜎𝑧
+)
+2
+]
+100
+𝑛=−100
++ 𝑒𝑥𝑝 [−
+1
+2
+(
+𝑧 + ℎ + 2𝑛𝐻
+𝜎𝑧
+)
+2
+]}
+(2-20)
+MACCS uses the summation from -100 to +100 to approximate infinite reflections. MACCS uses 
+Equation (2-20) from the time of release until the plume segment is well-mixed between the ground 
+and inversion layer (i.e., uniform in the vertical direction). Once the plume segment is well-mixed, 
+MACCS has the vertical distribution 𝜓(𝑧) transition from Equation (2-20) to a uniform 
+distribution:
+𝜓(𝑧) =
+1
+𝐻
+ for 𝑧 ∈ [0, 𝐻]
+(2-21)
+MACCS assumes deposition to the ground does not affect the shape of either vertical distribution. 
+At each radial interval along the plume's trajectory, MACCS tests for a well-mixed vertical 
+distribution according to 𝐻
+𝜎𝑧
+< 0.03. This criterion occurs when Equations (2-20) and (2-21) agree
+to within approximately 1%. When this criterion is met, MACCS switches the vertical distribution 
+𝜓(𝑧) from Equation (2-20) to Equation (2-21). Because Equation (2-21) is independent of 𝜎𝑧
+, 
+MACCS ceases to calculate 𝜎𝑧 after this transition.
+In Section 2.7.2, MACCS uses Equation (2-19) to calculate dry deposition. In Section 2.8, MACCS 
+uses Equation (2-19) to calculate the time-integrated centerline air concentrations 𝜒(𝑧 = ℎ̅)
+𝑗
+and 
+ground-level air concentration 𝜒(𝑧 = 0)𝑗
+for radial interval j. See these sections for more 
+information.
+2.5.2 Dispersion Data
+The rate at which materials disperse in the atmosphere depends strongly on atmospheric 
+turbulence, which varies on stability class. Pasquill suggested curves for height and angular spread 
+according to stability classes and extrapolated this information to 100 km. Gifford used these data 
+to develop dispersion parameter curves with downwind distance for each stability class (Turner, 
+1970). As modified, these curves are presented in Figure 2-3 (Gifford F. A., 1976). 57
+Figure 2-3 Dependence of σy and σz on Distance for the Six Pasquill-Gifford Stability Classes (A 
+Through F)
+The solid lines in Figure 2-3 depict the range of the experimental data; dashed lines are 
+extrapolations. Several other field studies have been conducted to develop dispersion parameter 
+systems. These include studies at Brookhaven (Singer & Smith, 1966), St. Louis (McElroy & 
+Pooler, 1968), and Julich Nuclear Research Center in Germany (Vogt, 1977; Bundesminister des 
+Innern, 1981; Geiss, 1982; Kiefer et al., 1979). Dispersion parameter systems from these field 
+studies are discussed in Section 2.3.3.2 of Till & Meyer (1983).
+In the early 1990’s, the U.S. Nuclear Regulatory Commission and the Commission of European 
+Communities (CEC) conducted a series of expert elicitations to obtain distributions for uncertain 
+variables used in health consequence analyses related to accidental release of nuclear material.
+Harper et al. (1995) document the expert elicitation that provides a technical basis for defining the 
+plume lateral and vertical dispersion for a range of stability conditions, a range of surface 
+roughness corresponding to several land-use categories, and downwind distances ranging from 
+500 m to 30 km.
+2.5.3 Dispersion Rate Models
+The dispersion parameters y and z in the Gaussian plume equations are important values that 
+determine how quickly the plume disperses as it travels downwind. MACCS has two main methods 
+to determine y and z. The user can choose either a power-law function or user-supplied lookup 
+tables to model the dispersion parameters, both of which depend on distance and stability class. In 
+addition, as an option for modeling long-range dispersion the user can switch the lateral dispersion 
+z (m) y (m) Distance Downwind (km) Distance Downwind (km)58
+rate from distance-based dispersion 𝜎𝑦
+(𝑥) to time-based dispersion 𝜎𝑦
+(𝑡) at a specified distance 
+downwind.
+In addition to the dispersion rate models, linear scaling factors for dispersion (YSCALE, ZSCALE) 
+discussed in Section 2.5.5 and the plume meander models (PLMMOD) discussed in Section 2.5.6
+can also affect dispersion. 
+The rate at which materials disperse in the atmosphere depends strongly on atmospheric 
+turbulence, which varies greatly with stability class. To update the dispersion rate model based on 
+new atmospheric conditions, to account for the initial dispersion from a building wake, and to 
+switch from distance- to time-based dispersion, MACCS uses a concept known as a “virtual source 
+location” described in Section 2.5.4.
+2.5.3.1 Power Law Option
+The user can choose to use the power-law function by setting a value of zero to the number of 
+distances defined in the lookup table option (NUM_DIST). The dispersion parameter power-law 
+functions for y and z have the following forms:
+𝜎𝑦𝑖(𝑥) = 𝑎𝑦𝑖 ∙ (
+𝑥
+𝑥0
+)
+𝑏𝑦𝑖
+𝜎𝑧𝑖(𝑥) = 𝑎𝑧𝑖 ∙ (
+𝑥
+𝑥0
+)
+𝑏𝑧𝑖 (2-22)
+Where
+• 𝜎𝑦𝑖 is the lateral dispersion parameter for stability class, i, for stability classes A-F. This 
+parameter is the standard deviation of a Gaussian distribution (m).
+• 𝜎𝑧𝑖 is the vertical dispersion parameter for stability class, i. This parameter is the standard 
+deviation of a Gaussian distribution (m).
+• 𝑥 is the downwind distance (m) from the virtual source. 
+• 𝑥0 is a fixed unit of length, 1 m, and ensures that the term 𝑥⁄𝑥0
+is dimensionless.
+• 𝑎𝑦𝑖 and 𝑎𝑧𝑖 are the linear coefficients (m) in the power-law expressions for lateral 
+dispersion and vertical dispersion, respectively, for stability class, i. These values are 
+specified by the input parameters CYSIGA and CZSIGA, respectively.
+• 𝑏𝑦𝑖 and 𝑏𝑧𝑖 are the exponentials (dimensionless) in the power-law expressions for lateral 
+dispersion and vertical dispersion, respectively, for stability class, i. These values are 
+specified by the input parameters CZSIGB and CZSIGB, respectively.59
+Tadmor & Gur (1969) constructed power-law fits to the Pasquill-Gifford (P-G) curves discussed 
+in Section 2.5.2. NUREG-1150 and the original MACCS Sample Problem A (NRC, 1990, 
+Appendix A) used these values, which are provided in Table 2-4. 
+Table 2-4 Tadmor and Gur Dispersion Coefficients for Equation (2-22) for a distance range of 0.5 
+to 5 km.
+Stability Class 𝝈𝒚𝒊 𝝈𝒛𝒊
+P-G i 𝒂𝒚𝒊 𝒃𝒚𝒊 𝒂𝒛𝒊 𝒃𝒛𝒊
+A 1 0.3658 0.9031 0.00025 2.125
+B 2 0.2751 0.9031 0.0019 1.6021
+C 3 0.2089 0.9031 0.2 0.8543
+D 4 0.1474 0.9031 0.3 0.6532
+E 5 0.1046 0.9031 0.4 0.6021
+F 6 0.0722 0.9031 0.2 0.6020
+*The values of these constants reflect correction of typographical errors identified by Dobbins (1979).
+More recently, NUREG/CR-7161 (Bixler, Clauss, & Morrow, 2013) constructed power-law fits to 
+dispersion data from the NRC / CEC joint expert elicitation (Harper, et al., 1995). The SOARCA 
+project (NUREG-1935; NRC, 2012) used these values, which are provided in Table 2-5:
+Table 2-5 NUREG/CR-7161 Dispersion Coefficients for Equation (2-22), Median Values of 
+Expert Elicitation (Bixler, Clauss, & Morrow, 2013)7
+Stability Class 𝝈𝒚𝒊 𝝈𝒛𝒊
+P-G i 𝒂𝒚𝒊 𝒃𝒚𝒊 𝒂𝒛𝒊 𝒃𝒛𝒊
+A 1 0.7507 0.866 0.0361 1.277
+B 2 0.7507 0.866 0.0361 1.277
+C 3 0.4063 0.865 0.2036 0.859
+D 4 0.2779 0.881 0.2636 0.751
+E 5 0.2158 0.866 0.2463 0.619
+F 6 0.2158 0.866 0.2463 0.619
+7 Note that the same parameter values are assigned for classes A/B and for classes E/F. Use of the NUREG/CR-7161 
+correlations would appear to result in effectively four stability classes: unstable (A/B), slightly unstable (C), neutral 
+(D), and stable (E/F/G).60
+2.5.3.2 Lookup Table Option
+The lookup table option allows the user to define a lookup table as an alternative to power-law 
+functions for y and z. If tracer experiments are available for a site, it may be possible to process 
+the data into tables of lateral and vertical standard deviations (y and z) in this way.
+To use the lookup table option, the user sets a value for the number of distances to be defined in 
+the lookup table (NUM_DIST) between 3 and 50. The table requires user-defined distances and 
+dispersion values. This includes lateral and vertical dispersion values (y and z) for each stability 
+class (A to F), for a total of twelve dispersion values at each specified distance.
+The lookup table option uses an interpolation technique known as a Hermite cubic spline as 
+discussed by Kahaner, Moler, & Nash (1989). This approach avoids the numerical instabilities 
+observed with other cubic spline fits. The lookup table option does not extrapolate beyond the user 
+supplied distances, and instead simply uses the dispersion value of the closest distance that is 
+specified in the table.
+2.5.3.3 Time-Based Option
+As an option for modeling long-range dispersion, the user can switch the lateral dispersion 
+parameter from distance-based dispersion 𝜎𝑦
+(𝑥) (according to the power law equation or the 
+lookup tables previously discussed), to time-based dispersion 𝜎𝑦
+(𝑡) at a certain distance 
+downwind. The user can choose the time-based dispersion model by setting a value of “LRTIME”
+to the parameter DISPMD. To only use the distance-based dispersion (either power law option or 
+the lookup-table option), the user sets a value of “LRDIST” for the parameter DISPMD. When 
+mapping dispersion onto the spatial grid, a time-based dispersion model updates dispersion when 
+a change in windspeed occurs, whereas a distance-based dispersion updates dispersion when a 
+change in stability class occurs.
+Time-based dispersion requires the user to select the downwind distance at which the code 
+switches from distance-based dispersion to time-based dispersion (CYDIST). The user must also 
+select a linear coefficient, 𝑎𝑐
+, for the time-based dispersion model (CYCOEF). The default value 
+for the time-based linear coefficient and the transition distance are 0.5 m/s and 30 km, respectively, 
+based on a recommendation by Hanna (2002). The virtual source concept (as discussed in Section
+2.5.4) is used to ensure that there is no discontinuity in switching from distance- to time-based 
+dispersion.
+When the user implements power law option at close distances, the following equation describes 
+the switch from distance-based dispersion to time-based dispersion: 
+𝜎𝑦 = {
+𝑎 (
+𝑥
+𝑥0
+)
+𝑏
+𝑥 < 𝑥𝑐
+𝑎𝑐
+𝑡 𝑥 ≥ 𝑥𝑐
+(2-23)
+Where 
+• 𝜎𝑦 is the lateral dispersion parameter (m) in the crosswind direction,61
+• a is the linear coefficient (m) for distance-based lateral dispersion for a given stability 
+class,
+• b is the exponent (dimensionless) for distance-based lateral dispersion for a given 
+stability class,
+• 𝑎𝑐
+is the linear coefficient for time-based lateral dispersion (m/s), specified by the input 
+parameter CYCOEF,
+• 𝑥0 is unity (m) used to make the term 𝑥/𝑥0 dimensionless, 
+• 𝑥𝑐
+is the distance from the source (m) at which the use of the lateral dispersion model 
+switches from distance- to time-based, specified by the input parameter CYDIST,
+• 𝑥 is the downwind distance from the virtual source (m), and
+• t is the time since the plume was released from the virtual source (s).
+Alternatively, the user can implement a lookup table for distances less than CYDIST.
+When the time-based dispersion model is enabled, time-based dispersion is implemented at 
+distances greater than or equal to 𝑥𝑐 as shown in Equation (2-23). However, distance-based 
+dispersion is always applied within the first ring, regardless of the value of CYDIST. 
+Hanna (2002) recommends that dispersion beyond 30 km be based on time rather than distance. 
+The time-based dispersion option allows the user to implement Hanna’s recommendation, and the 
+time-based dispersion model is closer to the treatment used in some Gaussian puff codes. The basis 
+for the recommended distance, 30 km, is that the expert elicitation only considered distances as far 
+as 30 km (Harper, et al., 1995) and that several Gaussian puff codes switch to time-based 
+dispersion at about 30 or 40 km (Draxler & Hess, 1997). The distances required to model 
+consequences for a nuclear reactor accident can extend considerably farther than 30 km, a 
+minimum of 80 km. 
+2.5.4 Virtual Source Calculation
+The dispersion rate models use a concept known as a “virtual” source location. A virtual source 
+location is a release point at a hypothetical upwind location. The location of this virtual source 
+depends on the dispersion rate model and is based on the dispersion at a specific plume location.
+With these boundary conditions, the dispersion rate models can calculate downwind lateral 
+dispersion (y) and vertical dispersion (z) according to the downwind distance (x; or release time 
+[t]) from the virtual source location. The downwind distance (x) and release time (t) from the 
+virtual source location are used only to calculate downwind dispersion. Plume locations are always 
+expressed relative to the release point, which is the center point of the polar-coordinate 
+computational grid. The virtual source location is generally different for σy and σz.
+MACCS uses these boundary conditions and the associated virtual source location for several 
+different purposes. One purpose is to update dispersion based on changing atmospheric conditions.62
+The distance-based dispersion parameters 𝜎𝑦
+(𝑥) and 𝜎𝑧
+(𝑥) depend on stability class, and the 
+stability class changes discretely as the plume travels downwind. As such, MACCS allows the rate 
+of plume expansion to also change discretely according to the updated atmospheric conditions, in 
+a piecewise continuous fashion.
+In order to maintain the correct amount of plume dispersion when changing from one set of 
+atmospheric conditions to the next, MACCS calculates a new virtual source location. See Figure 
+2-4 for a representation of this piecewise continuous dispersion of the plume.
+Figure 2-4 Growth of y During Three Time Periods Characterized by Different Atmospheric 
+Stabilities i, j, and k
+MACCS also uses the virtual source location concept to estimate dispersion after building wake 
+effects from the initial release. The initial plume height (SIGZINIT) and plume width (SIGYINIT) 
+caused by building wake are user inputs. These initial plume dimensions at a downwind distance 
+of zero meters act as the boundary conditions for calculating the virtual source location.
+Another example of where MACCS uses a virtual source term is to switch from a distance-based 
+dispersion parameter 𝜎𝑦
+(𝑥) to time-based dispersion 𝜎𝑦
+(𝑡). Like the changes in atmospheric 
+conditions, the switch to time-based dispersion is a discrete change. The boundary condition for 
+the virtual source location is the specific amount of plume dispersion (previously determined by 
+one of the distance-based dispersion models) at a user specified downwind location (CYDIST).
+From this boundary condition, the time-based dispersion model calculates downwind dispersion 
+based on the time (t) relative to the time it was released from the virtual source. Lateral dispersion 
+𝜎𝑦
+(𝑡) does not depend on the stability class, and so after a switch to time-based dispersion, the 
+virtual source time is constant. Note, however, that time-based dispersion is not constant with 63
+distance when there are changes in windspeed. Therefore, the plume shape over the spatial grid 
+can appear to have discrete changes like those shown in Figure 2-4, although for a different reason.
+The following shows how MACCS uses the power law option for calculating the new source 
+distances (i.e., the downwind distances from the virtual source) based on a change in stability class.
+Let i be the stability class before the change in atmospheric conditions and 𝑥𝑦𝑖 and 𝑥𝑧𝑖 be the source 
+distances under the original conditions (i.e., the downwind distances to the virtual source just 
+before the stability class changes). Let j be the stability class after the change, and 𝑥𝑦𝑗 and 𝑥𝑧𝑗 be 
+the virtual source distances under the updated conditions. To ensure continuity, 𝜎𝑦𝑖 must be equal 
+to 𝜎𝑦𝑗 and 𝜎𝑧𝑖 must be equal to 𝜎𝑧𝑗 at the transition. Thus,
+𝑎𝑖(𝑥𝑦𝑖
+)
+𝑏𝑖 = 𝜎𝑦𝑖 = 𝜎𝑦𝑗 = 𝑎𝑗 (𝑥𝑦𝑗
+)
+𝑏𝑗
+𝑐𝑖(𝑥𝑧𝑖
+)
+𝑑𝑖 = 𝜎𝑧𝑖 = 𝜎𝑧𝑗 = 𝑐𝑗 (𝑥𝑧𝑗
+)
+𝑑𝑗
+(2-24)
+These equations can be solved explicitly for the new virtual source distance to produce the 
+following result:
+𝑥𝑦𝑗 = (
+𝜎𝑦𝑖
+𝑎𝑗
+)
+1
+𝑏𝑗
+= [
+1
+𝑎𝑗
+𝑎𝑖(𝑥𝑦𝑖
+)
+𝑏𝑖
+]
+1
+𝑏𝑗
+𝑥𝑧𝑗 = (
+𝜎𝑧𝑖
+𝑐𝑗
+)
+1
+𝑑𝑗
+= [
+1
+𝑐𝑗
+𝑐𝑖(𝑥𝑧𝑖
+)
+𝑑𝑖
+]
+1
+𝑑𝑗
+(2-25)
+This same approach can be used in conjunction with the lookup table option described above. For 
+this option, calculating the virtual source distances and the dispersion parameter values use the 
+same lookup tables and interpolation methods. The ability to calculate the virtual source distance 
+assumes that the inverse functional dependence for the lookup table can be evaluated, i.e., that 
+given a dispersion value, a unique value of x can be determined. To ensure uniqueness, MACCS 
+requires the tables to have monotonically increasing values.
+2.5.5 Dispersion Scaling Factors
+MACCS has scaling factors that act as multipliers on 𝜎𝑦 and 𝜎𝑧
+. The user can change the lateral 
+scaling factor (YSCALE) to linearly decrease or increase the amount of lateral plume dispersion 
+(𝜎𝑦), and likewise can change vertical scaling factor (ZSCALE) to linearly decrease or increase 
+the amount of vertical plume dispersion (𝜎𝑧
+).
+These scaling factors can help account for phenomena that would tend to increase or decrease the 
+plume dimensions. Two such phenomena that are commonly included in plume modeling are
+plume broadening caused by meander (wind direction fluctuations) and increased vertical 
+spreading caused by the surface roughness of terrain. MACCS has separate models for plume 
+meander, as described in Section 2.5.6. As such, the lateral scaling factor is usually set to 1.0.64
+However, MACCS does not contain a separate model to account for surface roughness, so users 
+commonly modify the vertical scale factor for each site.
+The surface roughness of terrain causes increased turbulence and increased vertical dispersion.
+The dispersion rate model data are from field experiments (e.g., Prairie Grass experiment) or other 
+sources with an associated surface roughness. However, the terrain near nuclear power plants 
+typically have a greater surface roughness length than those for field experiments and therefore 
+have more vertical dispersion. Hanna, Briggs, & Hosker (1982, p. 29) estimates that the increase 
+in vertical dispersion is proportional to the surface roughness with an exponential factor of “q,” 
+where the exponent q is a constant that is typically a value of 0.2, but can range from 0.10 to 2.5.
+As such, users usually account for the increased amount of vertical dispersion by calculating a 
+value for ZSCALE based on the following relationship:
+𝑍𝑆𝐶𝐴𝐿𝐸 = (
+𝑧0
+𝑧0,𝑟𝑒𝑓)
+𝑞
+= (
+𝑧0
+3 𝑐𝑚
+)
+0.2
+(2-26)
+Where
+• ZSCALE is the linear scaling coefficient for vertical dispersion.
+• 𝑧0,𝑟𝑒𝑓 is a reference surface roughness. This should be the surface roughness associated 
+with the data underlying the dispersion rate model, which is 3 cm if the data are from the 
+Prairie Grass experiments.
+• 𝑧0 is the surface roughness (cm) of the terrain within a few kilometers of the release.
+• 𝑞 is an exponential factor that relates surface roughness to vertical dispersion, typically 
+a value of 0.2.
+Figure 2-5 presents some approximate surface roughness lengths for different land uses based on 
+the values in (Lettau, 1969; Briggs, 1984; Randerson, 1984).65
+Figure 2-5 Approximate Surface Roughness Lengths (z0) for Various Surfaces
+Because surface roughness affects both vertical dispersion and dry deposition velocities, users 
+should choose values for ZSCALE and VDEPOS that are consistent. Dry deposition velocity is 
+discussed in more detail in Section 2.7.2
+2.5.6 Plume Meander 
+Wind shifts that can occur at time intervals less than that of the recorded weather data (i.e., less 
+than the weather averaging time) can result in an apparent dispersion that is greater than would be 
+computed using dispersion curves based on measurements over a shorter time period, such as the 
+Pasquill-Gifford curves. The apparent increase in lateral dispersion can be significant under stable, 
+low-wind speed conditions. This effect is known as plume meander.
+MACCS has two explicit models for plume meander, which are the original MACCS model and a 
+model based on NUREG/CR-2260 (Snell & Jubach, 1981) and Reg Guide 1.145 (NRC, 1983). A 
+user can choose not to use a plume meander model by giving a value of “OFF” to the parameter 
+MNDMOD. Even with no explicit model for plume meander, the user can still account for 
+increased lateral dispersion using a constant, linear scaling factor (YSCALE), as discussed in 
+Section 2.5.5.
+The MACCS plume meander models calculate a meander factor. Like the lateral dispersion scaling 
+factor, YSCALE, the meander factor acts as a multiplier on lateral dispersion (y) and works with 
+either distance-based or time-based dispersion rate models.
+𝜎𝑦𝑚 = 𝑓𝑚 ⋅ 𝜎𝑦 (2-27)
+Where
+• 𝜎𝑦𝑚 is lateral dispersion (m) accounting for plume meander,
+8.0
+6.0
+4.0
+2.0
+1.0
+0.8
+0.6
+0.4
+0.2
+0.1
+Grassland
+Suburban
+Residential Dwellings
+Plowed Field
+Wheat Field
+Natural Snow
+1000
+800
+600
+400
+200
+100
+80
+60
+40
+20
+10
+Urban Area
+Woodland Forest
+High Rise Buildings
+(30+ Floors)
+Suburban 
+Medium Buildings
+(Institutional)
+Z0
+(cm)
+Roughness Height, z0 (cm)
+8.0
+6.0
+4.0
+2.0
+1.0
+0.8
+0.6
+0.4
+0.2
+0.1
+Grassland
+Suburban
+Residential Dwellings
+Plowed Field
+Wheat Field
+Natural Snow
+1000
+800
+600
+400
+200
+100
+80
+60
+40
+20
+10
+Urban Area
+Woodland Forest
+High Rise Buildings
+(30+ Floors)
+Suburban 
+Medium Buildings
+(Institutional)
+Z0
+(cm)
+1000
+800
+600
+400
+200
+100
+80
+60
+40
+20
+10
+Urban Area
+Woodland Forest
+High Rise Buildings
+(30+ Floors)
+Suburban 
+Medium Buildings
+(Institutional)
+Z0
+(cm)
+Roughness Height, z0 (cm)66
+• 𝜎𝑦 is lateral dispersion (m) not accounting for plume meander,
+• 𝑓𝑚 is the meander factor (dimensionless), as calculated by one of the MACCS plume 
+meander models described below.
+Lateral dispersion, 𝜎𝑦, is based on one of the dispersion rate model previously described, either 
+distance-based 𝜎𝑦
+(𝑥) defined in terms of a power-law equation or as a lookup table, or it can be 
+time-based 𝜎𝑦
+(𝑡). Depending on the meander model, the meander factor 𝑓𝑚 can depend either on 
+release duration or on downwind distance, windspeed, and stability class.
+2.5.6.1 Original Plume Meander Model
+A user can choose to use the original MACCS plume meander model by setting a value of “OLD” 
+to the parameter MNDMOD. The original MACCS model was designed based on the PasquillGifford
+dispersion data and accounts for the effect of meander during transport of a plume segment 
+using a meander factor, as defined in Equation (2-27). The meander factor in the original meander 
+model is defined as follows:
+𝑓𝑚 = {
+1 𝛥𝑡𝑟𝑒𝑙𝑒𝑎𝑠𝑒 ≤ 𝛥𝑡0
+(𝛥𝑡𝑟𝑒𝑙𝑒𝑎𝑠𝑒⁄𝛥𝑡0)
+𝐹1 𝑖𝑓 𝛥𝑡0 < 𝛥𝑡𝑟𝑒𝑙𝑒𝑎𝑠𝑒 ≤ 𝛥𝑡1
+(𝛥𝑡𝑟𝑒𝑙𝑒𝑎𝑠𝑒⁄𝛥𝑡0)
+𝐹2 𝛥𝑡1 < 𝛥𝑡𝑟𝑒𝑙𝑒𝑎𝑠𝑒 ≤ 10
+(2-28)
+Where
+• 𝛥𝑡𝑟𝑒𝑙𝑒𝑎𝑠𝑒 is the release duration for the plume segment (s), specified in the parameter 
+PLUDUR,
+• 𝛥𝑡0 is the release duration (s), defined by the parameter TIMBAS. This is usually chosen 
+to be 600 s, which is the release duration of the Prairie Grass experiment,
+8
+• 𝛥𝑡1 is the breakpoint in release duration (s), defined by the parameter BRKPNT,
+• 𝐹1 is the exponent for time dependence below the breakpoint (dimensionless), defined 
+by the parameter XPFAC1, and 
+• 𝐹2 is the exponent for time dependence above the breakpoint (dimensionless), defined 
+by the parameter XPFAC2.
+All the values used to define the meander factor are input parameters. Gifford (1975) recommends 
+a value of 0.2 for 𝐹1 and a value of 0.25 for 𝐹2 when the breakpoint is 3,600 seconds. Users should 
+limit plume segment release durations to 10 hr, because Equation (2-28) is not intended to be used 
+8 There is some controversy over the correct reference time, 𝛥𝑡0
+, to use in the denominator of Equation (2-26). The 
+averaging time for the Prairie Grass tests was 600 s and some authors support using this value; other authors support 
+using a value of 180 s. Since the reference time in Equation (2-26) is a user input (TIMBAS), either value can be 
+chosen by the user.67
+for longer release durations. If a plume segment exceeds 10 hr a nonfatal warning is given in the 
+output file and the meander factor is calculated as though the plume duration were 10 hr. 
+2.5.6.2 New Plume Meander Model (Based on Regulatory Guide 1.145)
+MACCS contains a plume meander model based on the meander factors developed in 
+NUREG/CR-2260 (Snell & Jubach, 1981), which in turn is based on the Rancho Seco field tracer 
+experiments (Start, et al., 1977). NUREG/CR-2260 supports Regulatory Guide 1.145 (NRC, 
+1982). A user can choose to use this meander model by setting a value of “NEW” to the parameter 
+MNDMOD.
+The NUREG/CR-2260 meander factors correct the Pasquill-Gifford lateral dispersion values to 
+account for plume meander. Unlike the original model, this model accounts for the observation 
+that plume meander depends on stability class and windspeed. NUREG/CR-2260 states that plume 
+meander is most prevalent for stability classes D through G for low wind speeds. As such, the 
+authors assigned a range of windspeeds for which plume meander is applicable, that being fully 
+applicable below 2 m/s, not applicable above 6 m/s, and between these two values a meander factor 
+that varies logarithmically with windspeed. Furthermore, because the tracer field experiments used 
+sensors out to 800 m, NUREG/CR-2260 deemed it inappropriate to model additional meander 
+beyond this point. MACCS generalizes the approach and defines the meander factor as follows:
+𝑓𝑚 = {
+𝑚𝑖
+⋅ 𝑓(𝑢) 𝑥 ≤ 𝑑
+1 𝑥 > 𝑑
+(2-29)
+And
+𝑓(𝑢) =
+{
+ 
+ 
+1 𝑢 ≤ 𝑢1
+1
+𝑚𝑖
+∙ 𝑒𝑥𝑝 [(1 −
+𝑙𝑛( 𝑢) − 𝑙𝑛( 𝑢1)
+𝑙𝑛( 𝑢2) − 𝑙𝑛( 𝑢1)
+) ∙ 𝑙𝑛( 𝑚𝑖)] 𝑢1 < 𝑢 ≤ 𝑢2
+1/𝑚𝑖 𝑢2 < 𝑢
+(2-30)
+Where
+• 𝑚𝑖
+is the maximum meander factor (dimensionless) for stability class, i. These values 
+are specified by the input parameter MNDFACi, and where integers of i = 1, 2, 3, 4, 5, 
+and 6 correspond to stability classes A, B, C, D, E, and F/G, respectively.
+• 𝑥 is the downwind distance from the virtual source (m).
+• 𝑑 is a distance within which plume meander affects lateral plume dispersion, as defined 
+by the parameter MNDIST.
+• 𝑓(𝑢) is a dimensionless function that ranges between (1/𝑚𝑖
+, 1) and specifies how 
+quickly the meander factor diminishes as windspeed increases.
+• 𝑢 is windspeed (m/s), according to the weather data.68
+• 𝑢1 is the windspeed (m/s) where the meander factor changes from a constant value to a 
+decreasing function of the windspeed, as defined by the parameter WINSP1.
+• 𝑢2 is the windspeed (m/s) where the meander factor reaches one for all stability classes, 
+as defined by parameter WINSP2.
+As indicated in Equation (2-29), this meander model treats meander for distances less than 𝑑, but 
+does not treat additional meander beyond 𝑑. To ensure continuity in dispersion at 𝑑, MACCS uses 
+the virtual source location method described in Section 2.5.4. The MACCS plume meander model 
+closely matches the Regulatory Guide 1.145 model when the meander factor 𝑚𝑖 = [1, 1, 1, 2, 3, 4]
+for stability class i, 𝑢1 = 2 m/s, 𝑢2 = 6 m/s, and 𝑑 = 800 m. These are the recommended meander 
+factors for MNDFACi.
+Analysts should be aware that these meander factors were derived based as corrections for 
+Pasquill-Gifford lateral dispersion values, which were based on vertical temperature lapse rates to 
+characterize atmospheric releases and based on 1-hour releases. Analysts should use caution when 
+using this model with other dispersion curves or other stability classification methods. In addition, 
+while the original plume meander model in MACCS accounts for the duration of the release, the 
+Regulatory Guide 1.145 model is calibrated for 1-hour release durations. This plume meander 
+model overpredicts peak doses for release durations significantly longer than 1 hour and 
+underpredicts peak doses for release durations significantly shorter than 1 hour. Enforcement of 
+this model restriction is left to the user; MACCS does not restrict the duration of plume segments 
+to be approximately 1 hour when this model is selected. 
+2.6 Downwind Transport
+The length of a plume segment depends on its release duration (PLUDUR) and the windspeed 
+during release. For plume segments that span multiple hours of weather data, MACCS matches 
+the plume segment release period with the weather data. As such, a plume segment length Ls is 
+defined by the following:
+𝐿𝑠 = ∑𝑢𝑖
+∙ Δ𝑡𝑟,𝑖
+𝑁
+𝑖=𝑛
+(2-31)
+where
+• 𝐿𝑠
+is the length (m) plume segment, 
+• 𝑢𝑖
+(m/s) is the windspeed during time period i, as given by the weather data,
+• Δ𝑡𝑟,𝑖
+(s) is the duration of release during weather hour i, where the summation of all 
+durations is equal to the full release duration of the plume segment, PLUDUR.
+• {n, ..., N} is the set of weather hours during which release occurs, where the delay to 
+plume segment release (PDELAY) is in hour n, and where plume segment release ends 
+(PDELAY + PLUDUR) in hour N. 69
+The values of Δ𝑡𝑟,𝑛+1 through Δ𝑡𝑟,𝑁−1 are all equal to one hour and Δ𝑡𝑟,𝑛 and Δ𝑡𝑟,𝑁 may be parts 
+of an hour, assuming that weather data are hourly. The MACCS downwind plume segment 
+transport does not consider how the height of the plume affects the windspeed (i.e., no vertical 
+wind shear). Likewise, the Gaussian equations in MACCS assume that turbulent velocities are 
+small compared with the mean windspeed (Kao, 1984). Therefore, the plume segment moves 
+downwind as one unit with a distinct cutoff at the leading and trailing edge.
+After the plume segment is fully released, it continuesto change speeds according to the windspeed 
+values specified in the weather data. Changes in windspeed simultaneously affect the entire plume 
+segment. Therefore, the length of the plume segment is constant during downwind transport
+(except when a transition from weather sequence data to boundary weather occurs, for which 
+MACCS preserves the residence time of the plume segment overhead rather than the length). As 
+such, MACCS determines the transit time of any location along the plume segment (e.g., head, 
+midpoint, tail) to any downwind grid point (e.g., inner boundary, midpoint, or outer boundary of 
+a radial interval) with the following equation:
+𝑡𝑑 = ∑ Δ𝑡𝑑,𝑖
+𝑀
+𝑖=𝑚
+(2-32)
+Where 
+• 𝑡𝑑 is transit time (s) of any point of interest along a plume segment to a downwind 
+location, relative to the release time (PDELAY) of the plume segment’s reference 
+location (specified by REFTIM), 
+• Δ𝑡𝑑,𝑖
+is the duration (s) of plume segment transit during weather hour i, and
+• {m, ..., M} is the set of weather hours during plume segment transit.
+As before, the values of Δ𝑡𝑑,𝑚+1 through Δ𝑡𝑑,𝑀−1 are all equal to one hour and Δ𝑡𝑑,𝑚 and Δ𝑡𝑑,𝑀
+may be part of an hour. The first duration Δ𝑡𝑑,𝑚 is the remaining time in weather hour m at the 
+time specified by PDELAY. The last duration Δ𝑡𝑑,𝑀 is based on the windspeed u during weather 
+hour M and the remaining distance of the point of interest on the plume segment to the downwind 
+location, (𝑑𝑀−𝑑𝑀−1
+)
+𝑢𝑀
+, where 𝑑𝑀 is the distance to the downwind location from the point of release.
+Finally, the plume segment overhead time, ∆𝑡𝑒
+, which is the duration of a plume segment 
+traversing any downwind location is given by the following equation:
+∆𝑡𝑒 = 𝑡𝑡 − 𝑡ℎ (2-33)
+Where 𝑡ℎ and 𝑡𝑡 are the arrival times (s) of the head and the tail of the plume segment, respectively.
+The plume segment overhead time is an input to dose equations for cloudshine and direct 
+inhalation, discussed in more detail in Section 3.70
+2.7 Plume Depletion
+Radioactivity is removed from plume segments by decay and by deposition of radioactive 
+materials onto the ground. While radioactivity reduces plume concentrations, the decay and 
+ingrowth of radionuclides is not considered in the computational framework until after 
+atmospheric transport modeling is complete. Once undecayed air and ground concentrations are 
+known, MACCS adjusts the air and ground concentrations to account for radioactive decay and 
+ingrowth.
+Deposition onto the ground is caused by wet and dry deposition onto surfaces. The deposition 
+caused by precipitation is called wet deposition. Deposition not caused by rain is called dry 
+deposition. In MACCS, these processes are modeled as first-order rate processes.
+2.7.1 Radioactive Decay and Ingrowth
+After atmospheric transport modeling is complete, MACCS adjusts the air and ground 
+concentrations to account for radioactive decay and ingrowth. MACCS accounts for radioactive 
+decay and ingrowth using data in the decay chain definition file INDEXR.DAT. The dataset 
+contains the half-lives, decay products, and decay fractions for 825 radionuclides. The dataset is 
+supplied by the Radiation Shielding Information Center as part of the FGR-DOSE/DLC-167 data 
+package. 
+MACCS allows decay chains to have up to five decays, which is a total of six generations of 
+nuclides including the parent. Decay chains can be terminated in two ways. If the decay chain 
+reaches a stable isotope, the chain is automatically terminated. The other option is to terminate the 
+decay chain early. To avoid the unnecessary computational expense, this is commonly done when 
+the decay product is very long-lived and contributes very little to the overall dose. The user can 
+terminate a decay chain by adding the long-lived daughter product to the list of “pseudostable” 
+isotopes (NAMSTB). 
+For example, Cs-135 is formed by beta decay of Xe-135. It decays to Ba-135 by low-energy beta 
+decay with a half-life of 2.3 × 106
+years. Because of the long half-life and low energy beta produced 
+by its decay, Ba-135 has little effect on doses and is often included as a decay-chain terminator in 
+MACCS calculations by including it as a pseudostable isotope.
+In some older calculations, decay products were treated implicitly by adding the dose coefficients 
+for the progeny to the one for the parent radionuclide and including the progeny in the list of 
+pseudostable radionuclides. This simplification was done to reduce memory and CPU 
+requirements. It works when the half-life for the progeny is much shorter than the one for the 
+parent so that the progeny decays almost immediately once the parent radionuclide decays. This 
+practice somewhat disguises the set of radionuclides that are being treated in a problem and reduces 
+flexibility. Since computer memory is at much less of a premium now than when MACCS was 
+initially developed, this practice of implicitly including progeny in a calculation is not used with 
+the latest dose conversion factor files.71
+MACCS evaluates the radioactive decay of each radionuclide in the initial inventory and buildup 
+of radioactive daughters using standard formulae (Adamson, 1973, p. 1046). For simple first-order 
+decay with no ingrowth, MACCS uses the following equation:
+𝐷(𝑡)
+𝐷0
+=
+𝜆𝑁(𝑡)
+𝜆𝑁0
+= 𝑒
+−𝜆𝑡
+(2-34)
+Where
+• 𝐷(𝑡) is the radioactivity (Bq) at time t, 
+• 𝐷0 is the radioactivity (Bq) at time zero, 
+• 𝑁(𝑡) is the number of radioactive atoms at time t, 
+• 𝑁0 is the number of radioactive atoms at time zero, and
+• 𝜆 is the decay constant (1/s), as provided by the data in the decay chain definition file 
+(INDEXR.DAT).
+Decay of a parent radionuclide to a radioactive daughter is calculated using the following equation:
+𝐷2
+(𝑡) =
+𝜆2
+𝜆2 − 𝜆1
+𝐷1,0(𝑒
+−𝜆1𝑡 − 𝑒
+−𝜆2𝑡
+) + 𝐷2,0𝑒
+−𝜆2𝑡
+(2-35)
+Where
+• 𝐷2
+(𝑡) is the activity (Bq) of the daughter at time t,
+• 𝐷1,0 and 𝐷2,0 are the activities (Bq) of the parent and daughter at time zero, and
+• 𝜆1 and 𝜆2 are the decay constants (1/s) of the parent and daughter (𝜆1 ≠𝜆2), as provided 
+by the data in the decay chain definition file (INDEXR.DAT).
+In Equation (2-35), the second term represents decay of daughter atoms initially present at time 
+zero.
+Because the ingrowth of daughter products occurs between accident initiation and plume segment 
+release, there are two options (“PARENT” and “PROGENY”) for how to treat radioactive decay 
+using the parameter APLFRC. The “PARENT” option calculates radioactive decay and ingrowth 
+in one step, starting from accident initiation. In this option, MACCS does not consider the ingrowth 
+of daughter products until after transport. The “PROGENY” option calculates radioactive decay 
+and ingrowth in two steps. First, MACCS calculates the decay and ingrowth that occurs between 
+accident initiation and plume segment release, which MACCS uses to update the radionuclide 
+inventory. MACCS then calculates decay and ingrowth as it would have in the “PARENT” option, 
+only in this option radioactive decay and ingrowth start from the intermediate step of plume 
+release.
+The two options can produce different results because the daughter products created between 
+accident initiation and plume segment release can have different chemical properties than the 
+parents. For instance, the daughter product may be more volatile and have a larger release fraction, 72
+or it may form different aerosol sizes that impact its deposition rate during transport. In the 
+“PARENT” option, the new decay products have the same release fraction and aerosol size 
+distribution as the parent radionuclide, while in the “PROGENY” option, daughter products are 
+treated no differently from the same radionuclides present at accident initiation. 
+Neither option is perfect, but the better option depends on the fraction of decay that occurs before 
+versus after release from the fuel and whether the decay involves a phase change between parent 
+and progeny. For example, if a radionuclide is formed by decay before being released from the 
+fuel, it is most likely released in proportion to its own chemical group, so “PROGENY” is the 
+better option. If the decay occurs in an aerosol particle after release from fuel, then the decay 
+product is likely to remain bound in the aerosol and to be released in proportion to the “PARENT” 
+chemical group. If a decay product is volatile, as is the case when a noble gas is formed, then the 
+decay product might be released in proportion to its own chemical group or might remain trapped 
+for a period of time in an aerosol and thereby behave like the parent.
+MACCS calculates a set of air and ground concentrations independent of decay and ingrowth. For 
+the early phase, ATMOS calculates a separate set of air and ground concentrations for each plume 
+segment. For the intermediate and long-term phases, the sum of the ground concentrations from 
+all plume segments is sufficient. 
+ATMOS adjusts the concentrations to consider decay and ingrowth starting from the beginning of 
+the accident. For early doses, ATMOS considers decay and ingrowth up to the point in time when 
+a plume segment exits a radial interval, i.e., at the point in time when deposition is complete for 
+the radial interval being reported. This is done for each plume segment, as the timing of the plume 
+segments affect the amount of decay and ingrowth. For exposures that continue after plume 
+departure, the early dose pathways in EARLY continue to account for decay and ingrowth in the 
+dose calculations. For late doses, ATMOS considers decay and ingrowth of the total ground 
+concentration up to the end of the early phase. For exposures that continue after the early phase, 
+the late dose pathways in CHRONC also continue to account for decay and ingrowth. 
+2.7.2 Dry Deposition
+Dry deposition is modeled using Chamberlain's source depletion method (Chamberlain, 1953; 
+Hosker, 1974; Karlsson, 1982) modified to allow treatment of a particle size distribution and of 
+capping of vertical expansion by an inversion layer. The source depletion method calculates the 
+rate at which materials are deposited onto the ground (the deposition flux) as the product of the 
+ground-level air concentration of the materials and the dry deposition velocity (Sehmel, 1984) of 
+those materials. The method neglects the effects of deposition on the vertical distribution of the
+plume. Thus, dry deposition does not perturb the normal distribution of plume materials in the 
+vertical direction. This is generally an excellent assumption because turbulent advection is 
+generally on the order of 0.5 m/s while deposition velocities are typically a few cm/s or less. When 
+stable conditions occur, the assumption introduces an artificial flux of material from upper regions 
+of the plume to regions near the ground.
+The ground-level air concentration at a location (x, y, z = 0) of a plume that is capped by an 
+inversion layer at height H is obtained from Equation (2-19) and setting z = 0, which yields the 
+following:73
+𝜒(𝑥, 𝑦, 0) =
+𝑄
+𝑢
+∙ 𝑓𝐺
+(𝑦) ∙ 𝜓0
+(2-36)
+Where 𝜓(𝑧) is the plume distribution in the vertical direction (m
+-1
+), as defined in Equations (2-20)
+and (2-21), and 𝜓0 is the value of the distribution at 𝜓(𝑧 = 0). The flux of plume material to the 
+ground, 𝜔(𝑥, 𝑦) is given by the following:
+𝜔(𝑥, 𝑦) = 𝑣𝑑 ∙ 𝜒(𝑥, 𝑦, 0) (2-37)
+where 𝑣𝑑, the dry deposition velocity (VDEPOS), embodies the combined effects of gravitational 
+settling, impaction, and diffusion of suspended materials onto the ground and other surfaces 
+(Sehmel, 1984).
+The rate of plume material loss (𝑑𝑄/𝑑𝑥) by dry deposition onto the ground into a differential 
+length dx located at the downwind distance x is the following (Hosker, 1974):
+𝑑𝑄
+𝑑𝑥 = − ∫ 𝜔(𝑥, 𝑦)𝑑𝑦
+∞
+−∞
+(2-38)
+Substitution of Equations (2-36) and (2-37) into Equation (2-38) gives,
+𝑑𝑄
+𝑑𝑥 = −
+𝑣𝑑𝜓0𝑄
+𝑢
+∫ 𝑓𝐺
+(𝑦)
+∞
+−∞
+𝑑𝑦 = −
+𝑣𝑑𝜓0𝑄
+𝑢
+(2-39)
+where 
+• 𝑣𝑑 is the dry deposition velocity (m/s), as specified by VDEPOS,
+• 𝜓0 is shorthand for 𝜓(𝑧 = 0), which is the ground-level value of the plume distribution 
+in the vertical direction (m
+-1
+), which is defined in Equation (2-20) and (2-21),
+• 𝑄 is the released activity (Bq), 
+• u is the windspeed (m/s), as given by the weather data, and 
+• 𝑓𝐺
+(𝑦) is the Gaussian distribution (m
+-1
+) representing lateral dispersion.
+The integral of the lateral Gaussian distribution simplifies to one. During any single hour of 
+weather data, the mean windspeed u is constant. Thus dx = udt, which when substituted into 
+Equation (2-39) gives,
+𝑑𝑄
+𝑑𝑡 = −𝑣𝑑 ∙ 𝜓0 ∙ 𝑄 (2-40)
+Rearranging and integrating and assuming 𝜓0 is a constant within a given radial interval gives,74
+𝑄1
+𝑄0
+= 𝑓𝑑 = 𝑒𝑥𝑝[−𝑣𝑑 ∙ 𝜓0 ∙ ∆𝑡𝑟𝑒𝑓]
+(2-41)
+where 
+• 𝑄0 is the amount of aerosols transported into the radial interval, 
+• 𝑄1 is the amount transported out of the radial interval, 
+• 𝑓𝑑 = 𝑄1/𝑄0 is the fraction not removed by dry deposition when the plume segment 
+transverses the radial interval, 
+• ∆𝑡𝑟𝑒𝑓 is the time required for the reference location (REFTIM) of a plume segment to 
+transverse the radial interval, and 
+• 𝑣𝑑 and 𝜓0 are the same as previously defined.
+In MACCS, the effect of particle size on dry deposition velocity is treated by discretizing the 
+particle size distribution of the materials subject to dry deposition (the radioactive aerosols) into 
+i particle size bins (NPSGRP), specifying the fraction (𝑝𝑖
+) of all aerosol materials in each particle 
+size bin (PSDIST), assigning a dry deposition velocity (𝑣𝑑𝑖) to each size bin (VDEPOSi), and 
+applying Equation (2-41) separately to each bin. Thus, the fraction 𝑓𝑑𝑖 of particle size bin i not 
+removed by dry deposition when the plume segment transverses the radial interval is the following:
+𝑄1𝑖
+𝑄0𝑖
+= 𝑓𝑑𝑖 = 𝑒𝑥𝑝[−𝑣𝑑𝑖 ∙ 𝜓0 ∙ ∆𝑡𝑟𝑒𝑓]
+(2-42)
+To calculate Equation (2-42), MACCS must first calculate the ground-level value of the vertical 
+plume profile, 𝜓0, and the time ∆𝑡𝑟𝑒𝑓 for the plume segment reference location to transverse the 
+radial interval. 
+Before the plume is fully vertically dispersed, 𝜓0 depends on the vertical dispersion parameter,
+𝜎𝑧
+(𝑥), which in turn depends on the downwind distance [see Equation (2-20)]. For radial interval 
+j, MACCS calculates the vertical dispersion parameter using 𝜎̅𝑧,𝑗
+shown in Equation (2-54), which 
+is an average of the dispersion parameter values at the inner and outer edge of the radial interval.
+After the plume is fully vertically dispersed, 𝜓0 is equal to 1/𝐻, where 𝐻 is the mixing layer height 
+[see Equation (2-21)]. 
+The term, 𝛥𝑡𝑟𝑒𝑓, is the time of arrival of the segment's reference location at the outer edge of the 
+radial interval minus the time of its arrival at the inner edge of the interval. Because MACCS 
+allows plume segments to have long release durations and radial intervals can have narrow radial 
+dimensions, lengthy plume segments that span more than one radial interval are common. Of 
+course, when exiting a radial interval, even a short plume segment lies over at least two radial 
+intervals. Even when a plume segment lies above more than one radial interval, dry deposition 
+from the segment is assumed to occur entirely onto the radial interval that contains the reference 
+location regardless of how many radial intervals lie under the entire length of the segment.75
+After a segment has traversed a radial interval, the amounts of material in each particle size bin
+are decreased by the amounts removed from the bin by dry deposition during transport across the 
+radial interval. Then, the fractions that specify the amounts of aerosol materials in the bins of the 
+aerosol size distribution are recalculated and as a consistency check their sum is renormalized to 
+be one.
+Finally, since 𝑄1 = ∑𝑖 𝑄1𝑖
+, 𝑄1𝑖 = 𝑄0𝑖
+∙ 𝑓𝑑𝑖, and 𝑄0𝑖 = 𝑄0 ∙ 𝑝𝑖
+, the fraction (𝑓𝑑) of all aerosol 
+materials in all of the size bins i that remains after dry deposition has occurred from each bin onto 
+the entire radial interval is given by:
+𝑓𝑑 =
+𝑄1
+𝑄0
+=
+1
+𝑄0
+∑𝑄1𝑖
+𝑖
+=
+1
+𝑄0
+∑𝑄0𝑖
+𝑖
+∙ 𝑓𝑑𝑖 =
+1
+𝑄0
+∑𝑄0 ∙ 𝑝𝑖
+∙ 𝑓𝑑𝑖
+𝑖
+= ∑𝑝𝑖
+𝑖
+∙ 𝑓𝑑𝑖 (2-43)
+Section 2.8 provides more details on how dry deposition affects air and ground concentrations.
+2.7.3 Wet Deposition
+The wet deposition model estimates how much material is deposited during episodes of 
+precipitation. Wet deposition is treated as a function of both precipitation duration and intensity.
+Wet deposition is calculated using the model of Brenk & Vogt (1981):
+𝑑𝑄
+𝑑𝑡 = −𝛬𝑄 = −𝐶1 (
+𝐼
+𝐼0
+)
+𝐶2
+∙ 𝑄 (2-44)
+Where
+• 𝑄 is the amount of suspended radioactive material (Bq),
+• 𝛬 is the removal rate of aerosols by wet deposition (1/s),
+• 𝐶1 is the linear wet deposition coefficient (1/s), as given by the parameter CWASH1,
+• 𝐶2 is the exponential wet deposition coefficient (dimensionless), as given by the 
+parameter CWASH2,
+• 𝐼 is the intensity of precipitation (mm/hr), as specified by the weather data, and 
+• 𝐼0 is the unit rain intensity, 1 mm/hr.
+Integrating Equation (2-44), assuming a constant precipitation rate, provides the following
+equation:
+𝑄1
+𝑄0
+= 𝑓𝑤 = 𝑒𝑥𝑝 [−𝐶1 (
+𝐼
+𝐼0
+)
+𝐶2
+𝛥𝑡𝑤] (2-45)
+Where
+• 𝑓𝑤 = 𝑄1/𝑄0 is the fraction of suspended aerosols in a plume segment that is not removed 
+by wet deposition while crossing a radial interval,76
+• 𝑄0 is the amount of radioactive material (Bq) transported into the radial interval,
+• 𝑄1 is the amount of radioactive material (Bq) transported out of the radial interval,
+• 𝛥𝑡𝑤 is the duration (s) that the full plume segment takes to cross both ends of a given 
+radial interval, and 
+• 𝐶1, 𝐶2, 𝐼, and 𝐼0 are the same as previously defined.
+Whereas the dry deposition model depends on particle size, the wet deposition model does not.
+Also, unlike dry deposition, which is a continuous and relatively slow process, wet deposition is 
+discontinuous and often is quite rapid relative to dry deposition. Therefore, treating wet deposition
+entirely onto the radial interval that lies under the segment’s reference location is not acceptable. 
+Instead, wet deposition is apportioned over all the radial intervals that lie under the segment.
+For example, consider the release of a plume segment during a 10-hour period during which the 
+average windspeed is 5 m/s. At the end of the release, the plume segment has a length of 180 km,
+and especially during the early stages of a MACCS calculation, extends over many radial intervals. 
+Suppose the windspeed drops to 1 m/s and that a one-hour rainstorm begins just as the segment's 
+reference location enters a 3.6 km wide radial interval. In this example, most of the content of a 
+180 km plume segment deposits onto a 3.6 km radial interval. This is clearly unrealistic. 
+To apportion wet deposition over all the radial intervals traversed wholly or partially by a plume 
+segment during a rainstorm, on an hourly basis, the average fraction of plume segment length 𝑓𝑎𝑣
+that lies over a radial interval during the storm must be calculated. Let Lsj be the length of the 
+portion of the plume segment that lies over the radial interval j beneath the plume at time t. Figure 
+2-6 is a plot of Lsj vs t for a segment of total length LS and an interval of radial length Lj (length in 
+the downwind direction), where Ls ≠ Lj. Because Ls ≠ Lj, the plot has a trapezoidal shape with 
+height Lmax = Min (Ls, Lj). Note that when Ls = Lj the trapezoid is reduced to a triangle.
+In Figure 2-6, t1 is the time when the head of the plume segment enters the radial interval; t6 is the 
+time when the tail of the segment leaves the radial interval. If Ls < Lj, t2 is the time when the tail 
+of the segment enters the radial interval and t4 the time when the head leaves the radial interval; if 
+Ls > Lj, t2 is the time when the head of the segment leaves the radial interval and t4 is the time when 
+the tail enters the radial interval. The time points, t3 and t5, are indicated by vertical dashed lines, 
+denote the beginning and end of a one-hour time period (t5 - t3 = 1 hr) during which weather data 
+is constant. Since windspeed has only one value during any hour of weather data, the area of the 
+geometric shape bounded by the dashed lines is simple to calculate, no matter where the hourly 
+time points fall. Let the area of this regular shape be A. Ls and Lj and thus Lmax are known, and all 
+the time points on the figure (points t1 through t6) are known or are calculated by MACCS. Thus, 
+for any one-hour time period, Lav, the average value of Lsj during that time period, is given by Lav
+= A/(t5 - t3). Since t5 - t3 = 1 hr, Lav = A. The hourly average fraction of plume segment length 𝑓𝑎𝑣
+that lies over a radial interval during the storm is given by 𝑓𝑎𝑣 = Lav/Ls. So, 𝑓𝑎𝑣 can be calculated 
+hour-by-hour for each plume segment and every radial interval.77
+Figure 2-6 Plume Segment Length Over a Radial Interval vs Time
+The quantity 𝑓𝑎𝑣 now must be introduced into Equation (2-45). To see how this is done, let 𝛥𝑡𝑤 be 
+the time required for the full plume segment to traverse both the inner and outer edge of a given 
+radial interval.
+Note that the plume segment transport time over a given radial interval for dry deposition, 𝛥𝑡𝑟𝑒𝑓,
+the plume segment transport time over a given radial interval for wet deposition, 𝛥𝑡𝑤, and the 
+plume segment transport time overhead a stationary individual, 𝛥𝑡𝑒
+, are all different.
+If the transport time 𝛥𝑡𝑤 is several hours long, then 𝛥𝑡𝑤 = ∑ 𝛥𝑡 𝑖 𝑖 where the first and last values 
+of ∆ti can be fractional hours. Let 𝑓𝑎𝑣,𝑖 be the average fraction of the plume segment within the 
+radial interval during 𝛥𝑡𝑖
+, and let 𝑓𝑤 be the fraction of aerosol removed by wet deposition within 
+the radial interval. The fraction of aerosol 𝑓𝑤𝑖 removed during 𝛥𝑡𝑖
+is then the following.
+𝑓𝑤𝑖 = 𝑓𝑎𝑣,𝑖
+⋅ 𝑓𝑤 (2-46)
+Where 𝑓𝑤𝑖 and 𝑓𝑤 are the complements of the fraction of material not removed from the plume 
+(i.e., 𝑓𝑤𝑖 = 1 − 𝑓𝑤𝑖 and 𝑓𝑤 = 1 − 𝑓𝑤). Recall that 𝑓𝑤 was previously derived in Equation (2-45). 
+By substituting Equation (2-44) for time step i into the formula above and solving for 𝑓𝑤𝑖 gives 
+the following:
+𝑓𝑤𝑖 = 1 − 𝑓𝑎𝑣,𝑖
+⋅ (1 − 𝑒𝑥𝑝 [−𝐶1 (
+𝐼𝑖
+𝐼0
+)
+𝐶2
+𝛥𝑡𝑖
+]) (2-47)
+And fw, the fraction of aerosol remaining in the plume after deposition only onto the radial interval
+during all of the time steps i required to transport the plume segment across the radial interval, is 
+given by the product of these fractions:
+𝑓𝑤 = ∏𝑓𝑤𝑖
+𝑖
+(2-48)78
+2.8 Centerline Air and Ground Concentrations
+As modeled in MACCS, dry and wet deposition are independent processes. For example, assume 
+that during transport across a radial interval dry deposition alone would deplete a plume segment 
+of one-tenth of the material in the segment, and wet deposition alone would remove one-half of 
+the material in the segment. Then, if the two processes are independent and occur simultaneously, 
+the fraction of the material in the segment upon entry into the radial interval, that remains when 
+the segment leaves the radial interval, is 0.45 = (1.0 - 0.1)(1.0 - 0.5). Thus, the total amount of 
+material 𝛥𝑄𝑗 deposited onto the ground during transport of a plume segment across radial interval
+j is given by,
+𝛥𝑄𝑗 = 𝑄𝑗(1 − 𝑓𝑑𝑗 ∙ 𝑓𝑤𝑗) (2-49)
+Where 
+• 𝑄𝑗
+is the amount of radioactive material (Bq) that is transported into interval j by the 
+plume segment, discussed in more detail below,
+• 𝑓𝑑𝑗 is the fraction of material (dimensionless) that would remain in the plume after 
+transport across radial interval j if only dry deposition occurred, given by 
+Equation (2-43), and 
+• 𝑓𝑤𝑗 is the fraction of material (dimensionless) that would remain in the plume after 
+transport across radial interval j if only wet deposition occurred, given by 
+Equation (2-48).
+Under this construct, it then follows that the amount of radioactive material 𝑄𝑗
+transported into 
+radial interval j is the following:
+𝑄𝑗 = 𝑄0 ∙∏𝑓𝑑𝑛 ∙ 𝑓𝑤𝑛
+𝑗−1
+𝑛=1
+(2-50)
+Where 
+• 𝑄0 is the released activity (Bq), which is the product of RELFRC and CORINV, modified 
+by CORSCA, and 
+• 𝑓𝑑𝑛 and 𝑓𝑤𝑛 are the same as before, except n belongs to the set of radial intervals that the 
+plume segment transverses before reaching radial interval j.
+The amount of material 𝑄𝑗+1 still airborne in the plume segment after transport across the radial 
+interval is the following:
+𝑄𝑗+1 = 𝑄𝑗 − 𝛥𝑄𝑗 (2-51)79
+Now let 𝐺𝐶(𝑦 = 0)𝑗 be the average ground concentration under the plume centerline along the 
+length (Lj) of radial interval j. Then the total amount of material 𝛥𝑄𝑗 deposited onto the ground 
+during transport of a plume segment across radial interval j is the following:
+𝛥𝑄𝑗 = 𝐺𝐶(𝑦 = 0)𝑗
+∙ 𝐿𝑗
+∙ ∫ 𝑒𝑥𝑝
+∞
+−∞
+{−
+𝑦
+2
+2𝜎𝑦
+2
+} 𝑑𝑦
+= 𝐺𝐶(𝑦 = 0) (2-52)
+𝑗
+∙ 𝐿𝑗
+∙ √2𝜋𝜎𝑦 ∫
+1
+√2𝜋𝜎𝑦
+∞
+−∞
+𝑒𝑥𝑝 {−
+𝑦
+2
+2𝜎𝑦
+2
+} 𝑑𝑦
+= 𝐺𝐶(𝑦 = 0)𝑗
+∙ 𝐿𝑗
+∙ √2𝜋𝜎𝑦
+The equation simplifies since the value of the second integral is one. Solving for the average 
+ground concentration 𝐺𝐶(𝑦 = 0)𝑗 under the plume centerline of radial interval j gives the 
+following:
+𝐺𝐶(𝑦 = 0)𝑗 =
+𝛥𝑄𝑗
+√2𝜋𝜎𝑦 ∙ 𝐿𝑗
+(2-53)
+Average values for the plume source activity 𝑄𝑗
+, lateral dispersion 𝜎̅𝑦,𝑗
+, vertical dispersion 𝜎̅𝑧,𝑗
+, 
+plume height ℎ𝑗
+, and average windspeed 𝑢̄𝑗
+for transport of a plume segment across radial interval
+j are given by the following:
+𝑄𝑗 = 𝑄𝑗 − 0.5 ∙ 𝛥𝑄𝑗
+𝜎̅𝑦,𝑗 = 0.5 ∙ (𝜎𝑦,𝑗 + 𝜎𝑦,𝑗+1)
+(2-54)
+𝜎̅𝑧,𝑗 = 0.5 ∙ (𝜎𝑧,𝑗 + 𝜎𝑧,𝑗+1)
+ℎ𝑗 = 0.5 ∙ (ℎ𝑗 + ℎ𝑗+1)
+𝑢̄𝑗 =
+𝐿𝑗
+𝑡𝑗+1 − 𝑡𝑗
+where the subscripts j and j + 1 signify that the value of the parameter pertains respectively to the 
+inner and outer edges of the radial interval (the values when the reference location of the plume 
+segment enters and leaves the radial interval), and Lj is the length of the radial interval. 
+The centerline dispersion factor 𝜒
+𝑄
+(𝑥 = 𝑥𝑗
+, 𝑦 = 0, 𝑧 = ℎ) for radial interval j and the ground-level 
+dispersion factor under the plume centerline 𝜒
+𝑄
+(𝑥 = 𝑥𝑗
+, 𝑦 = 0, 𝑧 = 0) for radial interval j can be 
+derived at the downwind distance 𝑥𝑗
+.
+Recall from Equation (2-19) that the profile of the plume 𝜒(𝑥, 𝑦, 𝑧) is expressed as follows:
+𝜒(𝑥, 𝑦, 𝑧) =
+𝑄
+𝑢
+∙ 𝑓𝐺
+(𝑦) ∙ 𝜓(𝑧) for 𝑧 ∈ [0, 𝐻] (2-55)80
+Where 
+• 𝜓(𝑧) is the vertical distribution (m
+-1
+), which at short distances is a Gaussian distribution 
+with mirrored reflections [Equation (2-20)], and at long distances is a uniform 
+distribution [Equation (2-21)], 
+• 𝑓𝐺
+(𝑦) is the lateral Gaussian distribution (m
+-1
+) in the crosswind direction, as shown in 
+Equation (2-18),
+• 𝑄 is the released activity (Bq), and
+• u is the windspeed (m/s).
+The centerline air concentration 𝜒(𝑧 = ℎ̅)
+𝑗
+for radial interval j can be derived by solving for the 
+centerline location (𝑥 = 𝑥𝑗
+, 𝑦 = 0, 𝑧 = ℎ) and using the average values for radial interval j as 
+given in the set of Equations (2-54):
+𝜒(𝑧 = ℎ̅)
+𝑗
+=
+𝑄𝑗
+√2𝜋𝜎̅𝑦,𝑗𝑢̄𝑗
+∙ 𝜓𝑗(ℎ̅) (2-56)
+The centerline dispersion factor 𝜒
+𝑄
+(𝑧 = ℎ̅)
+𝑗
+for radial interval j can be derived the same way by 
+also dividing Equation (2-55) by the release activity 𝑄:
+𝜒
+𝑄
+(𝑧 = ℎ̅)
+𝑗
+=
+1
+√2𝜋𝜎̅𝑦,𝑗𝑢̄𝑗
+∙ 𝜓𝑗(ℎ̅) (2-57)
+By repeating the process and instead solving for the ground-level location (𝑥 = 𝑥𝑗
+, 𝑦 = 0, 𝑧 = 0), 
+the same steps give the ground-level air concentration 𝜒(𝑧 = 0)𝑗
+for radial interval j:
+𝜒(𝑧 = 0)𝑗 =
+𝑄𝑗
+√2𝜋𝜎̅𝑦,𝑗𝑢̄𝑗
+∙ 𝜓𝑗
+(0) (2-58)
+As well as the ground-level dispersion factor 𝜒
+𝑄
+(𝑧 = 0)𝑗
+for radial interval j:
+𝜒
+𝑄
+(𝑧 = 0)𝑗 =
+1
+√2𝜋𝜎̅𝑦,𝑗𝑢̄𝑗
+∙ 𝜓𝑗
+(0) (2-59)
+Finally, the ratio 𝑅𝑗 of the ground-level to centerline air concentration at radial interval j can be 
+found by the following equation:
+𝑅𝑗 =
+𝜓𝑗
+(0)
+𝜓𝑗(ℎ̅)
+(2-60)81
+2.9 Atmospheric Transport Model Outputs
+MACCS calculates atmospheric transport results at the midpoint of each radial interval traversed 
+by the plume segment. MACCS reports two sets of results related to the atmospheric transport:
+“Type 0” results that provide summary results from a CCDF, and “Debug Output” results that 
+report results from individual weather trials. The two sets contain many of the same parameters. 
+Type 0 Results: Atmospheric Results at Specified Downwind Distances
+The first set is a group of outputs for a single user-specified plume segment (INDREL) and for a 
+single radial interval (INDRAD). The user also selects a radionuclide of interest (NUCOUT), such 
+as iodine-131. Like most outputs, MACCS computes a CCDF when many weather simulations are 
+run, and summary statistics of these results are available in the output file when requested. The 
+outputs and their derivations are described in Table 2-6:82
+Table 2-6 Complimentary Cumulative Distribution Function of Atmospheric Results
+Output Name
+(for I-131) Description Derivation
+I-131 Center Air Conc. 
+(Bq-s/m3
+)
+Centerline integrated air concentration (𝑧 = 𝐻) from 
+this plume segment averaged over the radial interval’s 
+length
+Equation (2-56), adjusted by 
+decay and ingrowth
+I-131 Ground Air Conc. 
+(Bq-s/m3
+)
+Centerline ground-level integrated air concentration 
+(𝑧 = 0) from this plume segment averaged over the 
+radial interval’s length
+(Bq-s/m3
+)
+Equation (2-58), adjusted by 
+decay and ingrowth
+I-131 Center Ground 
+Conc. (Bq/m2
+)
+Centerline ground concentration after passage of this 
+plume averaged over the radial interval’s length
+(Bq/m2
+)
+Equation (2-53), adjusted by 
+decay and ingrowth
+Total Center Ground 
+Conc. (Bq/m2
+)
+Total Centerline ground concentration after passage of 
+this plume averaged over the radial interval’s length
+(Bq/m2
+)
+Equation (2-53), summed over
+all radionuclides, adjusted by 
+decay and ingrowth
+Ground-Level Dilution, 
+𝜒/𝑄 (s/m3
+)
+Centerline ground-level 𝜒/𝑄; the ratio of air 
+concentration (𝜒) to source strength (𝑄) averaged over 
+the interval’s length, not accounting for radioactive 
+decay or deposition (s/m3
+)
+Equation (2-59)
+I-131 Adjusteda Source, 
+𝑄 (Bq)
+Adjusteda
+source strength of the plume upon entering 
+each radial interval after adjustment for losses in the 
+previous intervals due to radioactive decay and wet 
+and dry deposition (Bq)
+Equation (2-50), adjusted by 
+decay and ingrowth
+Plume Sigma-y (m)
+Lateral dispersion parameter 𝜎̅𝑦 averaged over the 
+radial interval’s length Equations (2-54)
+Plume Sigma-z (m)
+Vertical dispersion parameter 𝜎̅𝑧 averaged over the 
+radial interval’s length Equations (2-54)
+Plume Height (m)
+Average plume centerline height as it traverses the 
+radial interval Equations (2-54)
+Plume Arrival Time (s)
+Time after accident initiation at which the reference 
+location of the plume arrived at the center of the radial 
+interval (s) 
+Equation (2-32) plus the 
+period before plume release 
+(PDELAY)
+a
+In the Gaussian plume equations, 𝑄0 is commonly used to represent the amount released activity. When material decays or is 
+deposited onto the ground during transport, the effective source strength for downwind distances is reduced. This is treated in 
+MACCS through the definition of an adjusted source strength, 𝑄, which is reduced by deposition and radioactive decay that 
+occur over plume trajectory up to the current location. Note that all the concentration results shown in this table account for 
+plume depletion; however, the value for 𝜒/𝑄 does not. This quantity simply represents the normalized concentration (s/m3
+) 
+from dispersion at a downwind distance.
+Atmospheric Transport Debug Output
+Additionally, another set of atmospheric transport model results are available as part of the 
+debugging tools (IDEBUG), and again for a select radionuclide (NUCOUT). Some of these results 
+are identical outputs to those in the previous table but are not available as a CCDF. Instead, 
+MACCS reports values for every weather simulation, plume segment, and distance interval. The 
+type of output results and derivations are shown in Table 2-7.83
+Table 2-7 Atmospheric Results Available through debug results (IDEBUG = “1” or “2”)
+Output 
+Name Description Derivation
+GL AIRCON Centerline ground-level integrated air concentration (𝑧 = 0) from this 
+plume segment averaged over the radial interval’s length (Bq-s/m3
+)
+Equation (2-58),
+adjusted by decay 
+and ingrowth
+GRNCON Centerline ground concentration after passage of this plume averaged 
+over the radial interval’s length (Bq/m2
+)
+Equation (2-53),
+adjusted by decay 
+and ingrowth
+GL 𝜒/𝑄
+Centerline ground-level 𝜒/𝑄; the ratio of air concentration (𝜒) to source 
+strength (𝑄), averaged over the interval’s length (s/m3
+)
+Equation (2-59)
+WETREM Fraction of material remaining in the plume segment after wet deposition 
+over the radial interval’s length (dimensionless) Equation (2-43)
+DRYREM Fraction of material remaining in the plume segment after dry deposition 
+over the radial interval’s length (dimensionless) Equation (2-48)
+REMINV
+Adjusted source strength of the plume upon entering each radial interval
+after adjustment for losses in the previous intervals due to radioactive 
+decay and wet and dry deposition (Bq)
+Equation (2-51),
+adjusted by decay 
+and ingrowth
+PLSIGY Lateral dispersion parameter 𝜎̅𝑦 averaged over the radial interval’s length
+(m)
+Equations (2-54)
+PLSIGZ Vertical dispersion parameter 𝜎̅𝑧 averaged over the radial interval’s 
+length (m)
+Equations (2-54)
+WEATHER
+Indices to the first and last hours of the weather sequence used for 
+determining atmospheric conditions during transport across each radial 
+interval (hr)
+Equation (2-33)
+HTFCTR Ratio of the centerline ground-level air concentration (𝑧 = 0) to the 
+plume centerline air concentration (𝑧 = 𝐻) (dimensionless) Equation (2-60)
+AVGHIT Average plume centerline height as it traverses the radial interval (m) Equations (2-54)
+TIMCEN Time after accident initiation at which the reference location of the plume 
+arrived at the center of the radial interval (s)
+Equation (2-32) plus 
+the period before 
+plume release 
+(PDELAY)
+TIMOVH Duration for which the plume was overhead at the midpoint of the radial 
+interval (s)
+Equation (2-33)
+MXMIXH Mixing height for this plume segment over the radial interval (m)
+From mixing height 
+model (

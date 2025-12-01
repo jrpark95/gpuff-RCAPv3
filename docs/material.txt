@@ -1,0 +1,311 @@
+2.5.2 Dispersion Data
+The rate at which materials disperse in the atmosphere depends strongly on atmospheric 
+turbulence, which varies on stability class. Pasquill suggested curves for height and angular spread 
+according to stability classes and extrapolated this information to 100 km. Gifford used these data 
+to develop dispersion parameter curves with downwind distance for each stability class (Turner, 
+1970). As modified, these curves are presented in Figure 2-3 (Gifford F. A., 1976). 57
+Figure 2-3 Dependence of σy and σz on Distance for the Six Pasquill-Gifford Stability Classes (A 
+Through F)
+The solid lines in Figure 2-3 depict the range of the experimental data; dashed lines are 
+extrapolations. Several other field studies have been conducted to develop dispersion parameter 
+systems. These include studies at Brookhaven (Singer & Smith, 1966), St. Louis (McElroy & 
+Pooler, 1968), and Julich Nuclear Research Center in Germany (Vogt, 1977; Bundesminister des 
+Innern, 1981; Geiss, 1982; Kiefer et al., 1979). Dispersion parameter systems from these field 
+studies are discussed in Section 2.3.3.2 of Till & Meyer (1983).
+In the early 1990’s, the U.S. Nuclear Regulatory Commission and the Commission of European 
+Communities (CEC) conducted a series of expert elicitations to obtain distributions for uncertain 
+variables used in health consequence analyses related to accidental release of nuclear material.
+Harper et al. (1995) document the expert elicitation that provides a technical basis for defining the 
+plume lateral and vertical dispersion for a range of stability conditions, a range of surface 
+roughness corresponding to several land-use categories, and downwind distances ranging from 
+500 m to 30 km.
+2.5.3 Dispersion Rate Models
+The dispersion parameters y and z in the Gaussian plume equations are important values that 
+determine how quickly the plume disperses as it travels downwind. MACCS has two main methods 
+to determine y and z. The user can choose either a power-law function or user-supplied lookup 
+tables to model the dispersion parameters, both of which depend on distance and stability class. In 
+addition, as an option for modeling long-range dispersion the user can switch the lateral dispersion 
+z (m) y (m) Distance Downwind (km) Distance Downwind (km)58
+rate from distance-based dispersion 𝜎𝑦
+(𝑥) to time-based dispersion 𝜎𝑦
+(𝑡) at a specified distance 
+downwind.
+In addition to the dispersion rate models, linear scaling factors for dispersion (YSCALE, ZSCALE) 
+discussed in Section 2.5.5 and the plume meander models (PLMMOD) discussed in Section 2.5.6
+can also affect dispersion. 
+The rate at which materials disperse in the atmosphere depends strongly on atmospheric 
+turbulence, which varies greatly with stability class. To update the dispersion rate model based on 
+new atmospheric conditions, to account for the initial dispersion from a building wake, and to 
+switch from distance- to time-based dispersion, MACCS uses a concept known as a “virtual source 
+location” described in Section 2.5.4.
+2.5.3.1 Power Law Option
+The user can choose to use the power-law function by setting a value of zero to the number of 
+distances defined in the lookup table option (NUM_DIST). The dispersion parameter power-law 
+functions for y and z have the following forms:
+𝜎𝑦𝑖(𝑥) = 𝑎𝑦𝑖 ∙ (
+𝑥
+𝑥0
+)
+𝑏𝑦𝑖
+𝜎𝑧𝑖(𝑥) = 𝑎𝑧𝑖 ∙ (
+𝑥
+𝑥0
+)
+𝑏𝑧𝑖 (2-22)
+Where
+• 𝜎𝑦𝑖 is the lateral dispersion parameter for stability class, i, for stability classes A-F. This 
+parameter is the standard deviation of a Gaussian distribution (m).
+• 𝜎𝑧𝑖 is the vertical dispersion parameter for stability class, i. This parameter is the standard 
+deviation of a Gaussian distribution (m).
+• 𝑥 is the downwind distance (m) from the virtual source. 
+• 𝑥0 is a fixed unit of length, 1 m, and ensures that the term 𝑥⁄𝑥0
+is dimensionless.
+• 𝑎𝑦𝑖 and 𝑎𝑧𝑖 are the linear coefficients (m) in the power-law expressions for lateral 
+dispersion and vertical dispersion, respectively, for stability class, i. These values are 
+specified by the input parameters CYSIGA and CZSIGA, respectively.
+• 𝑏𝑦𝑖 and 𝑏𝑧𝑖 are the exponentials (dimensionless) in the power-law expressions for lateral 
+dispersion and vertical dispersion, respectively, for stability class, i. These values are 
+specified by the input parameters CZSIGB and CZSIGB, respectively.59
+Tadmor & Gur (1969) constructed power-law fits to the Pasquill-Gifford (P-G) curves discussed 
+in Section 2.5.2. NUREG-1150 and the original MACCS Sample Problem A (NRC, 1990, 
+Appendix A) used these values, which are provided in Table 2-4. 
+Table 2-4 Tadmor and Gur Dispersion Coefficients for Equation (2-22) for a distance range of 0.5 
+to 5 km.
+Stability Class 𝝈𝒚𝒊 𝝈𝒛𝒊
+P-G i 𝒂𝒚𝒊 𝒃𝒚𝒊 𝒂𝒛𝒊 𝒃𝒛𝒊
+A 1 0.3658 0.9031 0.00025 2.125
+B 2 0.2751 0.9031 0.0019 1.6021
+C 3 0.2089 0.9031 0.2 0.8543
+D 4 0.1474 0.9031 0.3 0.6532
+E 5 0.1046 0.9031 0.4 0.6021
+F 6 0.0722 0.9031 0.2 0.6020
+*The values of these constants reflect correction of typographical errors identified by Dobbins (1979).
+More recently, NUREG/CR-7161 (Bixler, Clauss, & Morrow, 2013) constructed power-law fits to 
+dispersion data from the NRC / CEC joint expert elicitation (Harper, et al., 1995). The SOARCA 
+project (NUREG-1935; NRC, 2012) used these values, which are provided in Table 2-5:
+Table 2-5 NUREG/CR-7161 Dispersion Coefficients for Equation (2-22), Median Values of 
+Expert Elicitation (Bixler, Clauss, & Morrow, 2013)7
+Stability Class 𝝈𝒚𝒊 𝝈𝒛𝒊
+P-G i 𝒂𝒚𝒊 𝒃𝒚𝒊 𝒂𝒛𝒊 𝒃𝒛𝒊
+A 1 0.7507 0.866 0.0361 1.277
+B 2 0.7507 0.866 0.0361 1.277
+C 3 0.4063 0.865 0.2036 0.859
+D 4 0.2779 0.881 0.2636 0.751
+E 5 0.2158 0.866 0.2463 0.619
+F 6 0.2158 0.866 0.2463 0.619
+7 Note that the same parameter values are assigned for classes A/B and for classes E/F. Use of the NUREG/CR-7161 
+correlations would appear to result in effectively four stability classes: unstable (A/B), slightly unstable (C), neutral 
+(D), and stable (E/F/G).60
+2.5.3.2 Lookup Table Option
+The lookup table option allows the user to define a lookup table as an alternative to power-law 
+functions for y and z. If tracer experiments are available for a site, it may be possible to process 
+the data into tables of lateral and vertical standard deviations (y and z) in this way.
+To use the lookup table option, the user sets a value for the number of distances to be defined in 
+the lookup table (NUM_DIST) between 3 and 50. The table requires user-defined distances and 
+dispersion values. This includes lateral and vertical dispersion values (y and z) for each stability 
+class (A to F), for a total of twelve dispersion values at each specified distance.
+The lookup table option uses an interpolation technique known as a Hermite cubic spline as 
+discussed by Kahaner, Moler, & Nash (1989). This approach avoids the numerical instabilities 
+observed with other cubic spline fits. The lookup table option does not extrapolate beyond the user 
+supplied distances, and instead simply uses the dispersion value of the closest distance that is 
+specified in the table.
+2.5.3.3 Time-Based Option
+As an option for modeling long-range dispersion, the user can switch the lateral dispersion 
+parameter from distance-based dispersion 𝜎𝑦
+(𝑥) (according to the power law equation or the 
+lookup tables previously discussed), to time-based dispersion 𝜎𝑦
+(𝑡) at a certain distance 
+downwind. The user can choose the time-based dispersion model by setting a value of “LRTIME”
+to the parameter DISPMD. To only use the distance-based dispersion (either power law option or 
+the lookup-table option), the user sets a value of “LRDIST” for the parameter DISPMD. When 
+mapping dispersion onto the spatial grid, a time-based dispersion model updates dispersion when 
+a change in windspeed occurs, whereas a distance-based dispersion updates dispersion when a 
+change in stability class occurs.
+Time-based dispersion requires the user to select the downwind distance at which the code 
+switches from distance-based dispersion to time-based dispersion (CYDIST). The user must also 
+select a linear coefficient, 𝑎𝑐
+, for the time-based dispersion model (CYCOEF). The default value 
+for the time-based linear coefficient and the transition distance are 0.5 m/s and 30 km, respectively, 
+based on a recommendation by Hanna (2002). The virtual source concept (as discussed in Section
+2.5.4) is used to ensure that there is no discontinuity in switching from distance- to time-based 
+dispersion.
+When the user implements power law option at close distances, the following equation describes 
+the switch from distance-based dispersion to time-based dispersion: 
+𝜎𝑦 = {
+𝑎 (
+𝑥
+𝑥0
+)
+𝑏
+𝑥 < 𝑥𝑐
+𝑎𝑐
+𝑡 𝑥 ≥ 𝑥𝑐
+(2-23)
+Where 
+• 𝜎𝑦 is the lateral dispersion parameter (m) in the crosswind direction,61
+• a is the linear coefficient (m) for distance-based lateral dispersion for a given stability 
+class,
+• b is the exponent (dimensionless) for distance-based lateral dispersion for a given 
+stability class,
+• 𝑎𝑐
+is the linear coefficient for time-based lateral dispersion (m/s), specified by the input 
+parameter CYCOEF,
+• 𝑥0 is unity (m) used to make the term 𝑥/𝑥0 dimensionless, 
+• 𝑥𝑐
+is the distance from the source (m) at which the use of the lateral dispersion model 
+switches from distance- to time-based, specified by the input parameter CYDIST,
+• 𝑥 is the downwind distance from the virtual source (m), and
+• t is the time since the plume was released from the virtual source (s).
+Alternatively, the user can implement a lookup table for distances less than CYDIST.
+When the time-based dispersion model is enabled, time-based dispersion is implemented at 
+distances greater than or equal to 𝑥𝑐 as shown in Equation (2-23). However, distance-based 
+dispersion is always applied within the first ring, regardless of the value of CYDIST. 
+Hanna (2002) recommends that dispersion beyond 30 km be based on time rather than distance. 
+The time-based dispersion option allows the user to implement Hanna’s recommendation, and the 
+time-based dispersion model is closer to the treatment used in some Gaussian puff codes. The basis 
+for the recommended distance, 30 km, is that the expert elicitation only considered distances as far 
+as 30 km (Harper, et al., 1995) and that several Gaussian puff codes switch to time-based 
+dispersion at about 30 or 40 km (Draxler & Hess, 1997). The distances required to model 
+consequences for a nuclear reactor accident can extend considerably farther than 30 km, a 
+minimum of 80 km. 
+2.5.4 Virtual Source Calculation
+The dispersion rate models use a concept known as a “virtual” source location. A virtual source 
+location is a release point at a hypothetical upwind location. The location of this virtual source 
+depends on the dispersion rate model and is based on the dispersion at a specific plume location.
+With these boundary conditions, the dispersion rate models can calculate downwind lateral 
+dispersion (y) and vertical dispersion (z) according to the downwind distance (x; or release time 
+[t]) from the virtual source location. The downwind distance (x) and release time (t) from the 
+virtual source location are used only to calculate downwind dispersion. Plume locations are always 
+expressed relative to the release point, which is the center point of the polar-coordinate 
+computational grid. The virtual source location is generally different for σy and σz.
+MACCS uses these boundary conditions and the associated virtual source location for several 
+different purposes. One purpose is to update dispersion based on changing atmospheric conditions.62
+The distance-based dispersion parameters 𝜎𝑦
+(𝑥) and 𝜎𝑧
+(𝑥) depend on stability class, and the 
+stability class changes discretely as the plume travels downwind. As such, MACCS allows the rate 
+of plume expansion to also change discretely according to the updated atmospheric conditions, in 
+a piecewise continuous fashion.
+In order to maintain the correct amount of plume dispersion when changing from one set of 
+atmospheric conditions to the next, MACCS calculates a new virtual source location. See Figure 
+2-4 for a representation of this piecewise continuous dispersion of the plume.
+Figure 2-4 Growth of y During Three Time Periods Characterized by Different Atmospheric 
+Stabilities i, j, and k
+MACCS also uses the virtual source location concept to estimate dispersion after building wake 
+effects from the initial release. The initial plume height (SIGZINIT) and plume width (SIGYINIT) 
+caused by building wake are user inputs. These initial plume dimensions at a downwind distance 
+of zero meters act as the boundary conditions for calculating the virtual source location.
+Another example of where MACCS uses a virtual source term is to switch from a distance-based 
+dispersion parameter 𝜎𝑦
+(𝑥) to time-based dispersion 𝜎𝑦
+(𝑡). Like the changes in atmospheric 
+conditions, the switch to time-based dispersion is a discrete change. The boundary condition for 
+the virtual source location is the specific amount of plume dispersion (previously determined by 
+one of the distance-based dispersion models) at a user specified downwind location (CYDIST).
+From this boundary condition, the time-based dispersion model calculates downwind dispersion 
+based on the time (t) relative to the time it was released from the virtual source. Lateral dispersion 
+𝜎𝑦
+(𝑡) does not depend on the stability class, and so after a switch to time-based dispersion, the 
+virtual source time is constant. Note, however, that time-based dispersion is not constant with 63
+distance when there are changes in windspeed. Therefore, the plume shape over the spatial grid 
+can appear to have discrete changes like those shown in Figure 2-4, although for a different reason.
+The following shows how MACCS uses the power law option for calculating the new source 
+distances (i.e., the downwind distances from the virtual source) based on a change in stability class.
+Let i be the stability class before the change in atmospheric conditions and 𝑥𝑦𝑖 and 𝑥𝑧𝑖 be the source 
+distances under the original conditions (i.e., the downwind distances to the virtual source just 
+before the stability class changes). Let j be the stability class after the change, and 𝑥𝑦𝑗 and 𝑥𝑧𝑗 be 
+the virtual source distances under the updated conditions. To ensure continuity, 𝜎𝑦𝑖 must be equal 
+to 𝜎𝑦𝑗 and 𝜎𝑧𝑖 must be equal to 𝜎𝑧𝑗 at the transition. Thus,
+𝑎𝑖(𝑥𝑦𝑖
+)
+𝑏𝑖 = 𝜎𝑦𝑖 = 𝜎𝑦𝑗 = 𝑎𝑗 (𝑥𝑦𝑗
+)
+𝑏𝑗
+𝑐𝑖(𝑥𝑧𝑖
+)
+𝑑𝑖 = 𝜎𝑧𝑖 = 𝜎𝑧𝑗 = 𝑐𝑗 (𝑥𝑧𝑗
+)
+𝑑𝑗
+(2-24)
+These equations can be solved explicitly for the new virtual source distance to produce the 
+following result:
+𝑥𝑦𝑗 = (
+𝜎𝑦𝑖
+𝑎𝑗
+)
+1
+𝑏𝑗
+= [
+1
+𝑎𝑗
+𝑎𝑖(𝑥𝑦𝑖
+)
+𝑏𝑖
+]
+1
+𝑏𝑗
+𝑥𝑧𝑗 = (
+𝜎𝑧𝑖
+𝑐𝑗
+)
+1
+𝑑𝑗
+= [
+1
+𝑐𝑗
+𝑐𝑖(𝑥𝑧𝑖
+)
+𝑑𝑖
+]
+1
+𝑑𝑗
+(2-25)
+This same approach can be used in conjunction with the lookup table option described above. For 
+this option, calculating the virtual source distances and the dispersion parameter values use the 
+same lookup tables and interpolation methods. The ability to calculate the virtual source distance 
+assumes that the inverse functional dependence for the lookup table can be evaluated, i.e., that 
+given a dispersion value, a unique value of x can be determined. To ensure uniqueness, MACCS 
+requires the tables to have monotonically increasing values.
+2.5.5 Dispersion Scaling Factors
+MACCS has scaling factors that act as multipliers on 𝜎𝑦 and 𝜎𝑧
+. The user can change the lateral 
+scaling factor (YSCALE) to linearly decrease or increase the amount of lateral plume dispersion 
+(𝜎𝑦), and likewise can change vertical scaling factor (ZSCALE) to linearly decrease or increase 
+the amount of vertical plume dispersion (𝜎𝑧
+).
+These scaling factors can help account for phenomena that would tend to increase or decrease the 
+plume dimensions. Two such phenomena that are commonly included in plume modeling are
+plume broadening caused by meander (wind direction fluctuations) and increased vertical 
+spreading caused by the surface roughness of terrain. MACCS has separate models for plume 
+meander, as described in Section 2.5.6. As such, the lateral scaling factor is usually set to 1.0.64
+However, MACCS does not contain a separate model to account for surface roughness, so users 
+commonly modify the vertical scale factor for each site.
+The surface roughness of terrain causes increased turbulence and increased vertical dispersion.
+The dispersion rate model data are from field experiments (e.g., Prairie Grass experiment) or other 
+sources with an associated surface roughness. However, the terrain near nuclear power plants 
+typically have a greater surface roughness length than those for field experiments and therefore 
+have more vertical dispersion. Hanna, Briggs, & Hosker (1982, p. 29) estimates that the increase 
+in vertical dispersion is proportional to the surface roughness with an exponential factor of “q,” 
+where the exponent q is a constant that is typically a value of 0.2, but can range from 0.10 to 2.5.
+As such, users usually account for the increased amount of vertical dispersion by calculating a 
+value for ZSCALE based on the following relationship:
+𝑍𝑆𝐶𝐴𝐿𝐸 = (
+𝑧0
+𝑧0,𝑟𝑒𝑓)
+𝑞
+= (
+𝑧0
+3 𝑐𝑚
+)
+0.2
+(2-26)
+Where
+• ZSCALE is the linear scaling coefficient for vertical dispersion.
+• 𝑧0,𝑟𝑒𝑓 is a reference surface roughness. This should be the surface roughness associated 
+with the data underlying the dispersion rate model, which is 3 cm if the data are from the 
+Prairie Grass experiments.
+• 𝑧0 is the surface roughness (cm) of the terrain within a few kilometers of the release.
+• 𝑞 is an exponential factor that relates surface roughness to vertical dispersion, typically 
+a value of 0.2.
+Figure 2-5 presents some approximate surface roughness lengths for different land uses based on 
+the values in (Lettau, 1969; Briggs, 1984; Randerson, 1984).

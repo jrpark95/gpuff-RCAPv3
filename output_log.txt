@@ -1,0 +1,554 @@
+
+========================================
+[MAIN] Starting GPUFF-RCAPv3...
+========================================
+
+[MAIN:001] Gpuff object created
+[MAIN:002] Initializing 80 nuclide data structures...
+[MAIN:003] Nuclide initialization complete
+
+[MAIN:004] Reading nuclear data libraries...
+[MAIN:005] Reading DCF file: .\input\RCAPdata\MACCS_DCF_New2.LIB
+[MAIN:006] DCF file read complete
+[MAIN:007] Reading NDL file: .\input\RCAPdata\MACCS60.NDL
+[MAIN:008] NDL file read complete
+[MAIN:009] CHECK_NDL is FALSE - skipping NDL print
+Size of NuclideData: 1180
+
+[MAIN:010] ===== PARSING INPUT FILES =====
+[MAIN:011] Opening main input file: .\input\RCAPdata\Test.inp
+[MAIN:012] Number of input scenarios detected: 1
+[MAIN:013] Reading input file line by line...
+File 1 of 1 = .\input\RCAPdata\Test.inp
+
+
+[MAIN:020] ===== READING DETAILED INPUT FILES =====
+[MAIN:021] Reading primary input file: .\input\RCAPdata\Test.inp
+[MAIN:022] --> Calling read_input_RCAP() for file #1...
+
+[READ_RCAP:001] ==== ENTERING read_input_RCAP() ====
+[READ_RCAP:002] Opening file: .\input\RCAPdata\Test.inp
+[READ_RCAP:003] File opened successfully
+[READ_RCAP:004] Starting to parse file line by line...
+
+[READ_RCAP:EP240] >>> FOUND EP240 at line 38
+[READ_RCAP:EP240] Raw line: EP240  1    3              8.0      5.0      10.0     900.0       3600.0
+[READ_RCAP:EP240] nSpeedPeriod = 3
+[READ_RCAP:EP240] Reading speeds array...
+[READ_RCAP:EP240] speeds[0] = 8
+[READ_RCAP:EP240] speeds[1] = 5
+[READ_RCAP:EP240] speeds[2] = 10
+[READ_RCAP:EP240] Reading durations array...
+[READ_RCAP:EP240] durations[0] = 900
+[READ_RCAP:EP240] durations[1] = 3600
+[READ_RCAP:EP240] <<< EP240 parsing complete
+wc1 = 1.89e-05, wc2 = 0.664
+[READ_RCAP:999] File closed, EXITING read_input_RCAP()
+[READ_RCAP:999] ================================
+
+[MAIN:023] <-- Returned from read_input_RCAP()
+[MAIN:027] All input files processed
+
+[MAIN:028] ===== CONFIGURATION PRINTING SECTION =====
+[MAIN:036] Configuration printing section complete (FORCE_DISABLE=1)
+
+[MAIN:040] ===== METEOROLOGICAL DATA & INITIALIZATION =====
+[MAIN:041] Reading meteorological data from METEO.inp...
+[MAIN:042] Meteorological data loaded
+[MAIN:043] Initializing puffs...
+[initializePuffs] Using CONSTANT weather (WD.isConstant = true)
+  - Wind Speed: 2.20 m/s
+  - Stability: F
+  - Rain Rate: 0.00 mm/hr
+  - Mix Height: 1000.00 m
+  - numSims set to: 1
+
+[DEBUG] ===== FIRST PUFF VALUES =====
+  Position: x=0.00, y=0.00, z=50.00 (m)
+  Plume Rise: delta_h=0.00 m, he=50.00 m (rel_heat=0.00e+00 W)
+  Concentrations: [0]=0.00e+00, [1]=0.00e+00, [2]=0.00e+00 (Bq)
+  Release time: 0.00 (s)
+  Unit index: 0
+  Wind speed: 2.20 (m/s)
+  Wind direction: 0.0000 (rad)
+  Stability class: 6
+  Rain rate: 0.00 (mm/hr)
+  Met index: 0
+  isNaN checks: x=0, y=0, z=0, ws=0, wd=0
+=====================================
+
+[initializePuffs] Total puffs created: 1
+[MAIN:044] Puffs initialized
+[MAIN:045] Reading simulation config...
+freq = 2
+[MAIN:046] Simulation config loaded
+[MAIN:047] nop = 1
+[MAIN:048] Initializing evacuees...
+[initializeEvacuees] Creating evacuees for 1 meteorological scenarios
+[MAIN:049] Evacuees initialized
+[MAIN:050] totalevacuees_per_Sim = 97
+totalpuff_per_Sim = 1
+[MAIN:051] Copying simulation parameters to device constant memory...
+[MAIN:052] Device constant memory updated
+[MAIN:053] Initializing ground deposition array...
+[MAIN:054] Ground deposition array initialized
+[MAIN:055] Allocating GPU memory for ground deposition...
+[MAIN:056] GPU memory for ground deposition allocated
+[MAIN:057] Allocating and copying evacuees to device...
+[MAIN:058] Evacuees copied to device
+[MAIN:059] Allocating and copying radius to device...
+[MAIN:060] Radius copied to device
+[MAIN:061] Allocating and copying puffs to device...
+[PUFF_COPY:001] Entering allocate_and_copy_puffs_RCAP_to_device
+[PUFF_COPY:002] puffs_RCAP.size() = 1
+[PUFF_COPY:003] Allocating 716 bytes on device
+[PUFF_COPY:004] Device memory allocated
+[PUFF_COPY:005] Data copied to device
+[PUFF_COPY:006] First puff data check:
+  Puff[0].x = 0
+[PUFF_COPY:007] Exiting function
+[MAIN:062] Puffs copied to device
+[MAIN:063] Creating CUDA events for timing...
+[MAIN:064] CUDA events created
+[MAIN:065] >>> Calling time_update_RCAP2()...
+
+[TIME_UPDATE:001] ==== ENTERING time_update_RCAP2() ====
+[CLOUDSHINE:DEBUG] Table debug output written to cloudshine_tables_debug.txt
+[CLOUDSHINE:002] Initialized dose tables - Np=200, Nnucl=80, p_range=[0.1,50000]m
+[CLOUDSHINE:001] Initialized Puff720 geometry with 6×10×12 points
+[TIME_UPDATE:002] Starting simulation loop (time_end=10800)
+[CALC RESULT] Mode 0: sum_all=4.022e-07 -> dose_cloudshine=4.022e-07
+[CALC RESULT] Mode 0: sum_all=3.496e-07 -> dose_cloudshine=3.496e-07
+[CALC RESULT] Mode 0: sum_all=2.970e-07 -> dose_cloudshine=2.970e-07
+[CALC RESULT] Mode 0: sum_all=2.443e-07 -> dose_cloudshine=2.443e-07
+[CALC RESULT] Mode 0: sum_all=1.914e-07 -> dose_cloudshine=1.914e-07
+[CALC RESULT] Mode 0: sum_all=1.393e-07 -> dose_cloudshine=1.393e-07
+[CALC RESULT] Mode 0: sum_all=1.122e-07 -> dose_cloudshine=1.122e-07
+[CALC RESULT] Mode 0: sum_all=9.748e-08 -> dose_cloudshine=9.748e-08
+[CALC RESULT] Mode 0: sum_all=8.276e-08 -> dose_cloudshine=8.276e-08
+[CALC RESULT] Mode 0: sum_all=6.802e-08 -> dose_cloudshine=6.802e-08
+[CALC RESULT] Mode 0: sum_all=5.325e-08 -> dose_cloudshine=5.325e-08
+[CALC RESULT] Mode 0: sum_all=3.918e-08 -> dose_cloudshine=3.918e-08
+[CALC RESULT] Mode 0: sum_all=3.063e-08 -> dose_cloudshine=3.063e-08
+[CALC RESULT] Mode 0: sum_all=2.639e-08 -> dose_cloudshine=2.639e-08
+[CALC RESULT] Mode 0: sum_all=2.260e-08 -> dose_cloudshine=2.260e-08
+[CALC RESULT] Mode 0: sum_all=1.881e-08 -> dose_cloudshine=1.881e-08
+[CALC RESULT] Mode 0: sum_all=1.501e-08 -> dose_cloudshine=1.501e-08
+[CALC RESULT] Mode 0: sum_all=1.134e-08 -> dose_cloudshine=1.134e-08
+[CALC RESULT] Mode 0: sum_all=8.519e-09 -> dose_cloudshine=8.519e-09
+[CALC RESULT] Mode 0: sum_all=6.962e-09 -> dose_cloudshine=6.962e-09
+[CALC RESULT] Mode 0: sum_all=5.980e-09 -> dose_cloudshine=5.980e-09
+[CALC RESULT] Mode 0: sum_all=5.087e-09 -> dose_cloudshine=5.087e-09
+[CALC RESULT] Mode 0: sum_all=4.193e-09 -> dose_cloudshine=4.193e-09
+[CALC RESULT] Mode 0: sum_all=3.306e-09 -> dose_cloudshine=3.306e-09
+[CALC RESULT] Mode 0: sum_all=2.498e-09 -> dose_cloudshine=2.498e-09
+[CALC RESULT] Mode 0: sum_all=1.903e-09 -> dose_cloudshine=1.903e-09
+[CALC RESULT] Mode 0: sum_all=1.547e-09 -> dose_cloudshine=1.547e-09
+[CALC RESULT] Mode 0: sum_all=1.316e-09 -> dose_cloudshine=1.316e-09
+[CALC RESULT] Mode 0: sum_all=1.121e-09 -> dose_cloudshine=1.121e-09
+[CALC RESULT] Mode 0: sum_all=9.292e-10 -> dose_cloudshine=9.292e-10
+[CALC RESULT] Mode 0: sum_all=7.402e-10 -> dose_cloudshine=7.402e-10
+[CALC RESULT] Mode 0: sum_all=5.683e-10 -> dose_cloudshine=5.683e-10
+[CALC RESULT] Mode 0: sum_all=4.333e-10 -> dose_cloudshine=4.333e-10
+[CALC RESULT] Mode 0: sum_all=3.410e-10 -> dose_cloudshine=3.410e-10
+[CALC RESULT] Mode 0: sum_all=2.832e-10 -> dose_cloudshine=2.832e-10
+[CALC RESULT] Mode 0: sum_all=2.404e-10 -> dose_cloudshine=2.404e-10
+[CALC RESULT] Mode 0: sum_all=2.029e-10 -> dose_cloudshine=2.029e-10
+[CALC RESULT] Mode 0: sum_all=1.662e-10 -> dose_cloudshine=1.662e-10
+[CALC RESULT] Mode 0: sum_all=1.312e-10 -> dose_cloudshine=1.312e-10
+[CALC RESULT] Mode 0: sum_all=1.007e-10 -> dose_cloudshine=1.007e-10
+[CALC RESULT] Mode 0: sum_all=7.752e-11 -> dose_cloudshine=7.752e-11
+[CALC RESULT] Mode 0: sum_all=6.141e-11 -> dose_cloudshine=6.141e-11
+[CALC RESULT] Mode 0: sum_all=5.073e-11 -> dose_cloudshine=5.073e-11
+[CALC RESULT] Mode 0: sum_all=4.283e-11 -> dose_cloudshine=4.283e-11
+[CALC RESULT] Mode 0: sum_all=3.602e-11 -> dose_cloudshine=3.602e-11
+[CALC RESULT] Mode 0: sum_all=2.967e-11 -> dose_cloudshine=2.967e-11
+[CALC RESULT] Mode 0: sum_all=2.368e-11 -> dose_cloudshine=2.368e-11
+[CALC RESULT] Mode 0: sum_all=1.837e-11 -> dose_cloudshine=1.837e-11
+[CALC RESULT] Mode 0: sum_all=1.423e-11 -> dose_cloudshine=1.423e-11
+[CALC RESULT] Mode 0: sum_all=1.107e-11 -> dose_cloudshine=1.107e-11
+[CALC RESULT] Mode 0: sum_all=8.978e-12 -> dose_cloudshine=8.978e-12
+[CALC RESULT] Mode 0: sum_all=7.446e-12 -> dose_cloudshine=7.446e-12
+[CALC RESULT] Mode 0: sum_all=6.272e-12 -> dose_cloudshine=6.272e-12
+[CALC RESULT] Mode 0: sum_all=5.241e-12 -> dose_cloudshine=5.241e-12
+[CALC RESULT] Mode 0: sum_all=4.286e-12 -> dose_cloudshine=4.286e-12
+[CALC RESULT] Mode 0: sum_all=3.409e-12 -> dose_cloudshine=3.409e-12
+[CALC RESULT] Mode 0: sum_all=2.651e-12 -> dose_cloudshine=2.651e-12
+[CALC RESULT] Mode 0: sum_all=2.063e-12 -> dose_cloudshine=2.063e-12
+[CALC RESULT] Mode 0: sum_all=1.614e-12 -> dose_cloudshine=1.614e-12
+[CALC RESULT] Mode 0: sum_all=1.303e-12 -> dose_cloudshine=1.303e-12
+[CALC RESULT] Mode 0: sum_all=1.075e-12 -> dose_cloudshine=1.075e-12
+[CALC RESULT] Mode 0: sum_all=9.002e-13 -> dose_cloudshine=9.002e-13
+[CALC RESULT] Mode 0: sum_all=7.493e-13 -> dose_cloudshine=7.493e-13
+[CALC RESULT] Mode 0: sum_all=6.190e-13 -> dose_cloudshine=6.190e-13
+[CALC RESULT] Mode 0: sum_all=4.988e-13 -> dose_cloudshine=4.988e-13
+[CALC RESULT] Mode 0: sum_all=3.924e-13 -> dose_cloudshine=3.924e-13
+[CALC RESULT] Mode 0: sum_all=3.079e-13 -> dose_cloudshine=3.079e-13
+[CALC RESULT] Mode 0: sum_all=2.382e-13 -> dose_cloudshine=2.382e-13
+[CALC RESULT] Mode 0: sum_all=1.898e-13 -> dose_cloudshine=1.898e-13
+[CALC RESULT] Mode 0: sum_all=1.540e-13 -> dose_cloudshine=1.540e-13
+[CALC RESULT] Mode 0: sum_all=1.268e-13 -> dose_cloudshine=1.268e-13
+[CALC RESULT] Mode 0: sum_all=1.060e-13 -> dose_cloudshine=1.060e-13
+[CALC RESULT] Mode 0: sum_all=8.777e-14 -> dose_cloudshine=8.777e-14
+[CALC RESULT] Mode 0: sum_all=7.258e-14 -> dose_cloudshine=7.258e-14
+[CALC RESULT] Mode 0: sum_all=5.858e-14 -> dose_cloudshine=5.858e-14
+[CALC RESULT] Mode 0: sum_all=4.637e-14 -> dose_cloudshine=4.637e-14
+[CALC RESULT] Mode 0: sum_all=3.663e-14 -> dose_cloudshine=3.663e-14
+[CALC RESULT] Mode 0: sum_all=2.838e-14 -> dose_cloudshine=2.838e-14
+[CALC RESULT] Mode 0: sum_all=2.250e-14 -> dose_cloudshine=2.250e-14
+[CALC RESULT] Mode 0: sum_all=1.813e-14 -> dose_cloudshine=1.813e-14
+[CALC RESULT] Mode 0: sum_all=1.481e-14 -> dose_cloudshine=1.481e-14
+[CALC RESULT] Mode 0: sum_all=1.225e-14 -> dose_cloudshine=1.225e-14
+[CALC RESULT] Mode 0: sum_all=1.016e-14 -> dose_cloudshine=1.016e-14
+[CALC RESULT] Mode 0: sum_all=8.428e-15 -> dose_cloudshine=8.428e-15
+[CALC RESULT] Mode 0: sum_all=6.924e-15 -> dose_cloudshine=6.924e-15
+[CALC RESULT] Mode 0: sum_all=5.573e-15 -> dose_cloudshine=5.573e-15
+[CALC RESULT] Mode 0: sum_all=4.435e-15 -> dose_cloudshine=4.435e-15
+[CALC RESULT] Mode 0: sum_all=3.487e-15 -> dose_cloudshine=3.487e-15
+[CALC RESULT] Mode 0: sum_all=2.727e-15 -> dose_cloudshine=2.727e-15
+[CALC RESULT] Mode 0: sum_all=2.164e-15 -> dose_cloudshine=2.164e-15
+[CALC RESULT] Mode 0: sum_all=1.740e-15 -> dose_cloudshine=1.740e-15
+[CALC RESULT] Mode 0: sum_all=1.414e-15 -> dose_cloudshine=1.414e-15
+[CALC RESULT] Mode 0: sum_all=1.161e-15 -> dose_cloudshine=1.161e-15
+[CALC RESULT] Mode 0: sum_all=9.663e-16 -> dose_cloudshine=9.663e-16
+[CALC RESULT] Mode 0: sum_all=7.950e-16 -> dose_cloudshine=7.950e-16
+[CALC RESULT] Mode 0: sum_all=6.593e-16 -> dose_cloudshine=6.593e-16
+[CALC RESULT] Mode 0: sum_all=5.370e-16 -> dose_cloudshine=5.370e-16
+[CALC RESULT] Mode 0: sum_all=4.310e-16 -> dose_cloudshine=4.310e-16
+[CALC RESULT] Mode 0: sum_all=3.435e-16 -> dose_cloudshine=3.435e-16
+[CALC RESULT] Mode 0: sum_all=2.680e-16 -> dose_cloudshine=2.680e-16
+[CALC RESULT] Mode 0: sum_all=2.123e-16 -> dose_cloudshine=2.123e-16
+[CALC RESULT] Mode 0: sum_all=1.691e-16 -> dose_cloudshine=1.691e-16
+[CALC RESULT] Mode 0: sum_all=1.359e-16 -> dose_cloudshine=1.359e-16
+[CALC RESULT] Mode 0: sum_all=1.103e-16 -> dose_cloudshine=1.103e-16
+[CALC RESULT] Mode 0: sum_all=9.029e-17 -> dose_cloudshine=9.029e-17
+[CALC RESULT] Mode 0: sum_all=7.489e-17 -> dose_cloudshine=7.489e-17
+[CALC RESULT] Mode 0: sum_all=6.129e-17 -> dose_cloudshine=6.129e-17
+[CALC RESULT] Mode 0: sum_all=5.111e-17 -> dose_cloudshine=5.111e-17
+[CALC RESULT] Mode 0: sum_all=4.189e-17 -> dose_cloudshine=4.189e-17
+[CALC RESULT] Mode 0: sum_all=3.392e-17 -> dose_cloudshine=3.392e-17
+[CALC RESULT] Mode 0: sum_all=2.722e-17 -> dose_cloudshine=2.722e-17
+[CALC RESULT] Mode 0: sum_all=2.136e-17 -> dose_cloudshine=2.136e-17
+[CALC RESULT] Mode 0: sum_all=1.692e-17 -> dose_cloudshine=1.692e-17
+[CALC RESULT] Mode 0: sum_all=1.340e-17 -> dose_cloudshine=1.340e-17
+[CALC RESULT] Mode 0: sum_all=1.071e-17 -> dose_cloudshine=1.071e-17
+[CALC RESULT] Mode 0: sum_all=8.589e-18 -> dose_cloudshine=8.589e-18
+[CALC RESULT] Mode 0: sum_all=6.994e-18 -> dose_cloudshine=6.994e-18
+[CALC RESULT] Mode 0: sum_all=5.759e-18 -> dose_cloudshine=5.759e-18
+[CALC RESULT] Mode 0: sum_all=4.725e-18 -> dose_cloudshine=4.725e-18
+[CALC RESULT] Mode 0: sum_all=3.877e-18 -> dose_cloudshine=3.877e-18
+[CALC RESULT] Mode 0: sum_all=3.241e-18 -> dose_cloudshine=3.241e-18
+[CALC RESULT] Mode 0: sum_all=2.664e-18 -> dose_cloudshine=2.664e-18
+[CALC RESULT] Mode 0: sum_all=2.174e-18 -> dose_cloudshine=2.174e-18
+[CALC RESULT] Mode 0: sum_all=1.748e-18 -> dose_cloudshine=1.748e-18
+[CALC RESULT] Mode 0: sum_all=1.382e-18 -> dose_cloudshine=1.382e-18
+[CALC RESULT] Mode 0: sum_all=1.099e-18 -> dose_cloudshine=1.099e-18
+[CALC RESULT] Mode 0: sum_all=8.681e-19 -> dose_cloudshine=8.681e-19
+[CALC RESULT] Mode 0: sum_all=6.899e-19 -> dose_cloudshine=6.899e-19
+[CALC RESULT] Mode 0: sum_all=5.531e-19 -> dose_cloudshine=5.531e-19
+[CALC RESULT] Mode 0: sum_all=4.477e-19 -> dose_cloudshine=4.477e-19
+[CALC RESULT] Mode 0: sum_all=3.622e-19 -> dose_cloudshine=3.622e-19
+[CALC RESULT] Mode 0: sum_all=2.992e-19 -> dose_cloudshine=2.992e-19
+[CALC RESULT] Mode 0: sum_all=2.421e-19 -> dose_cloudshine=2.421e-19
+[CALC RESULT] Mode 0: sum_all=2.010e-19 -> dose_cloudshine=2.010e-19
+[CALC RESULT] Mode 0: sum_all=1.683e-19 -> dose_cloudshine=1.683e-19
+[CALC RESULT] Mode 0: sum_all=1.388e-19 -> dose_cloudshine=1.388e-19
+[CALC RESULT] Mode 0: sum_all=1.139e-19 -> dose_cloudshine=1.139e-19
+[CALC RESULT] Mode 0: sum_all=9.148e-20 -> dose_cloudshine=9.148e-20
+[CALC RESULT] Mode 0: sum_all=7.295e-20 -> dose_cloudshine=7.295e-20
+[CALC RESULT] Mode 0: sum_all=5.814e-20 -> dose_cloudshine=5.814e-20
+[CALC RESULT] Mode 0: sum_all=4.596e-20 -> dose_cloudshine=4.596e-20
+[CALC RESULT] Mode 0: sum_all=3.654e-20 -> dose_cloudshine=3.654e-20
+[CALC RESULT] Mode 0: sum_all=2.925e-20 -> dose_cloudshine=2.925e-20
+[CALC RESULT] Mode 0: sum_all=2.344e-20 -> dose_cloudshine=2.344e-20
+[CALC RESULT] Mode 0: sum_all=1.890e-20 -> dose_cloudshine=1.890e-20
+[CALC RESULT] Mode 0: sum_all=1.541e-20 -> dose_cloudshine=1.541e-20
+[CALC RESULT] Mode 0: sum_all=1.254e-20 -> dose_cloudshine=1.254e-20
+[CALC RESULT] Mode 0: sum_all=1.014e-20 -> dose_cloudshine=1.014e-20
+[CALC RESULT] Mode 0: sum_all=8.545e-21 -> dose_cloudshine=8.545e-21
+[CALC RESULT] Mode 0: sum_all=7.149e-21 -> dose_cloudshine=7.149e-21
+[CALC RESULT] Mode 0: sum_all=5.936e-21 -> dose_cloudshine=5.936e-21
+[CALC RESULT] Mode 0: sum_all=4.877e-21 -> dose_cloudshine=4.877e-21
+[CALC RESULT] Mode 0: sum_all=3.929e-21 -> dose_cloudshine=3.929e-21
+[CALC RESULT] Mode 0: sum_all=3.155e-21 -> dose_cloudshine=3.155e-21
+[CALC RESULT] Mode 0: sum_all=2.518e-21 -> dose_cloudshine=2.518e-21
+[CALC RESULT] Mode 0: sum_all=1.996e-21 -> dose_cloudshine=1.996e-21
+[CALC RESULT] Mode 0: sum_all=1.588e-21 -> dose_cloudshine=1.588e-21
+[CALC RESULT] Mode 0: sum_all=1.270e-21 -> dose_cloudshine=1.270e-21
+[CALC RESULT] Mode 0: sum_all=1.008e-21 -> dose_cloudshine=1.008e-21
+[CALC RESULT] Mode 0: sum_all=8.116e-22 -> dose_cloudshine=8.116e-22
+[CALC RESULT] Mode 0: sum_all=6.525e-22 -> dose_cloudshine=6.525e-22
+[CALC RESULT] Mode 0: sum_all=5.327e-22 -> dose_cloudshine=5.327e-22
+[CALC RESULT] Mode 0: sum_all=4.255e-22 -> dose_cloudshine=4.255e-22
+[CALC RESULT] Mode 0: sum_all=3.496e-22 -> dose_cloudshine=3.496e-22
+[CALC RESULT] Mode 0: sum_all=2.969e-22 -> dose_cloudshine=2.969e-22
+[CALC RESULT] Mode 0: sum_all=2.495e-22 -> dose_cloudshine=2.495e-22
+[CALC RESULT] Mode 0: sum_all=2.082e-22 -> dose_cloudshine=2.082e-22
+[CALC RESULT] Mode 0: sum_all=1.707e-22 -> dose_cloudshine=1.707e-22
+[CALC RESULT] Mode 0: sum_all=1.388e-22 -> dose_cloudshine=1.388e-22
+[CALC RESULT] Mode 0: sum_all=1.122e-22 -> dose_cloudshine=1.122e-22
+[CALC RESULT] Mode 0: sum_all=8.979e-23 -> dose_cloudshine=8.979e-23
+[CALC RESULT] Mode 0: sum_all=7.132e-23 -> dose_cloudshine=7.132e-23
+[CALC RESULT] Mode 0: sum_all=5.681e-23 -> dose_cloudshine=5.681e-23
+[CALC RESULT] Mode 0: sum_all=4.542e-23 -> dose_cloudshine=4.542e-23
+[CALC RESULT] Mode 0: sum_all=3.571e-23 -> dose_cloudshine=3.571e-23
+[CALC RESULT] Mode 0: sum_all=2.882e-23 -> dose_cloudshine=2.882e-23
+[CALC RESULT] Mode 0: sum_all=2.294e-23 -> dose_cloudshine=2.294e-23
+[CALC RESULT] Mode 0: sum_all=1.854e-23 -> dose_cloudshine=1.854e-23
+[CALC RESULT] Mode 0: sum_all=1.480e-23 -> dose_cloudshine=1.480e-23
+[CALC RESULT] Mode 0: sum_all=1.186e-23 -> dose_cloudshine=1.186e-23
+[CALC RESULT] Mode 0: sum_all=9.920e-24 -> dose_cloudshine=9.920e-24
+[CALC RESULT] Mode 0: sum_all=8.437e-24 -> dose_cloudshine=8.437e-24
+[CALC RESULT] Mode 0: sum_all=7.129e-24 -> dose_cloudshine=7.129e-24
+[CALC RESULT] Mode 0: sum_all=5.971e-24 -> dose_cloudshine=5.971e-24
+[CALC RESULT] Mode 0: sum_all=4.916e-24 -> dose_cloudshine=4.916e-24
+[CALC RESULT] Mode 0: sum_all=4.029e-24 -> dose_cloudshine=4.029e-24
+[CALC RESULT] Mode 0: sum_all=3.278e-24 -> dose_cloudshine=3.278e-24
+[CALC RESULT] Mode 0: sum_all=2.634e-24 -> dose_cloudshine=2.634e-24
+[CALC RESULT] Mode 0: sum_all=2.102e-24 -> dose_cloudshine=2.102e-24
+[CALC RESULT] Mode 0: sum_all=1.678e-24 -> dose_cloudshine=1.678e-24
+[CALC RESULT] Mode 0: sum_all=1.344e-24 -> dose_cloudshine=1.344e-24
+[CALC RESULT] Mode 0: sum_all=1.052e-24 -> dose_cloudshine=1.052e-24
+[CALC RESULT] Mode 0: sum_all=8.495e-25 -> dose_cloudshine=8.495e-25
+[CALC RESULT] Mode 0: sum_all=6.743e-25 -> dose_cloudshine=6.743e-25
+[CALC RESULT] Mode 0: sum_all=5.329e-25 -> dose_cloudshine=5.329e-25
+[CALC RESULT] Mode 0: sum_all=4.287e-25 -> dose_cloudshine=4.287e-25
+[CALC RESULT] Mode 0: sum_all=3.344e-25 -> dose_cloudshine=3.344e-25
+[CALC RESULT] Mode 0: sum_all=2.675e-25 -> dose_cloudshine=2.675e-25
+[CALC RESULT] Mode 0: sum_all=2.285e-25 -> dose_cloudshine=2.285e-25
+[CALC RESULT] Mode 0: sum_all=1.957e-25 -> dose_cloudshine=1.957e-25
+[CALC RESULT] Mode 0: sum_all=1.663e-25 -> dose_cloudshine=1.663e-25
+[CALC RESULT] Mode 0: sum_all=1.398e-25 -> dose_cloudshine=1.398e-25
+[CALC RESULT] Mode 0: sum_all=1.163e-25 -> dose_cloudshine=1.163e-25
+[CALC RESULT] Mode 0: sum_all=9.597e-26 -> dose_cloudshine=9.597e-26
+[CALC RESULT] Mode 0: sum_all=7.870e-26 -> dose_cloudshine=7.870e-26
+[CALC RESULT] Mode 0: sum_all=6.364e-26 -> dose_cloudshine=6.364e-26
+[CALC RESULT] Mode 0: sum_all=5.119e-26 -> dose_cloudshine=5.119e-26
+[CALC RESULT] Mode 0: sum_all=4.094e-26 -> dose_cloudshine=4.094e-26
+[CALC RESULT] Mode 0: sum_all=3.290e-26 -> dose_cloudshine=3.290e-26
+[CALC RESULT] Mode 0: sum_all=2.597e-26 -> dose_cloudshine=2.597e-26
+[CALC RESULT] Mode 0: sum_all=2.071e-26 -> dose_cloudshine=2.071e-26
+[CALC RESULT] Mode 0: sum_all=1.648e-26 -> dose_cloudshine=1.648e-26
+[CALC RESULT] Mode 0: sum_all=1.296e-26 -> dose_cloudshine=1.296e-26
+[CALC RESULT] Mode 0: sum_all=1.022e-26 -> dose_cloudshine=1.022e-26
+[CALC RESULT] Mode 0: sum_all=8.086e-27 -> dose_cloudshine=8.086e-27
+[CALC RESULT] Mode 0: sum_all=6.273e-27 -> dose_cloudshine=6.273e-27
+[CALC RESULT] Mode 0: sum_all=4.916e-27 -> dose_cloudshine=4.916e-27
+[CALC RESULT] Mode 0: sum_all=4.262e-27 -> dose_cloudshine=4.262e-27
+[CALC RESULT] Mode 0: sum_all=3.676e-27 -> dose_cloudshine=3.676e-27
+[CALC RESULT] Mode 0: sum_all=3.147e-27 -> dose_cloudshine=3.147e-27
+[CALC RESULT] Mode 0: sum_all=2.664e-27 -> dose_cloudshine=2.664e-27
+[CALC RESULT] Mode 0: sum_all=2.243e-27 -> dose_cloudshine=2.243e-27
+[CALC RESULT] Mode 0: sum_all=1.869e-27 -> dose_cloudshine=1.869e-27
+[CALC RESULT] Mode 0: sum_all=1.548e-27 -> dose_cloudshine=1.548e-27
+[CALC RESULT] Mode 0: sum_all=1.264e-27 -> dose_cloudshine=1.264e-27
+[CALC RESULT] Mode 0: sum_all=1.025e-27 -> dose_cloudshine=1.025e-27
+[CALC RESULT] Mode 0: sum_all=8.281e-28 -> dose_cloudshine=8.281e-28
+[CALC RESULT] Mode 0: sum_all=6.715e-28 -> dose_cloudshine=6.715e-28
+[CALC RESULT] Mode 0: sum_all=5.472e-28 -> dose_cloudshine=5.472e-28
+[CALC RESULT] Mode 0: sum_all=4.371e-28 -> dose_cloudshine=4.371e-28
+[CALC RESULT] Mode 0: sum_all=3.566e-28 -> dose_cloudshine=3.566e-28
+[CALC RESULT] Mode 0: sum_all=2.874e-28 -> dose_cloudshine=2.874e-28
+[CALC RESULT] Mode 0: sum_all=2.293e-28 -> dose_cloudshine=2.293e-28
+[CALC RESULT] Mode 0: sum_all=1.820e-28 -> dose_cloudshine=1.820e-28
+[CALC RESULT] Mode 0: sum_all=1.449e-28 -> dose_cloudshine=1.449e-28
+[CALC RESULT] Mode 0: sum_all=1.121e-28 -> dose_cloudshine=1.121e-28
+[CALC RESULT] Mode 0: sum_all=8.768e-29 -> dose_cloudshine=8.768e-29
+[CALC RESULT] Mode 0: sum_all=6.756e-29 -> dose_cloudshine=6.756e-29
+[CALC RESULT] Mode 0: sum_all=5.769e-29 -> dose_cloudshine=5.769e-29
+[CALC RESULT] Mode 0: sum_all=5.040e-29 -> dose_cloudshine=5.040e-29
+[CALC RESULT] Mode 0: sum_all=4.374e-29 -> dose_cloudshine=4.374e-29
+[CALC RESULT] Mode 0: sum_all=3.777e-29 -> dose_cloudshine=3.777e-29
+[CALC RESULT] Mode 0: sum_all=3.254e-29 -> dose_cloudshine=3.254e-29
+[CALC RESULT] Mode 0: sum_all=2.770e-29 -> dose_cloudshine=2.770e-29
+[CALC RESULT] Mode 0: sum_all=2.360e-29 -> dose_cloudshine=2.360e-29
+[CALC RESULT] Mode 0: sum_all=1.984e-29 -> dose_cloudshine=1.984e-29
+[CALC RESULT] Mode 0: sum_all=1.660e-29 -> dose_cloudshine=1.660e-29
+[CALC RESULT] Mode 0: sum_all=1.386e-29 -> dose_cloudshine=1.386e-29
+[CALC RESULT] Mode 0: sum_all=1.152e-29 -> dose_cloudshine=1.152e-29
+[CALC RESULT] Mode 0: sum_all=9.570e-30 -> dose_cloudshine=9.570e-30
+[CALC RESULT] Mode 0: sum_all=7.908e-30 -> dose_cloudshine=7.908e-30
+[CALC RESULT] Mode 0: sum_all=6.451e-30 -> dose_cloudshine=6.451e-30
+[CALC RESULT] Mode 0: sum_all=5.313e-30 -> dose_cloudshine=5.313e-30
+[CALC RESULT] Mode 0: sum_all=4.363e-30 -> dose_cloudshine=4.363e-30
+[CALC RESULT] Mode 0: sum_all=3.547e-30 -> dose_cloudshine=3.547e-30
+[CALC RESULT] Mode 0: sum_all=2.814e-30 -> dose_cloudshine=2.814e-30
+[CALC RESULT] Mode 0: sum_all=2.219e-30 -> dose_cloudshine=2.219e-30
+[CALC RESULT] Mode 0: sum_all=1.756e-30 -> dose_cloudshine=1.756e-30
+[CALC RESULT] Mode 0: sum_all=1.337e-30 -> dose_cloudshine=1.337e-30
+[CALC RESULT] Mode 0: sum_all=1.012e-30 -> dose_cloudshine=1.012e-30
+[CALC RESULT] Mode 0: sum_all=7.705e-31 -> dose_cloudshine=7.705e-31
+[CALC RESULT] Mode 0: sum_all=5.738e-31 -> dose_cloudshine=5.738e-31
+[CALC RESULT] Mode 0: sum_all=5.052e-31 -> dose_cloudshine=5.052e-31
+[CALC RESULT] Mode 0: sum_all=4.459e-31 -> dose_cloudshine=4.459e-31
+[CALC RESULT] Mode 0: sum_all=3.909e-31 -> dose_cloudshine=3.909e-31
+[CALC RESULT] Mode 0: sum_all=3.395e-31 -> dose_cloudshine=3.395e-31
+[CALC RESULT] Mode 0: sum_all=2.952e-31 -> dose_cloudshine=2.952e-31
+[CALC RESULT] Mode 0: sum_all=2.539e-31 -> dose_cloudshine=2.539e-31
+[CALC RESULT] Mode 0: sum_all=2.171e-31 -> dose_cloudshine=2.171e-31
+[CALC RESULT] Mode 0: sum_all=1.856e-31 -> dose_cloudshine=1.856e-31
+[CALC RESULT] Mode 0: sum_all=1.574e-31 -> dose_cloudshine=1.574e-31
+[CALC RESULT] Mode 0: sum_all=1.337e-31 -> dose_cloudshine=1.337e-31
+[CALC RESULT] Mode 0: sum_all=1.131e-31 -> dose_cloudshine=1.131e-31
+[CALC RESULT] Mode 0: sum_all=9.541e-32 -> dose_cloudshine=9.541e-32
+[CALC RESULT] Mode 0: sum_all=7.930e-32 -> dose_cloudshine=7.930e-32
+[CALC RESULT] Mode 0: sum_all=6.596e-32 -> dose_cloudshine=6.596e-32
+[CALC RESULT] Mode 0: sum_all=5.562e-32 -> dose_cloudshine=5.562e-32
+[CALC RESULT] Mode 0: sum_all=4.587e-32 -> dose_cloudshine=4.587e-32
+[CALC RESULT] Mode 0: sum_all=3.797e-32 -> dose_cloudshine=3.797e-32
+[CALC RESULT] Mode 0: sum_all=3.034e-32 -> dose_cloudshine=3.034e-32
+[CALC RESULT] Mode 0: sum_all=2.431e-32 -> dose_cloudshine=2.431e-32
+[CALC RESULT] Mode 0: sum_all=1.901e-32 -> dose_cloudshine=1.901e-32
+[CALC RESULT] Mode 0: sum_all=1.485e-32 -> dose_cloudshine=1.485e-32
+[CALC RESULT] Mode 0: sum_all=1.073e-32 -> dose_cloudshine=1.073e-32
+[CALC RESULT] Mode 0: sum_all=8.303e-33 -> dose_cloudshine=8.303e-33
+[CALC RESULT] Mode 0: sum_all=6.031e-33 -> dose_cloudshine=6.031e-33
+[CALC RESULT] Mode 0: sum_all=4.096e-33 -> dose_cloudshine=4.096e-33
+[CALC RESULT] Mode 0: sum_all=3.657e-33 -> dose_cloudshine=3.657e-33
+[CALC RESULT] Mode 0: sum_all=3.236e-33 -> dose_cloudshine=3.236e-33
+[CALC RESULT] Mode 0: sum_all=2.854e-33 -> dose_cloudshine=2.854e-33
+[CALC RESULT] Mode 0: sum_all=2.521e-33 -> dose_cloudshine=2.521e-33
+[CALC RESULT] Mode 0: sum_all=2.203e-33 -> dose_cloudshine=2.203e-33
+[CALC RESULT] Mode 0: sum_all=1.914e-33 -> dose_cloudshine=1.914e-33
+[CALC RESULT] Mode 0: sum_all=1.666e-33 -> dose_cloudshine=1.666e-33
+[CALC RESULT] Mode 0: sum_all=1.441e-33 -> dose_cloudshine=1.441e-33
+[CALC RESULT] Mode 0: sum_all=1.241e-33 -> dose_cloudshine=1.241e-33
+[CALC RESULT] Mode 0: sum_all=1.075e-33 -> dose_cloudshine=1.075e-33
+[CALC RESULT] Mode 0: sum_all=9.219e-34 -> dose_cloudshine=9.219e-34
+[CALC RESULT] Mode 0: sum_all=7.874e-34 -> dose_cloudshine=7.874e-34
+[CALC RESULT] Mode 0: sum_all=6.698e-34 -> dose_cloudshine=6.698e-34
+[CALC RESULT] Mode 0: sum_all=5.656e-34 -> dose_cloudshine=5.656e-34
+[CALC RESULT] Mode 0: sum_all=4.837e-34 -> dose_cloudshine=4.837e-34
+[CALC RESULT] Mode 0: sum_all=4.086e-34 -> dose_cloudshine=4.086e-34
+[CALC RESULT] Mode 0: sum_all=3.438e-34 -> dose_cloudshine=3.438e-34
+[CALC RESULT] Mode 0: sum_all=2.835e-34 -> dose_cloudshine=2.835e-34
+[CALC RESULT] Mode 0: sum_all=2.302e-34 -> dose_cloudshine=2.302e-34
+[CALC RESULT] Mode 0: sum_all=1.846e-34 -> dose_cloudshine=1.846e-34
+[CALC RESULT] Mode 0: sum_all=1.448e-34 -> dose_cloudshine=1.448e-34
+[CALC RESULT] Mode 0: sum_all=1.137e-34 -> dose_cloudshine=1.137e-34
+[CALC RESULT] Mode 0: sum_all=8.285e-35 -> dose_cloudshine=8.285e-35
+[CALC RESULT] Mode 0: sum_all=6.304e-35 -> dose_cloudshine=6.304e-35
+[CALC RESULT] Mode 0: sum_all=4.672e-35 -> dose_cloudshine=4.672e-35
+[CALC RESULT] Mode 0: sum_all=3.051e-35 -> dose_cloudshine=3.051e-35
+[CALC RESULT] Mode 0: sum_all=2.089e-35 -> dose_cloudshine=2.089e-35
+[CALC RESULT] Mode 0: sum_all=1.868e-35 -> dose_cloudshine=1.868e-35
+[CALC RESULT] Mode 0: sum_all=1.675e-35 -> dose_cloudshine=1.675e-35
+[CALC RESULT] Mode 0: sum_all=1.488e-35 -> dose_cloudshine=1.488e-35
+[CALC RESULT] Mode 0: sum_all=1.317e-35 -> dose_cloudshine=1.317e-35
+[CALC RESULT] Mode 0: sum_all=1.161e-35 -> dose_cloudshine=1.161e-35
+[CALC RESULT] Mode 0: sum_all=1.026e-35 -> dose_cloudshine=1.026e-35
+[CALC RESULT] Mode 0: sum_all=8.987e-36 -> dose_cloudshine=8.987e-36
+[CALC RESULT] Mode 0: sum_all=7.857e-36 -> dose_cloudshine=7.857e-36
+[CALC RESULT] Mode 0: sum_all=6.918e-36 -> dose_cloudshine=6.918e-36
+[CALC RESULT] Mode 0: sum_all=6.025e-36 -> dose_cloudshine=6.025e-36
+[CALC RESULT] Mode 0: sum_all=5.244e-36 -> dose_cloudshine=5.244e-36
+[CALC RESULT] Mode 0: sum_all=4.518e-36 -> dose_cloudshine=4.518e-36
+[CALC RESULT] Mode 0: sum_all=3.928e-36 -> dose_cloudshine=3.928e-36
+[CALC RESULT] Mode 0: sum_all=3.365e-36 -> dose_cloudshine=3.365e-36
+[CALC RESULT] Mode 0: sum_all=2.919e-36 -> dose_cloudshine=2.919e-36
+[CALC RESULT] Mode 0: sum_all=2.497e-36 -> dose_cloudshine=2.497e-36
+[CALC RESULT] Mode 0: sum_all=2.139e-36 -> dose_cloudshine=2.139e-36
+[CALC RESULT] Mode 0: sum_all=1.801e-36 -> dose_cloudshine=1.801e-36
+[CALC RESULT] Mode 0: sum_all=1.477e-36 -> dose_cloudshine=1.477e-36
+[CALC RESULT] Mode 0: sum_all=1.223e-36 -> dose_cloudshine=1.223e-36
+[CALC RESULT] Mode 0: sum_all=9.694e-37 -> dose_cloudshine=9.694e-37
+[CALC RESULT] Mode 0: sum_all=7.757e-37 -> dose_cloudshine=7.757e-37
+[CALC RESULT] Mode 0: sum_all=6.046e-37 -> dose_cloudshine=6.046e-37
+[CALC RESULT] Mode 0: sum_all=4.350e-37 -> dose_cloudshine=4.350e-37
+[CALC RESULT] Mode 0: sum_all=3.411e-37 -> dose_cloudshine=3.411e-37
+[CALC RESULT] Mode 0: sum_all=2.525e-37 -> dose_cloudshine=2.525e-37
+[CALC RESULT] Mode 0: sum_all=1.642e-37 -> dose_cloudshine=1.642e-37
+[CALC RESULT] Mode 0: sum_all=8.329e-38 -> dose_cloudshine=8.329e-38
+[CALC RESULT] Mode 0: sum_all=7.556e-38 -> dose_cloudshine=7.556e-38
+[CALC RESULT] Mode 0: sum_all=6.794e-38 -> dose_cloudshine=6.794e-38
+[CALC RESULT] Mode 0: sum_all=6.093e-38 -> dose_cloudshine=6.093e-38
+[CALC RESULT] Mode 0: sum_all=5.437e-38 -> dose_cloudshine=5.437e-38
+[CALC RESULT] Mode 0: sum_all=4.867e-38 -> dose_cloudshine=4.867e-38
+[CALC RESULT] Mode 0: sum_all=4.349e-38 -> dose_cloudshine=4.349e-38
+[CALC RESULT] Mode 0: sum_all=3.847e-38 -> dose_cloudshine=3.847e-38
+[CALC RESULT] Mode 0: sum_all=3.420e-38 -> dose_cloudshine=3.420e-38
+[CALC RESULT] Mode 0: sum_all=3.044e-38 -> dose_cloudshine=3.044e-38
+[CALC RESULT] Mode 0: sum_all=2.686e-38 -> dose_cloudshine=2.686e-38
+[CALC RESULT] Mode 0: sum_all=2.369e-38 -> dose_cloudshine=2.369e-38
+[CALC RESULT] Mode 0: sum_all=2.071e-38 -> dose_cloudshine=2.071e-38
+[CALC RESULT] Mode 0: sum_all=1.833e-38 -> dose_cloudshine=1.833e-38
+[CALC RESULT] Mode 0: sum_all=1.596e-38 -> dose_cloudshine=1.596e-38
+[CALC RESULT] Mode 0: sum_all=1.392e-38 -> dose_cloudshine=1.392e-38
+[CALC RESULT] Mode 0: sum_all=1.223e-38 -> dose_cloudshine=1.223e-38
+[CALC RESULT] Mode 0: sum_all=1.056e-38 -> dose_cloudshine=1.056e-38
+[CALC RESULT] Mode 0: sum_all=9.211e-39 -> dose_cloudshine=9.211e-39
+[CALC RESULT] Mode 0: sum_all=7.862e-39 -> dose_cloudshine=7.862e-39
+[CALC RESULT] Mode 0: sum_all=6.530e-39 -> dose_cloudshine=6.530e-39
+[CALC RESULT] Mode 0: sum_all=5.518e-39 -> dose_cloudshine=5.518e-39
+[CALC RESULT] Mode 0: sum_all=4.507e-39 -> dose_cloudshine=4.507e-39
+[CALC RESULT] Mode 0: sum_all=3.579e-39 -> dose_cloudshine=3.579e-39
+[CALC RESULT] Mode 0: sum_all=2.903e-39 -> dose_cloudshine=2.903e-39
+[CALC RESULT] Mode 0: sum_all=2.227e-39 -> dose_cloudshine=2.227e-39
+[CALC RESULT] Mode 0: sum_all=1.655e-39 -> dose_cloudshine=1.655e-39
+[CALC RESULT] Mode 0: sum_all=1.307e-39 -> dose_cloudshine=1.307e-39
+[CALC RESULT] Mode 0: sum_all=9.609e-40 -> dose_cloudshine=9.609e-40
+[CALC RESULT] Mode 0: sum_all=6.172e-40 -> dose_cloudshine=6.172e-40
+[CALC RESULT] Mode 0: sum_all=2.756e-40 -> dose_cloudshine=2.756e-40
+[CALC RESULT] Mode 0: sum_all=2.098e-40 -> dose_cloudshine=2.098e-40
+[CALC RESULT] Mode 0: sum_all=1.903e-40 -> dose_cloudshine=1.903e-40
+[CALC RESULT] Mode 0: sum_all=1.717e-40 -> dose_cloudshine=1.717e-40
+[CALC RESULT] Mode 0: sum_all=1.553e-40 -> dose_cloudshine=1.553e-40
+[CALC RESULT] Mode 0: sum_all=1.405e-40 -> dose_cloudshine=1.405e-40
+[CALC RESULT] Mode 0: sum_all=1.261e-40 -> dose_cloudshine=1.261e-40
+[CALC RESULT] Mode 0: sum_all=1.128e-40 -> dose_cloudshine=1.128e-40
+[CALC RESULT] Mode 0: sum_all=1.019e-40 -> dose_cloudshine=1.019e-40
+[CALC RESULT] Mode 0: sum_all=9.142e-41 -> dose_cloudshine=9.142e-41
+[CALC RESULT] Mode 0: sum_all=8.160e-41 -> dose_cloudshine=8.160e-41
+[CALC RESULT] Mode 0: sum_all=7.278e-41 -> dose_cloudshine=7.278e-41
+[CALC RESULT] Mode 0: sum_all=6.454e-41 -> dose_cloudshine=6.454e-41
+[CALC RESULT] Mode 0: sum_all=5.791e-41 -> dose_cloudshine=5.791e-41
+[CALC RESULT] Mode 0: sum_all=5.129e-41 -> dose_cloudshine=5.129e-41
+[CALC RESULT] Mode 0: sum_all=4.516e-41 -> dose_cloudshine=4.516e-41
+[CALC RESULT] Mode 0: sum_all=4.008e-41 -> dose_cloudshine=4.008e-41
+[CALC RESULT] Mode 0: sum_all=3.536e-41 -> dose_cloudshine=3.536e-41
+[CALC RESULT] Mode 0: sum_all=3.110e-41 -> dose_cloudshine=3.110e-41
+[CALC RESULT] Mode 0: sum_all=2.736e-41 -> dose_cloudshine=2.736e-41
+[CALC RESULT] Mode 0: sum_all=2.360e-41 -> dose_cloudshine=2.360e-41
+[CALC RESULT] Mode 0: sum_all=1.988e-41 -> dose_cloudshine=1.988e-41
+[CALC RESULT] Mode 0: sum_all=1.706e-41 -> dose_cloudshine=1.706e-41
+[CALC RESULT] Mode 0: sum_all=1.426e-41 -> dose_cloudshine=1.426e-41
+[CALC RESULT] Mode 0: sum_all=1.146e-41 -> dose_cloudshine=1.146e-41
+[CALC RESULT] Mode 0: sum_all=9.420e-42 -> dose_cloudshine=9.420e-42
+[CALC RESULT] Mode 0: sum_all=7.547e-42 -> dose_cloudshine=7.547e-42
+[CALC RESULT] Mode 0: sum_all=5.674e-42 -> dose_cloudshine=5.674e-42
+[CALC RESULT] Mode 0: sum_all=4.495e-42 -> dose_cloudshine=4.495e-42
+[CALC RESULT] Mode 0: sum_all=3.551e-42 -> dose_cloudshine=3.551e-42
+[CALC RESULT] Mode 0: sum_all=2.608e-42 -> dose_cloudshine=2.608e-42
+[CALC RESULT] Mode 0: sum_all=1.665e-42 -> dose_cloudshine=1.665e-42
+[CALC RESULT] Mode 0: sum_all=7.217e-43 -> dose_cloudshine=7.217e-43
+
+=== HYBRID SIGMA DEBUG (Tadmor-Gur <5km, NUREG7161 >=5km) ===
+Timestep, Time(s), Distance(m), sigma_h(m), sigma_z(m)
+1, 10, 22, 1.18, 1.29
+10, 100, 220, 9.42, 5.14
+50, 500, 1100, 40.29, 13.55
+100, 1000, 2200, 75.35, 20.57
+200, 2000, 4400, 140.91, 31.22
+500, 5000, 11000, 519.66, 68.22
+1000, 10000, 22000, 1096.79, 112.58
+Total sum execution time: 0 ms
+[MAIN:066] <<< Returned from time_update_RCAP2()
+Total execution time: 1582.13 ms
+
+ ---------------------------------------------------------
+  Maximum Values for Radionuclide Dispersion (All Plumes) 
+ --------------------------------------------------------- 
+
+  Cs-137                     | 0~100m       100~220m     220~350m     350~510m     510~700m     700~950m     0.9~1.3km    1.3~1.7km    1.7~2.3km    2.3~3.0km    3.0~3.9km    3.9~5.0km    5.0~6.4km    6.4~8.1km    8~10km       10~13km      13~16km      16~20km      20~25km      25~30km     
+                               (iDir/Total)    (iDir/Total)    (iDir/Total)    (iDir/Total)    (iDir/Total)    (iDir/Total)    (iDir/Total)    (iDir/Total)    (iDir/Total)    (iDir/Total)    (iDir/Total)    (iDir/Total)    (iDir/Total)    (iDir/Total)    (iDir/Total)    (iDir/Total)    (iDir/Total)    (iDir/Total)    (iDir/Total)    (iDir/Total)  
+------------------------------+---------------+---------------+---------------+---------------+---------------+---------------+---------------+---------------+---------------+---------------+---------------+---------------+---------------+---------------+---------------+---------------+---------------+---------------+---------------+----------------
+ Center Air Conc. (Bq-s/m3)  |  1.44383e-02     4.47733e-03     2.24686e-03     1.28462e-03     8.02687e-04     5.10032e-04     3.27574e-04     2.11231e-04     1.36318e-04     9.11118e-05     6.21566e-05     4.33058e-05     3.02958e-05     2.13113e-05     1.54709e-05     1.07104e-05     7.63451e-06     5.53519e-06     4.07160e-06     0.00000e+00   
+                               ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)       
+ Ground Air Conc. (Bq-s/m3)  |  3.58141e-32     4.83134e-14     2.04577e-09     2.69542e-07     3.28797e-06     1.46689e-05     3.48916e-05     5.52508e-05     6.64304e-05     6.64258e-05     5.96889e-05     5.03306e-05     4.04943e-05     3.15577e-05     2.45811e-05     1.80834e-05     1.34382e-05     1.00401e-05     7.55009e-06     0.00000e+00   
+                               ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)       
+ Center Ground Conc. (Bq/m2) |  3.58141e-34     4.83134e-16     2.04577e-11     2.69542e-09     3.28797e-08     1.46689e-07     3.48916e-07     5.52508e-07     6.64304e-07     6.64258e-07     5.96889e-07     5.03306e-07     4.04943e-07     3.15577e-07     2.45811e-07     1.80834e-07     1.34382e-07     1.00401e-07     7.55009e-08     0.00000e+00   
+                               ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)       
+ Ground Dilution, X/Q (s/m3) |  3.61759e-33     4.88014e-15     2.06643e-10     2.72264e-08     3.32118e-07     1.48171e-06     3.52441e-06     5.58089e-06     6.71014e-06     6.70968e-06     6.02919e-06     5.08390e-06     4.09033e-06     3.18765e-06     2.48294e-06     1.82661e-06     1.35740e-06     1.01415e-06     7.62635e-07     0.00000e+00   
+                               ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)         ( 1/16)       
+
+[INFO] Results saved to: .\output\dispersion_results.txt
