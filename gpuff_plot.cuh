@@ -1403,16 +1403,20 @@ void Gpuff::init_max_tracking(int numRad) {
 }
 
 // ============================================================================
-// update_max_values
+// update_max_values_cpu (Legacy - kept for reference and comparison)
 //
-// Update maximum values using RCAP Segmented Plume model.
+// Update maximum values using RCAP Segmented Plume model on CPU.
 // For each ring, calculate concentration at the ring's center distance using
 // Pasquill-Gifford dispersion coefficients.
+//
+// NOTE: This function is now replaced by move_puffs_by_wind_RCAP3 GPU kernel.
+// The GPU kernel performs identical calculations. This function is kept for
+// debugging and validation purposes.
 //
 // RCAP Center Air Conc formula: Q / (π * σ_y * σ_z * u)
 // This is the crosswind-integrated Gaussian plume formula.
 // ============================================================================
-void Gpuff::update_max_values(const SimulationControl& SC, const std::vector<NuclideData>& ND) {
+void Gpuff::update_max_values_cpu(const SimulationControl& SC, const std::vector<NuclideData>& ND) {
 
     // Copy puff data from device to host
     cudaMemcpy(puffs_RCAP.data(), d_puffs_RCAP, puffs_RCAP.size() * sizeof(Puffcenter_RCAP), cudaMemcpyDeviceToHost);
@@ -1579,16 +1583,20 @@ void Gpuff::update_max_values(const SimulationControl& SC, const std::vector<Nuc
 }
 
 // ============================================================================
-// Print Results Summary
+// Print Results Summary (GPU version)
 // ============================================================================
 // Prints a formatted table of maximum radionuclide dispersion values
 // for each radial distance ring. Output format matches RCAP legacy output.
 //
-// Metrics calculated per ring:
+// This version copies GPU-computed values from move_puffs_by_wind_RCAP3 kernel
+// to host memory and outputs them without any CPU recalculation.
+//
+// Metrics per ring (all computed on GPU):
 //   - Center Air Concentration (Bq-s/m3): Time-integrated air concentration
 //   - Ground Air Concentration (Bq-s/m3): Ground-level air concentration
 //   - Center Ground Concentration (Bq/m2): Ground deposition
 //   - Ground Dilution X/Q (s/m3): Dilution factor
+//   - Sigma-y, Sigma-z (m): Dispersion parameters
 //
 // Parameters:
 //   SC: SimulationControl - Contains radial distances and grid info
@@ -1598,6 +1606,19 @@ void Gpuff::print_results_summary(const SimulationControl& SC, const std::vector
 
     int numRad = SC.numRad;
     int numTheta = SC.numTheta;
+
+    // Copy GPU-computed max values to host
+    cudaMemcpy(max_center_air_conc.data(), d_max_center_air_conc, numRad * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(max_ground_air_conc.data(), d_max_ground_air_conc, numRad * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(max_ground_conc.data(), d_max_ground_conc, numRad * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(max_xq.data(), d_max_xq, numRad * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(max_sigma_y.data(), d_max_sigma_y, numRad * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(max_sigma_z.data(), d_max_sigma_z, numRad * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(max_dir_center_air.data(), d_max_dir_center_air, numRad * sizeof(int), cudaMemcpyDeviceToHost);
+    cudaMemcpy(max_dir_ground_air.data(), d_max_dir_ground_air, numRad * sizeof(int), cudaMemcpyDeviceToHost);
+    cudaMemcpy(max_dir_ground.data(), d_max_dir_ground, numRad * sizeof(int), cudaMemcpyDeviceToHost);
+    cudaMemcpy(max_dir_xq.data(), d_max_dir_xq, numRad * sizeof(int), cudaMemcpyDeviceToHost);
+    cudaMemcpy(&max_tracking_nuclide, d_max_tracking_nuclide, sizeof(int), cudaMemcpyDeviceToHost);
 
     // Get nuclide name for display
     std::string nuclide_name = "Unknown";
@@ -1619,7 +1640,7 @@ void Gpuff::print_results_summary(const SimulationControl& SC, const std::vector
 
     // Helper lambda for printing to both console and file
     auto printBoth = [&](const std::string& text) {
-        std::cout << text;
+        //std::cout << text;
         outFile << text;
     };
 

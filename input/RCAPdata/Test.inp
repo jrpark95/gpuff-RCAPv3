@@ -110,7 +110,7 @@ RT110  60   Cm-244         0.00E+00
 !      ID  rel_class_name  wet_dep  dry_dep
 RT120  1   xenon           n        n
 RT120  2   iodine          y        y
-RT120  3   cesium          n        n
+RT120  3   cesium          y        y
 RT120  4   tellurium       y        y
 RT120  5   strontium       y        y
 RT120  6   ruthenium       y        y
@@ -177,7 +177,7 @@ RT320  1
 !      seed for random number 
 RT340  -79
 !      wind_speed(m/s)  stability  rain_rate(mm/hr)  mix_height(m)
-RT350  2.0              A          0.0               1000.0  
+RT350  2.0              F          0.0               1000.0  
 
 *END RN_Trans
 

@@ -164,6 +164,20 @@ float* d_particleSizeDistr;
 float* ground_deposit;
 float* d_ground_deposit;
 
+// GPU arrays for max dispersion values (per ring)
+// These store max values computed on GPU to match CPU update_max_values()
+float* d_max_center_air_conc = nullptr;
+float* d_max_ground_air_conc = nullptr;
+float* d_max_ground_conc = nullptr;
+float* d_max_xq = nullptr;
+float* d_max_sigma_y = nullptr;
+float* d_max_sigma_z = nullptr;
+int* d_max_dir_center_air = nullptr;
+int* d_max_dir_ground_air = nullptr;
+int* d_max_dir_ground = nullptr;
+int* d_max_dir_xq = nullptr;
+int* d_max_tracking_nuclide = nullptr;
+
 /**
  * Gpuff Class
  *
@@ -476,7 +490,7 @@ public:
     void plant_output_binary_RCAP(int input_num,
         const std::vector<RadioNuclideTransport>& RT, const std::vector<NuclideData>& ND);
     void init_max_tracking(int numRad);
-    void update_max_values(const SimulationControl& SC, const std::vector<NuclideData>& ND);
+    void update_max_values_cpu(const SimulationControl& SC, const std::vector<NuclideData>& ND);
     void print_results_summary(const SimulationControl& SC, const std::vector<NuclideData>& ND);
 
     // CPU-only methods for testing and validation

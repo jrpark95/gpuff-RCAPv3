@@ -768,23 +768,61 @@ __global__ void move_puffs_by_wind_RCAP2(
             continue;
         }
 
-        if (0) {
-        // if (nuclide.dry_deposition == true) {
+        if (nuclide.dry_deposition == true) {
             float conc = p.conc[nuc_idx];
-            float f_total = 0.0f;
 
+            // Calculate weighted average deposition velocity
+            // avg_vdep = Σ(fraction[i] * Vdepo[i])
+            float avg_vdep = 0.0f;
             for (int size_idx = 0; size_idx < PARTICLE_COUNT; ++size_idx) {
                 float fraction = d_particleSizeDistr[p.unitidx * (ELEMENT_COUNT * PARTICLE_COUNT)
                                                     + (group - 1) * PARTICLE_COUNT + size_idx];
                 float vdep = d_Vdepo[size_idx];
-                float f_size = expf(-vdep * d_dt / 1500.0f);
-                f_total += fraction * f_size;
+                avg_vdep += fraction * vdep;
             }
 
-            float new_conc = nuclide.wet_deposition ? conc * f_total * wetf : conc * f_total;
+            // Apply deposition using average velocity
+            // new_conc = conc * exp(-avg_vdep * dt / H), where H = mixing height (1000m)
+            const float H = 1000.0f;  // mixing height (m)
+            float deposition_factor = expf(-avg_vdep * d_dt / H);
+            float new_conc = conc * deposition_factor;
             p.conc[nuc_idx] = new_conc * decay_factor;
 
+            // Calculate deposition amount and accumulate to ground_deposit array
             float deposition = conc - new_conc;
+
+            // // DEBUG: Print deposition details for first few puffs at specific timesteps
+            // static __device__ int debug_counter = 0;
+            // if (idx == 0 && group == 3 && deposition > 0.0f) {
+            //     int current_count = atomicAdd(&debug_counter, 1);
+            //     if (current_count < 3) {  // Print first 3 occurrences
+            //         printf("[GPU DEBUG] puff=%d, nuc=%d, group=%d, rad_idx=%d, theta_idx=%d\n",
+            //                idx, nuc_idx, group, rad_idx, theta_idx);
+            //         printf("  conc=%.6e, avg_vdep=%.6e, dep_factor=%.6f, new_conc=%.6e, decay=%.6f\n",
+            //                conc, avg_vdep, deposition_factor, new_conc, decay_factor);
+            //         printf("  deposition=%.6e, dt=%.1f, H=%.1f, r=%.1f\n",
+            //                deposition, d_dt, H, r);
+            //         printf("  Vdepo: ");
+            //         for (int i = 0; i < PARTICLE_COUNT; i++) {
+            //             printf("%.4e ", d_Vdepo[i]);
+            //         }
+            //         printf("\n  fraction: ");
+            //         for (int i = 0; i < PARTICLE_COUNT; i++) {
+            //             float frac = d_particleSizeDistr[p.unitidx * (ELEMENT_COUNT * PARTICLE_COUNT) + (group - 1) * PARTICLE_COUNT + i];
+            //             printf("%.4f ", frac);
+            //         }
+            //         printf("\n");
+            //     }
+            // }
+
+            if (deposition > 0.0f && rad_idx < numRad) {
+                // Array index: [theta_idx * numRad * MAX_NUCLIDES + rad_idx * MAX_NUCLIDES + nuc_idx]
+                int deposit_idx = theta_idx * numRad * MAX_NUCLIDES + rad_idx * MAX_NUCLIDES + nuc_idx;
+                atomicAdd(&d_ground_deposit[deposit_idx], deposition);
+            }
+        } else {
+            // No dry deposition - just apply decay
+            p.conc[nuc_idx] = p.conc[nuc_idx] * decay_factor;
         }
     }
 }
@@ -922,6 +960,238 @@ void Gpuff::move_puffs_by_wind_RCAP2_cpu(
         float r0 = sqrt(puffs_RCAP[0].x * puffs_RCAP[0].x + puffs_RCAP[0].y * puffs_RCAP[0].y);
         printf(">>> Timestep %d: Puff0 distance=%.0fm, he=%.1fm, TotalConc=%.4e, sigma_z=%.2f, mixing_depth=%.0f\n",
                debug_timestep, r0, puffs_RCAP[0].he, total_conc, puffs_RCAP[0].sigma_z, puffs_RCAP[0].mixing_depth);
+    }
+}
+
+// ====================================================================================
+// RCAP3 Kernel - GPU-based max value calculation (identical to CPU update_max_values)
+// ====================================================================================
+//
+// This kernel performs the same calculations as the CPU update_max_values() function
+// in gpuff_plot.cuh, but runs entirely on GPU. The kernel:
+//   1. Calculates sigma_y, sigma_z using Briggs-McElroy-Pooler with FT=1.27 correction
+//   2. Applies sigma_z cap (mixing_height / sqrt(2π))
+//   3. Computes ground reflection model (g1 + g2 + g3 with 5 reflection iterations)
+//   4. Calculates Center Air Conc, Ground Air Conc, Ground Conc, X/Q
+//   5. Tracks maximum values per ring using atomicMax-style comparisons
+//
+// Thread organization: 2D grid [numRad x numPuffs], one thread per (ring, puff) pair
+// ====================================================================================
+
+__global__ void move_puffs_by_wind_RCAP3(
+    Gpuff::Puffcenter_RCAP* d_puffs_RCAP,
+    float* d_radius,
+    int numRad,
+    int numTheta,
+    float* d_max_center_air_conc,
+    float* d_max_ground_air_conc,
+    float* d_max_ground_conc,
+    float* d_max_xq,
+    float* d_max_sigma_y,
+    float* d_max_sigma_z,
+    int* d_max_dir_center_air,
+    int* d_max_dir_ground_air,
+    int* d_max_dir_ground,
+    int* d_max_dir_xq,
+    int* d_max_tracking_nuclide,
+    float* d_Vdepo,
+    float* d_particleSizeDistr,
+    NuclideData* d_ND)
+{
+    int puff_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (puff_idx >= d_nop) return;
+
+    Gpuff::Puffcenter_RCAP& puff = d_puffs_RCAP[puff_idx];
+    if (puff.flag == 0) return;
+
+    // Find tracking nuclide (first nuclide with non-zero concentration)
+    int tracking_nuclide = *d_max_tracking_nuclide;
+    if (tracking_nuclide < 0) {
+        for (int n = 0; n < MAX_NUCLIDES; n++) {
+            if (puff.conc[n] > 0.0f) {
+                // Try to set tracking nuclide atomically
+                atomicCAS(d_max_tracking_nuclide, -1, n);
+                tracking_nuclide = *d_max_tracking_nuclide;
+                break;
+            }
+        }
+    }
+
+    if (tracking_nuclide < 0) return;
+
+    float Q = puff.conc[tracking_nuclide];
+    if (Q <= 0.0f) return;
+
+    float ws = puff.windvel > 0.1f ? puff.windvel : 0.1f;
+    int stab_class = puff.stab - 1;  // Convert from 1-6 to 0-5 index
+    float H = puff.he > 0.0f ? puff.he : puff.z;  // Effective release height
+
+    // Current puff distance from source
+    float puff_distance = sqrtf(puff.x * puff.x + puff.y * puff.y);
+
+    // Get puff direction for theta index
+    float theta = atan2f(puff.y, puff.x);
+    if (theta < 0) theta += 2.0f * PI;
+    int theta_idx = static_cast<int>(theta / (2.0f * PI) * numTheta) % numTheta;
+
+    // Constants for RCAP model
+    const float FT = 1.27f;  // Sample time correction factor: (td/tref)^0.2 = (600/180)^0.2
+    const float SQRT_2PI = 2.506628f;
+    const float MIXING_HEIGHT = 1000.0f;  // mixing height (m)
+    const float L = 1000.0f;  // Inversion layer height (m)
+
+    // Calculate concentration at each ring the puff has passed through
+    for (int rad_idx = 0; rad_idx < numRad; rad_idx++) {
+        // Get ring boundaries
+        float r_inner = (rad_idx == 0) ? 0.0f : d_radius[rad_idx - 1];
+        float r_outer = d_radius[rad_idx];
+
+        // Use ring center (midpoint) as reference distance
+        float ring_distance = (r_inner + r_outer) / 2.0f;
+
+        // Only calculate if puff has reached or passed this ring
+        if (puff_distance < r_inner) continue;
+
+        // Calculate sigma_y and sigma_z at ring distance using Briggs-McElroy-Pooler model
+        float sigma_y = Sigma_h_Briggs_McElroy_Pooler(stab_class, ring_distance);
+        float sigma_z = Sigma_z_Briggs_McElroy_Pooler(stab_class, ring_distance);
+
+        // σy correction: Apply Ft (sample time correction factor)
+        sigma_y = FT * sigma_y;
+
+        // σz upper limit: σz_max = mixing_height / sqrt(2π)
+        float sigma_z_max = MIXING_HEIGHT / SQRT_2PI;
+        sigma_z = fminf(sigma_z, sigma_z_max);
+
+        // Ensure minimum values
+        sigma_y = fmaxf(sigma_y, 0.1f);
+        sigma_z = fmaxf(sigma_z, 0.1f);
+
+        // ============================================================
+        // RCAP Ground Reflection Model (RCAP 모델설명서 식 3.2.4, 3.2.5)
+        // ============================================================
+        float z = 0.0f;  // Ground level
+        float sigma_z2 = sigma_z * sigma_z;
+        float two_sigma_z2 = 2.0f * sigma_z2;
+
+        // g1: Direct term - exp[-(z-H)²/(2σz²)]
+        float g1 = expf(-((z - H) * (z - H)) / two_sigma_z2);
+
+        // g2: Ground reflection - exp[-(z+H)²/(2σz²)]
+        float g2 = expf(-((z + H) * (z + H)) / two_sigma_z2);
+
+        // g3: Multiple reflections (inversion layer) - n≤5
+        float g3 = 0.0f;
+        for (int n = 1; n <= 5; n++) {
+            float iL = static_cast<float>(n) * L;
+            g3 += expf(-((z - H - 2.0f * iL) * (z - H - 2.0f * iL)) / two_sigma_z2);
+            g3 += expf(-((z + H - 2.0f * iL) * (z + H - 2.0f * iL)) / two_sigma_z2);
+            g3 += expf(-((z - H + 2.0f * iL) * (z - H + 2.0f * iL)) / two_sigma_z2);
+            g3 += expf(-((z + H + 2.0f * iL) * (z + H + 2.0f * iL)) / two_sigma_z2);
+        }
+
+        float g_total = g1 + g2 + g3;
+
+        // RCAP formula: C = Q/(2π * σy * σz * u) * g
+        float base_conc = Q / (2.0f * PI * sigma_y * sigma_z * ws);
+
+        // Center Air Conc: At plume centerline (z=H)
+        float g1_center = 1.0f;
+        float g2_center = expf(-(4.0f * H * H) / two_sigma_z2);
+        float g3_center = 0.0f;
+        for (int n = 1; n <= 5; n++) {
+            float iL = static_cast<float>(n) * L;
+            g3_center += expf(-((H - H - 2.0f * iL) * (H - H - 2.0f * iL)) / two_sigma_z2);
+            g3_center += expf(-((H + H - 2.0f * iL) * (H + H - 2.0f * iL)) / two_sigma_z2);
+            g3_center += expf(-((H - H + 2.0f * iL) * (H - H + 2.0f * iL)) / two_sigma_z2);
+            g3_center += expf(-((H + H + 2.0f * iL) * (H + H + 2.0f * iL)) / two_sigma_z2);
+        }
+        float g_center = g1_center + g2_center + g3_center;
+        float center_air = base_conc * g_center;
+
+        // Ground Air Conc: At ground level (z=0)
+        float ground_air = base_conc * g_total;
+
+        // Ground concentration (deposition) using avg_vdep from particle size distribution
+        // Same calculation as move_puffs_by_wind_RCAP2
+        NuclideData nuclide = d_ND[tracking_nuclide];
+        int group = nuclide.chemical_group;
+        float avg_vdep = 0.0f;
+        if (group >= 1 && group <= ELEMENT_COUNT) {
+            for (int size_idx = 0; size_idx < PARTICLE_COUNT; ++size_idx) {
+                float fraction = d_particleSizeDistr[puff.unitidx * (ELEMENT_COUNT * PARTICLE_COUNT)
+                                                    + (group - 1) * PARTICLE_COUNT + size_idx];
+                float vdep = d_Vdepo[size_idx];
+                avg_vdep += fraction * vdep;
+            }
+        } else {
+            // Fallback to default deposition velocity
+            avg_vdep = puff.drydep_vel > 0.0f ? puff.drydep_vel : 0.001f;
+        }
+        float ground_conc = ground_air * avg_vdep;
+
+        // X/Q (dilution factor)
+        float xq = ground_air / Q;
+
+        // Update maximum values using atomic compare-and-swap
+        // For center_air_conc
+        float old_center = d_max_center_air_conc[rad_idx];
+        while (center_air > old_center) {
+            float assumed = old_center;
+            old_center = atomicCAS((int*)&d_max_center_air_conc[rad_idx],
+                                   __float_as_int(assumed),
+                                   __float_as_int(center_air));
+            old_center = __int_as_float(*(int*)&old_center);
+            if (old_center == assumed) {
+                // Successfully updated, also update direction and sigma values
+                d_max_dir_center_air[rad_idx] = theta_idx + 1;
+                d_max_sigma_y[rad_idx] = sigma_y;
+                d_max_sigma_z[rad_idx] = sigma_z;
+                break;
+            }
+        }
+
+        // For ground_air_conc
+        float old_ground_air = d_max_ground_air_conc[rad_idx];
+        while (ground_air > old_ground_air) {
+            float assumed = old_ground_air;
+            old_ground_air = atomicCAS((int*)&d_max_ground_air_conc[rad_idx],
+                                       __float_as_int(assumed),
+                                       __float_as_int(ground_air));
+            old_ground_air = __int_as_float(*(int*)&old_ground_air);
+            if (old_ground_air == assumed) {
+                d_max_dir_ground_air[rad_idx] = theta_idx + 1;
+                break;
+            }
+        }
+
+        // For ground_conc
+        float old_ground_conc = d_max_ground_conc[rad_idx];
+        while (ground_conc > old_ground_conc) {
+            float assumed = old_ground_conc;
+            old_ground_conc = atomicCAS((int*)&d_max_ground_conc[rad_idx],
+                                        __float_as_int(assumed),
+                                        __float_as_int(ground_conc));
+            old_ground_conc = __int_as_float(*(int*)&old_ground_conc);
+            if (old_ground_conc == assumed) {
+                d_max_dir_ground[rad_idx] = theta_idx + 1;
+                break;
+            }
+        }
+
+        // For X/Q
+        float old_xq = d_max_xq[rad_idx];
+        while (xq > old_xq) {
+            float assumed = old_xq;
+            old_xq = atomicCAS((int*)&d_max_xq[rad_idx],
+                               __float_as_int(assumed),
+                               __float_as_int(xq));
+            old_xq = __int_as_float(*(int*)&old_xq);
+            if (old_xq == assumed) {
+                d_max_dir_xq[rad_idx] = theta_idx + 1;
+                break;
+            }
+        }
     }
 }
 

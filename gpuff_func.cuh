@@ -1157,6 +1157,16 @@ void Gpuff::time_update_RCAP2(const SimulationControl& SC, const EvacuationData&
                 d_ND, d_radius, SC.numRad, SC.numTheta);
         cudaDeviceSynchronize();
 
+        // Update max dispersion values on GPU (identical calculation to CPU update_max_values)
+        move_puffs_by_wind_RCAP3 << <blocks, threads_per_block >> >
+            (d_puffs_RCAP, d_radius, SC.numRad, SC.numTheta,
+             d_max_center_air_conc, d_max_ground_air_conc, d_max_ground_conc, d_max_xq,
+             d_max_sigma_y, d_max_sigma_z,
+             d_max_dir_center_air, d_max_dir_ground_air, d_max_dir_ground, d_max_dir_xq,
+             d_max_tracking_nuclide,
+             d_Vdepo, d_particleSizeDistr, d_ND);
+        cudaDeviceSynchronize();
+
         // DEBUG: Print sigma values at specific timesteps
         if (timestep == 1 || timestep == 10 || timestep == 50 || timestep == 100 ||
             timestep == 200 || timestep == 500 || timestep == 1000 || timestep == 2000 ||
@@ -1243,8 +1253,8 @@ void Gpuff::time_update_RCAP2(const SimulationControl& SC, const EvacuationData&
         if (err != cudaSuccess)
             printf("CUDA error: %s, timestep = %d\n", cudaGetErrorString(err), timestep);
 
-        // Update maximum values for this timestep
-        update_max_values(SC, ND);
+        // NOTE: Max value calculation is now done on GPU by move_puffs_by_wind_RCAP3 kernel
+        // CPU version kept for reference: update_max_values_cpu(SC, ND);
 
         current_time += dt;
         timestep++;
@@ -1524,6 +1534,47 @@ void Gpuff::allocate_and_copy_radius_to_device(SimulationControl SC) {
     // Removed debug output that was causing terminal spam
     cudaMalloc(&d_radius, SC.numRad * sizeof(float));
     cudaMemcpy(d_radius, SC.ir_distances, SC.numRad * sizeof(float), cudaMemcpyHostToDevice);
+
+    // Allocate and initialize ground_deposit array for dry deposition tracking
+    // Array structure: [theta_idx * numRad * MAX_NUCLIDES + rad_idx * MAX_NUCLIDES + nuc_idx]
+    int ground_deposit_size = SC.numTheta * SC.numRad * MAX_NUCLIDES;
+    ground_deposit = new float[ground_deposit_size]();  // Initialize to zero
+    cudaMalloc(&d_ground_deposit, ground_deposit_size * sizeof(float));
+    cudaMemset(d_ground_deposit, 0, ground_deposit_size * sizeof(float));
+
+    // Allocate GPU arrays for max dispersion values (per ring)
+    // These arrays store maximum values computed by move_puffs_by_wind_RCAP3 kernel
+    int numRad = SC.numRad;
+    cudaMalloc(&d_max_center_air_conc, numRad * sizeof(float));
+    cudaMalloc(&d_max_ground_air_conc, numRad * sizeof(float));
+    cudaMalloc(&d_max_ground_conc, numRad * sizeof(float));
+    cudaMalloc(&d_max_xq, numRad * sizeof(float));
+    cudaMalloc(&d_max_sigma_y, numRad * sizeof(float));
+    cudaMalloc(&d_max_sigma_z, numRad * sizeof(float));
+    cudaMalloc(&d_max_dir_center_air, numRad * sizeof(int));
+    cudaMalloc(&d_max_dir_ground_air, numRad * sizeof(int));
+    cudaMalloc(&d_max_dir_ground, numRad * sizeof(int));
+    cudaMalloc(&d_max_dir_xq, numRad * sizeof(int));
+    cudaMalloc(&d_max_tracking_nuclide, sizeof(int));
+
+    // Initialize to zero/one
+    cudaMemset(d_max_center_air_conc, 0, numRad * sizeof(float));
+    cudaMemset(d_max_ground_air_conc, 0, numRad * sizeof(float));
+    cudaMemset(d_max_ground_conc, 0, numRad * sizeof(float));
+    cudaMemset(d_max_xq, 0, numRad * sizeof(float));
+    cudaMemset(d_max_sigma_y, 0, numRad * sizeof(float));
+    cudaMemset(d_max_sigma_z, 0, numRad * sizeof(float));
+
+    // Initialize direction arrays to 1 (default direction)
+    std::vector<int> ones(numRad, 1);
+    cudaMemcpy(d_max_dir_center_air, ones.data(), numRad * sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_max_dir_ground_air, ones.data(), numRad * sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_max_dir_ground, ones.data(), numRad * sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_max_dir_xq, ones.data(), numRad * sizeof(int), cudaMemcpyHostToDevice);
+
+    // Initialize tracking nuclide to -1 (not yet set)
+    int neg_one = -1;
+    cudaMemcpy(d_max_tracking_nuclide, &neg_one, sizeof(int), cudaMemcpyHostToDevice);
 }
 
 /**

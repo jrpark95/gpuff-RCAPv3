@@ -406,7 +406,7 @@ __global__ void ComputeCloudshineDose(
 
             // Debug: Print calculation result
             if (blockIdx.x == 0 && blockIdx.y == 0 && threadIdx.x == 0 && sum_all > 0.0f) {
-                printf("[CALC RESULT] Mode %d: sum_all=%.3e -> dose_cloudshine=%.3e\n", current_mode, sum_all, dose_cloudshine);
+                //printf("[CALC RESULT] Mode %d: sum_all=%.3e -> dose_cloudshine=%.3e\n", current_mode, sum_all, dose_cloudshine);
             }
         } else if (plane_src) {
             current_mode = 1;  // Plane source mode
@@ -426,7 +426,7 @@ __global__ void ComputeCloudshineDose(
 
             // Debug: Print calculation result
             if (blockIdx.x == 0 && blockIdx.y == 0 && threadIdx.x == 0 && sum_all > 0.0f) {
-                printf("[CALC RESULT] Mode %d: sum_all=%.3e -> dose_cloudshine=%.3e\n", current_mode, sum_all, dose_cloudshine);
+                //printf("[CALC RESULT] Mode %d: sum_all=%.3e -> dose_cloudshine=%.3e\n", current_mode, sum_all, dose_cloudshine);
             }
         } else if (semi_inf) {
             current_mode = 2;  // Semi-infinite mode
@@ -444,7 +444,7 @@ __global__ void ComputeCloudshineDose(
 
             // Debug: Print calculation result
             if (blockIdx.x == 0 && blockIdx.y == 0 && threadIdx.x == 0 && sum_all > 0.0f) {
-                printf("[CALC RESULT] Mode %d: sum_all=%.3e -> dose_cloudshine=%.3e\n", current_mode, sum_all, dose_cloudshine);
+                //printf("[CALC RESULT] Mode %d: sum_all=%.3e -> dose_cloudshine=%.3e\n", current_mode, sum_all, dose_cloudshine);
             }
         } else {
             current_mode = 1;  // Default to plane source mode for boundary cases
@@ -464,7 +464,7 @@ __global__ void ComputeCloudshineDose(
 
             // Debug: Print calculation result
             if (blockIdx.x == 0 && blockIdx.y == 0 && threadIdx.x == 0 && sum_all > 0.0f) {
-                printf("[CALC RESULT] Mode %d: sum_all=%.3e -> dose_cloudshine=%.3e\n", current_mode, sum_all, dose_cloudshine);
+                //printf("[CALC RESULT] Mode %d: sum_all=%.3e -> dose_cloudshine=%.3e\n", current_mode, sum_all, dose_cloudshine);
             }
         }
 
